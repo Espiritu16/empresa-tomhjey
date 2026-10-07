@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Empresa Tomhjey
 
-## Getting Started
+Aplicación operativa para una empresa: ventas, inventario, facturación electrónica con
+NubeFacT y asistencia con IA. Este repositorio es independiente de Trayecto SaaS.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 con App Router y TypeScript.
+- Supabase: PostgreSQL, Auth y Edge Functions.
+- `@supabase/ssr` para sesiones de Supabase en Next.js.
+- Prettier local para el formato.
+- NubeFacT como integración de facturación definida para el MVP.
+
+## Requisitos
+
+- Node.js 20.9 o posterior.
+- npm 11.19.0, fijado en `package.json`.
+- Docker para levantar Supabase localmente.
+
+## Preparar el entorno
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Completa en `.env.local` la URL y la clave publicable del proyecto Supabase. No coloques
+claves privadas de NubeFacT o del proveedor de IA en variables `NEXT_PUBLIC_*`; esas
+credenciales se configurarán como secretos de las Edge Functions.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Desarrollo local
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run supabase:start
+npm run dev
+```
 
-## Learn More
+La aplicación queda en `http://localhost:3000`. Para detener Supabase local:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run supabase:stop
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Comprobaciones disponibles
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run lint
+npm run typecheck
+npm run format:check
+npm run build
+```
 
-## Deploy on Vercel
+Para aplicar el formato con la versión local de Prettier:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run format
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Estructura
+
+- `src/app/`: rutas y layouts de Next.js.
+- `src/funcionalidades/`: módulos de negocio organizados por capacidad.
+- `src/compartido/`: código utilizado por más de una funcionalidad, incluidos los clientes
+  de Supabase.
+- `supabase/migrations/`: cambios versionados del esquema PostgreSQL.
+- `supabase/functions/`: integraciones de servidor que requieren secretos, como NubeFacT
+  y el proveedor de IA.
+- `docs/alcance-mvp.md`: alcance funcional acordado.
+
+## Fuente de verdad
+
+El alcance está en [`docs/alcance-mvp.md`](docs/alcance-mvp.md). Las instrucciones para
+agentes están en [`AGENTS.md`](AGENTS.md).

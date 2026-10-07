@@ -1,0 +1,12 @@
+node_modules
+.next
+out
+build
+coverage
+supabase/.temp
+supabase/.branches
+next-env.d.ts
+*.tsbuildinfo
+package-lock.json
+.env*
+!.env.example

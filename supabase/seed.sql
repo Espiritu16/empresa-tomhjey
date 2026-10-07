@@ -1,0 +1,1 @@
+-- Datos iniciales locales se añadirán junto con el modelo de negocio.

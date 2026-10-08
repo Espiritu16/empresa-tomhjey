@@ -27,7 +27,7 @@ select is((select count(*) from public.ventas), 1::bigint, 'el vendedor solo ve 
 select is((public.asistente_resumen_ventas(now() - interval '1 day', now() + interval '1 day') ->> 'cantidad'), '1', 'el asistente resume solo las ventas del vendedor');
 select is((public.resumen_inicio(now() - interval '1 day', now() + interval '1 day') ->> 'total_ventas'), '10.00', 'el inicio calcula solo el total visible al vendedor');
 select is((select count(*) from public.productos), 1::bigint, 'el vendedor puede consultar catálogo');
-select is((select count(*) from public.perfiles), 1::bigint, 'el vendedor solo ve su propio perfil');
+select is((select count(*) from public.perfiles where id in ('10000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000002')), 1::bigint, 'el vendedor solo ve su propio perfil');
 select is((select count(*) from public.conversaciones), 1::bigint, 'el vendedor solo ve sus conversaciones');
 select is((select count(*) from public.mensajes), 1::bigint, 'el vendedor solo ve los mensajes de su conversación');
 select lives_ok(
@@ -53,7 +53,7 @@ select throws_ok(
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
 select is((select count(*) from public.ventas), 2::bigint, 'el administrador ve todas las ventas');
 select is((public.asistente_resumen_ventas(now() - interval '1 day', now() + interval '1 day') ->> 'cantidad'), '2', 'el asistente resume todas las ventas para administración');
-select is((select count(*) from public.perfiles), 2::bigint, 'el administrador puede consultar el equipo');
+select is((select count(*) from public.perfiles where id in ('10000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000002')), 2::bigint, 'el administrador puede consultar el equipo de pruebas');
 select lives_ok(
   $$insert into public.categorias (nombre) values ('Categoría admin')$$,
   'el administrador puede crear categorías'

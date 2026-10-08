@@ -20,6 +20,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 - Next.js 16 App Router, TypeScript, npm; Supabase PostgreSQL 17, Auth y Edge Functions.
 - `npm run dev`, `npm run build`, `npm run lint`, `npm run typecheck`.
+- `npm run test:e2e` corre Playwright contra la aplicación y Supabase locales; inicia antes
+  Supabase con `npm run supabase:start`. La suite crea y elimina cuentas temporales.
 - `npm run format` aplica Prettier; `npm run format:check` lo comprueba.
 - `npm run supabase:start|stop|status` controla el stack local; requiere Docker.
 - `npm run supabase:reset` recrea la base local y borra sus datos de desarrollo.

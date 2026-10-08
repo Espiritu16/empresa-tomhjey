@@ -15,7 +15,12 @@ El entorno local se inicia con:
 npx supabase functions serve --env-file supabase/functions/.env.local
 ```
 
-`supabase/functions/.env.local` está ignorado por Git. Variables necesarias:
+Antes de probar NubeFacT u OpenAI, copia `supabase/functions/.env.example` a
+`supabase/functions/.env.local` y completa `NUBEFACT_RUTA`, `NUBEFACT_TOKEN` y
+`OPENAI_API_KEY` con credenciales de prueba. `OPENAI_MODEL` ya usa el modelo por defecto
+del proyecto y se puede cambiar localmente. El archivo `.env.local` está ignorado por Git.
+
+Variables necesarias:
 
 | Variable                    | Uso                                                                                           |
 | --------------------------- | --------------------------------------------------------------------------------------------- |

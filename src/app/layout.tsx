@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { Suspense } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Empresa Tomhjey",
-  description: "Sistema de ventas y facturación con asistencia de IA.",
+  title: {
+    default: "Tomhjey · Ventas y facturación",
+    template: "%s · Tomhjey",
+  },
+  description: "Panel de ventas, inventario y facturación de Tomhjey.",
 };
 
 export default function RootLayout({
@@ -12,7 +16,11 @@ export default function RootLayout({
 }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="es">
-      <body>{children}</body>
+      <body>
+        <Suspense fallback={<div aria-busy="true" className="cargando-app" />}>
+          {children}
+        </Suspense>
+      </body>
     </html>
   );
 }

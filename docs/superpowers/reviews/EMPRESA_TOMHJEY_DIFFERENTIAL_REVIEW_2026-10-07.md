@@ -26,15 +26,15 @@ La conclusión es de **confianza media**, no de alta: no se ejecutaron pruebas a
 
 ## Escenarios adversariales considerados
 
-| Actor o fallo | Intento | Resultado observado en el código |
-|---|---|---|
-| Sesión anónima | Invocar la Edge Function | `autenticar()` requiere un bearer válido antes de continuar. |
-| Usuario vendedor | Configurar serie o emitir | `exigirAdministrador()` responde 403; las RPC además revisan el rol activo. |
-| Cliente autenticado directo | Llamar la RPC de configuración | La función no concede `EXECUTE` a `authenticated`; solo la Edge Function usa `service_role`. |
-| Admin malicioso o error de captura | Reusar un correlativo anterior | La validación rechaza un valor menor al guardado; el bloqueo serializa cambios/reservas. |
-| Doble clic o dos peticiones | Emitir dos veces una venta | La reserva existente y su lease evitan solicitudes simultáneas; el reintento conserva el número. |
-| Timeout tras envío | Enviar otra factura con nuevo número | Al vencer el lease se consulta el comprobante existente y se compara con el payload reservado antes de reenviar. |
-| Respuesta externa manipulada con URL | Abrir enlace PDF arbitrario | La UI descarta protocolos distintos de HTTPS y hosts fuera de NubeFacT. |
+| Actor o fallo                        | Intento                              | Resultado observado en el código                                                                                 |
+| ------------------------------------ | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| Sesión anónima                       | Invocar la Edge Function             | `autenticar()` requiere un bearer válido antes de continuar.                                                     |
+| Usuario vendedor                     | Configurar serie o emitir            | `exigirAdministrador()` responde 403; las RPC además revisan el rol activo.                                      |
+| Cliente autenticado directo          | Llamar la RPC de configuración       | La función no concede `EXECUTE` a `authenticated`; solo la Edge Function usa `service_role`.                     |
+| Admin malicioso o error de captura   | Reusar un correlativo anterior       | La validación rechaza un valor menor al guardado; el bloqueo serializa cambios/reservas.                         |
+| Doble clic o dos peticiones          | Emitir dos veces una venta           | La reserva existente y su lease evitan solicitudes simultáneas; el reintento conserva el número.                 |
+| Timeout tras envío                   | Enviar otra factura con nuevo número | Al vencer el lease se consulta el comprobante existente y se compara con el payload reservado antes de reenviar. |
+| Respuesta externa manipulada con URL | Abrir enlace PDF arbitrario          | La UI descarta protocolos distintos de HTTPS y hosts fuera de NubeFacT.                                          |
 
 ## Cobertura y límites
 

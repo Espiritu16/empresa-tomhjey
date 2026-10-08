@@ -1,10 +1,10 @@
-# Emisión de facturas — Plan de implementación
+# Emisión de facturas y boletas — Plan de implementación
 
 > **Para agentes:** implementar tarea por tarea en esta sesión con `superpowers:executing-plans`. Cada tarea termina con revisión independiente del diff antes de pasar a la siguiente.
 
-**Objetivo:** Permitir que administración configure la serie fiscal F y emita facturas de ventas confirmadas desde el panel, mostrando el resultado real informado por NubeFacT.
+**Objetivo:** Permitir que administración configure series B y F, emita boletas y facturas de ventas confirmadas, y consulte la aceptación diferida de las boletas desde el panel.
 
-**Arquitectura:** Postgres mantiene la serie y reserva correlativos de manera transaccional. La Edge Function valida la sesión y el rol, envía el mismo comprobante reservado a NubeFacT y conserva su respuesta; Next.js ofrece la configuración mínima de serie, las ventas elegibles y el historial. La pantalla solo expone factura en esta entrega.
+**Arquitectura:** Postgres mantiene las series, reserva correlativos de manera transaccional y limita la consulta de boletas a siete días después del envío y una vez por día. La Edge Function valida la sesión y el rol, envía el comprobante reservado a NubeFacT y guarda emisión/consultas; Next.js ofrece configuración B/F, ventas elegibles e historial.
 
 **Stack:** Next.js 16 App Router, TypeScript, Supabase Postgres/Auth/Edge Functions, NubeFacT HTTP, Prettier 3.
 
@@ -17,7 +17,7 @@
 - NubeFacT, tokens y claves privadas se usan exclusivamente del lado servidor; nunca en `NEXT_PUBLIC_*`.
 - Los importes, el RUC y el correlativo se validan en servidor antes de emitir.
 - Un reintento conserva el correlativo y consulta NubeFacT antes de volver a enviar si el resultado es incierto.
-- La pantalla de esta entrega solo emite facturas; boletas, consulta diferida, notas de crédito y anulaciones quedan fuera.
+- La pantalla emite facturas y boletas. Las boletas se consultan manualmente tras siete días y, mientras no se acepten, como máximo una vez al día. No hay cron.
 - No se realizan solicitudes reales a NubeFacT durante implementación o verificación local.
 - No se aplican migraciones a un proyecto remoto ni se despliega.
 
@@ -26,11 +26,12 @@
 ## Mapa de archivos
 
 - `supabase/migrations/20261008044658_facturacion_facturas.sql`: permite configurar de forma autorizada una serie F activa, sin retroceder el correlativo; audita el cambio.
-- `supabase/functions/facturacion/index.ts`: limita esta entrega a `factura` y devuelve al panel el resultado normalizado de aceptación.
+- `supabase/migrations/<nueva>_facturacion_boletas.sql`: permite configurar series B/F y registrar consultas de aceptación de boletas con la espera y frecuencia definidas.
+- `supabase/functions/facturacion/index.ts`: permite `factura` y `boleta`, y agrega la operación segura de consulta de aceptación de boletas.
 - `supabase/functions/facturacion/nubefact.ts`: conserva el cliente HTTP y la reconciliación por serie, correlativo, total y fecha.
 - `src/app/panel/facturacion/page.tsx`: protege la vista para administración y carga datos con sesión/RLS.
-- `src/funcionalidades/facturacion/consultas.ts`: obtiene la serie activa, ventas confirmadas sin comprobante e historial visible.
-- `src/funcionalidades/facturacion/pagina-facturacion.tsx`: muestra la configuración de serie, la emisión de factura y el resultado del proveedor.
+- `src/funcionalidades/facturacion/consultas.ts`: obtiene series, ventas confirmadas sin comprobante e historial visible.
+- `src/funcionalidades/facturacion/pagina-facturacion.tsx`: muestra configuración B/F, emisión de ambos tipos y consulta de aceptación de boletas.
 - `src/funcionalidades/facturacion/estilos.css`: estilos locales coherentes con el sistema visual existente.
 - `src/app/globals.css`: importa los estilos del módulo si la convención actual lo requiere.
 - `src/app/panel/[modulo]/page.tsx`: permanece como fallback de los módulos todavía no implementados; la ruta estática `/panel/facturacion` tiene precedencia.
@@ -38,10 +39,10 @@
 
 ## Interfaces entre tareas
 
-- La RPC `public.configurar_serie_factura(administrador_objetivo uuid, serie_solicitada text, siguiente_solicitado bigint)` devuelve la fila de `public.series_comprobante`; valida que el objetivo sea administrador activo, la serie sea `F` más tres caracteres alfanuméricos y el correlativo positivo no decreciente. Solo `service_role` puede ejecutarla.
-- La Edge Function `facturacion` recibe `{ operacion: "configurar_serie", serie: string, siguienteNumero: number }` para configurar, o `{ ventaId: string, tipo: "factura" }` para emitir. La respuesta de emisión es `{ comprobanteId, estado, aceptadaPorSunat, respuesta? }` o `{ detalle, codigo }`.
-- `cargarPaginaFacturacion()` devuelve `{ empresa, serie, ventasElegibles, comprobantes }` con valores serializables, sin claves privadas.
-- `PaginaFacturacion` recibe ese DTO y emite mediante `supabase.functions.invoke("facturacion", { body: { ventaId, tipo: "factura" } })`; tras una respuesta llama `router.refresh()`.
+- La configuración B/F conserva la RPC restringida para factura y agrega una RPC general que valida rol, prefijo, correlativo monotónico y activa solo una serie por tipo.
+- La Edge Function recibe `{ operacion: "configurar_serie", tipo, serie, siguienteNumero }`, `{ ventaId, tipo }` para emitir, o `{ operacion: "consultar_boleta", comprobanteId }` para consultar SUNAT.
+- `cargarPaginaFacturacion()` devuelve empresa, series, ventas elegibles e historial con fechas de consulta disponibles, sin claves privadas.
+- La pantalla consulta boletas con una operación separada; la emisión no se confunde con aceptación y la respuesta queda persistida antes de refrescar.
 
 ## Tarea 1: Configurar serie F activa de forma segura
 
@@ -132,3 +133,28 @@
 - [x] No ejecutar pruebas, NubeFacT, migraciones, Supabase remoto ni despliegues en este alcance.
 
 **Entrega comprobable:** lint, formato, tipos, compilación y tipos Deno pasan; la migración queda versionada para revisión y no aplicada.
+
+## Tarea 6: Habilitar boletas y seguimiento diferido
+
+**Archivos:**
+
+- Crear: `supabase/migrations/20261008050019_habilitar_boletas.sql`
+- Modificar: `supabase/functions/facturacion/index.ts`
+- Modificar: `src/funcionalidades/facturacion/consultas.ts`
+- Modificar: `src/funcionalidades/facturacion/pagina-facturacion.tsx`
+- Modificar: `src/funcionalidades/facturacion/README.md`
+- Modificar: `docs/alcance-mvp.md`
+- Modificar: esta especificación y plan.
+
+**Pasos:**
+
+- [x] Configurar serie B y F con autorización de administrador, prefijo correspondiente, correlativo no decreciente y una serie activa por tipo.
+- [x] Permitir en la Edge Function únicamente los tipos factura/boleta y conservar la validación existente: factura con RUC del cliente; boleta con documento cuando supera el límite fiscal.
+- [x] Al enviar una boleta, persistir emisión como `emitido` pero no mostrar aceptación inmediata de SUNAT, aunque el proveedor devuelva un booleano true.
+- [x] Agregar una consulta manual que solo administre boletas emitidas, compruebe la identidad del número/respuesta y persista la consulta.
+- [x] Bloquear consultas hasta siete días después del envío y limitar consultas pendientes a una cada 24 horas; registrar el resultado «no encontrada» como pendiente, no como rechazo.
+- [x] Extender las ventas elegibles para boletas con/sin documento; mantener la factura disponible solo para cliente con RUC.
+- [x] Mostrar botones de emisión por tipo y seguimiento «Consultar aceptación» con la próxima fecha permitida; conservar PDF y estados sin mezclar rechazo de emisión con falta de aceptación.
+- [x] Actualizar la especificación y README; verificar formato, lint, tipos, build, Edge Functions y diff. No ejecutar pruebas, aplicar migraciones ni llamar al proveedor.
+
+**Entrega comprobable:** administración emite facturas y boletas; factura muestra aceptación inmediata si NubeFacT la confirma, y boleta solo cambia su aceptación tras consulta manual disponible desde el séptimo día.

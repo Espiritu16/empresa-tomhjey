@@ -28,6 +28,13 @@ type ReservaComprobante = {
   payload: PayloadNubefact;
 };
 
+type ReservaConsultaBoleta = {
+  comprobante_id: string;
+  serie: string;
+  numero: number;
+  payload: PayloadNubefact;
+};
+
 function leerCredenciales() {
   const ruta = Deno.env.get("NUBEFACT_RUTA");
   const token = Deno.env.get("NUBEFACT_TOKEN");
@@ -76,25 +83,107 @@ async function manejar(request: Request): Promise<Response> {
     const cuerpo = exigirObjetoJson(await request.json().catch(() => null));
     const clienteInterno = clientePrivilegiado();
 
+    if (cuerpo.operacion === "consultar_boleta") {
+      const comprobanteId = cuerpo.comprobanteId;
+      if (
+        typeof comprobanteId !== "string" ||
+        !/^[0-9a-f-]{36}$/i.test(comprobanteId)
+      ) {
+        throw new ErrorHttp(
+          "Selecciona una boleta válida.",
+          400,
+          "comprobante_invalido",
+        );
+      }
+
+      const credenciales = leerCredenciales();
+      const { data: dataReserva, error: errorReserva } =
+        await clienteInterno.rpc("reservar_consulta_boleta", {
+          administrador_objetivo: sesion.usuarioId,
+          comprobante_objetivo: comprobanteId,
+        });
+      if (errorReserva) {
+        const forbidden = errorReserva.code === "42501";
+        const ocupado = errorReserva.code === "55P03";
+        throw new ErrorHttp(
+          errorReserva.message,
+          forbidden ? 403 : ocupado ? 409 : 422,
+          forbidden
+            ? "rol_requerido"
+            : ocupado
+              ? "consulta_en_proceso"
+              : "consulta_no_disponible",
+        );
+      }
+
+      const reserva = dataReserva as ReservaConsultaBoleta;
+      const clienteNubefact = crearClienteNubefact(credenciales);
+      let respuesta: RespuestaNubefact | null = null;
+      try {
+        respuesta = await clienteNubefact.consultar(
+          reserva.payload.tipo_de_comprobante,
+          reserva.serie,
+          reserva.numero,
+        );
+      } catch (error) {
+        if (!(error instanceof ErrorNubefact) || error.codigo !== 24)
+          throw error;
+      }
+
+      if (respuesta && !coincideConReserva(respuesta, reserva.payload)) {
+        throw new ErrorNubefact(
+          "La respuesta consultada no coincide con la boleta reservada. Requiere revisión.",
+          23,
+          409,
+        );
+      }
+
+      const { error: errorRegistro } = await clienteInterno.rpc(
+        "registrar_consulta_boleta",
+        {
+          administrador_objetivo: sesion.usuarioId,
+          comprobante_objetivo: reserva.comprobante_id,
+          respuesta,
+        },
+      );
+      if (errorRegistro) {
+        throw new ErrorHttp(
+          "No se pudo guardar el resultado de consulta.",
+          500,
+          "consulta_no_guardada",
+        );
+      }
+
+      return responderJson({
+        comprobanteId: reserva.comprobante_id,
+        encontrada: respuesta !== null,
+        aceptadaPorSunat: respuesta?.aceptada_por_sunat === true,
+        respuesta,
+      });
+    }
+
     if (cuerpo.operacion === "configurar_serie") {
+      const tipo = cuerpo.tipo;
       const serie = cuerpo.serie;
       const siguienteNumero = cuerpo.siguienteNumero;
       if (
+        (tipo !== "factura" && tipo !== "boleta") ||
         typeof serie !== "string" ||
         typeof siguienteNumero !== "number" ||
         !Number.isSafeInteger(siguienteNumero) ||
         siguienteNumero <= 0
       ) {
         throw new ErrorHttp(
-          "Indica una serie F válida y un correlativo positivo.",
+          "Indica una serie válida y un correlativo positivo.",
           400,
           "serie_invalida",
         );
       }
 
       const { data: serieGuardada, error: errorSerie } =
-        await clienteInterno.rpc("configurar_serie_factura", {
+        await clienteInterno.rpc("configurar_serie_comprobante", {
           administrador_objetivo: sesion.usuarioId,
+          tipo_solicitado: tipo,
           serie_solicitada: serie,
           siguiente_solicitado: siguienteNumero,
         });
@@ -108,7 +197,7 @@ async function manejar(request: Request): Promise<Response> {
       }
       if (!serieGuardada) {
         throw new ErrorHttp(
-          "No se pudo guardar la serie de factura.",
+          "No se pudo guardar la serie.",
           500,
           "serie_no_configurada",
         );
@@ -136,12 +225,8 @@ async function manejar(request: Request): Promise<Response> {
         "venta_invalida",
       );
     }
-    if (tipo !== "factura") {
-      throw new ErrorHttp(
-        "Solo se puede emitir factura.",
-        400,
-        "tipo_invalido",
-      );
+    if (tipo !== "factura" && tipo !== "boleta") {
+      throw new ErrorHttp("Selecciona factura o boleta.", 400, "tipo_invalido");
     }
 
     const credenciales = leerCredenciales();
@@ -210,7 +295,8 @@ async function manejar(request: Request): Promise<Response> {
     return responderJson({
       comprobanteId: reserva.comprobante_id,
       estado: "emitido",
-      aceptadaPorSunat: resultado.aceptada_por_sunat === true,
+      aceptadaPorSunat:
+        tipo === "factura" && resultado.aceptada_por_sunat === true,
       respuesta: resultado,
     });
   } catch (error) {

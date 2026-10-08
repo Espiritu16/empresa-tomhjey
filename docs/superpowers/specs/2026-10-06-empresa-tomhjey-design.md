@@ -164,10 +164,11 @@ proveedor ni un modo de facturación manual alternativo.
 - Las credenciales de NubeFacT se guardan como secretos del entorno de
   Supabase, y solo las lee la Edge Function de facturación. El navegador nunca
   las recibe.
-- La primera entrega de facturación permite emitir **facturas** asociadas a una
-  venta confirmada. La emisión exige los datos fiscales válidos de la empresa y
-  el RUC del cliente antes de reservar un número. La boleta no se habilita en
-  esta entrega.
+- La primera entrega de facturación permite emitir **facturas y boletas**
+  asociadas a una venta confirmada. La emisión exige el RUC válido de la empresa
+  antes de reservar un número. La factura exige además el RUC válido del
+  cliente; la boleta admite un cliente sin documento hasta el límite fiscal
+  configurado en la reserva, y exige identificarlo cuando lo supera.
 - La función de emisión reserva y persiste el correlativo antes de llamar al
   proveedor. Un reintento reutiliza ese mismo número para evitar comprobantes
   fiscales duplicados.
@@ -175,24 +176,25 @@ proveedor ni un modo de facturación manual alternativo.
   al proveedor antes de reintentar. La respuesta de NubeFacT se conserva para
   soporte y trazabilidad sin guardar secretos.
 - El resultado de la emisión y la aceptación de SUNAT son datos distintos. La
-  interfaz solo presenta «Aceptada por SUNAT» cuando la respuesta guardada de
-  NubeFacT indica `aceptada_por_sunat: true`; un envío exitoso con aceptación
-  pendiente no se presenta como aceptado.
+  factura puede mostrar aceptación con la respuesta inmediata de NubeFacT. La
+  respuesta inmediata de una boleta nunca se presenta como aceptación: queda
+  pendiente y se consulta manualmente a NubeFacT después de siete días. Si
+  continúa pendiente, se permite una consulta por día hasta conocer el estado.
+  La respuesta de esa consulta es la que habilita «Aceptada por SUNAT» para una
+  boleta.
 - La persona puede iniciar la emisión desde una venta confirmada y consultar el
   resultado desde la venta o el módulo de facturación. La respuesta persistida
   incluye el enlace al PDF cuando NubeFacT lo devuelve. Los errores recuperables
   permiten reintentar de forma autorizada con el mismo correlativo.
-- La integración conserva el parámetro de tipo de comprobante para reutilizar
-  el flujo de reserva, envío y reconciliación cuando se incorpore boleta. Esa
-  incorporación se hará después: una boleta podrá quedar pendiente de
-  aceptación y requerirá una operación de consulta posterior a NubeFacT. Esta
-  entrega no incorpora consulta periódica, cron ni pantalla de boletas.
+- La integración reutiliza la reserva, envío y reconciliación para ambos tipos.
+  La consulta de aceptación de boletas se inicia desde el historial; no hay
+  consulta periódica ni cron en esta entrega.
 - La disponibilidad de NubeFacT no se convierte en un modo de producto ni en
   una ruta alternativa de emisión. Si el proveedor no responde, la operación
   queda con estado y error recuperables.
-- La entrega actual habilita factura únicamente. Boletas se incorporará después
-  con seguimiento de aceptación; notas de crédito y anulaciones fiscales quedan
-  fuera y requieren validación de la empresa antes de iniciar su desarrollo.
+- Esta entrega habilita factura y boleta con sus series F y B. Notas de crédito
+  y anulaciones fiscales quedan fuera y requieren validación de la empresa
+  antes de iniciar su desarrollo.
 
 La integración se implementará con base en el manual de NubeFacT ya verificado
 en Trayecto y se volverá a contrastar con el contrato vigente del proveedor

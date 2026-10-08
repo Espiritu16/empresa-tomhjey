@@ -35,6 +35,18 @@ La autorización se aplica en servidor y base de datos. La interfaz no es una ba
 seguridad. El detalle de qué ventas puede consultar el vendedor se debe confirmar con la
 empresa antes de implementar esa consulta.
 
+## Facturación del MVP
+
+- Administración configura una serie F para facturas y una B para boletas; el correlativo no
+  puede retroceder.
+- Facturas requieren RUC válido de la empresa y del cliente. Las boletas siguen la validación
+  fiscal de identificación del cliente aplicada en el backend.
+- La emisión exitosa de una factura muestra la aceptación que devuelve NubeFacT. La boleta se
+  muestra como pendiente y permite consultar su aceptación manualmente desde el séptimo día,
+  con consultas separadas por al menos 24 horas mientras siga pendiente.
+- No hay consulta automática ni cron. Notas de crédito y anulaciones fiscales quedan fuera del
+  MVP actual.
+
 ## Límites
 
 - Una empresa y una operación compartida por su equipo; sin alta SaaS ni administración de
@@ -50,8 +62,7 @@ empresa antes de implementar esa consulta.
 
 ## Decisiones pendientes
 
-- Tipos de comprobante y flujos fiscales necesarios, incluyendo anulaciones y notas de crédito.
-- Datos de cliente requeridos para cada comprobante.
+- Flujos fiscales de anulaciones y notas de crédito.
 - Visibilidad de ventas para el rol vendedor.
 - Proveedor/modelo de IA y límites de uso.
 - Credenciales y entorno de pruebas de NubeFacT para la empresa.

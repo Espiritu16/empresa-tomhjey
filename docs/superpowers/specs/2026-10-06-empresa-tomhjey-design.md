@@ -1,6 +1,6 @@
 # Empresa Tomhjey — spec técnico de backend y frontend
 
-**Estado:** propuesta para revisión del usuario  
+**Estado:** aprobada para implementación por el usuario el 2026-10-07
 **Fecha:** 2026-10-06  
 **Base funcional:** [alcance-mvp.md](../../alcance-mvp.md)  
 **Proyecto de referencia:** Trayecto, sistema de ventas e inventario para empresas textiles
@@ -330,17 +330,11 @@ el alcance de las ventas que puede consultar.
 
 ## 5. Criterios de aceptación del diseño
 
-Este diseño queda listo para convertirse en planes de implementación cuando:
-
-1. El usuario apruebe el alcance y los supuestos que aparecen como propuesta.
-2. El modelo de catálogo y la visibilidad de ventas del vendedor queden
-   confirmados.
-3. La empresa valide la exclusión inicial de notas de crédito y anulaciones
-   fiscales.
-4. Se apruebe la reutilización del sistema visual y se aclare la marca de
-   Tomhjey si ya existe un paquete propio.
-5. Las decisiones de datos, roles y operaciones críticas tengan una ruta de
-   validación en backend, RLS o Edge Function.
+El usuario aprobó la arquitectura de Supabase/Postgres, RLS, funciones transaccionales y Edge
+Functions para NubeFacT e IA el 2026-10-07. La visibilidad del vendedor se asume limitada a
+sus ventas; el backend la aplica tanto en RLS como en las funciones SQL. La marca de Tomhjey
+sigue pendiente de su paquete propio; el sistema visual de Trayecto se conserva como referencia
+del frontend.
 
 El plan de implementación posterior se divide en dos documentos coordinados:
 backend y frontend. Ambos respetan esta fuente de verdad y comienzan por los

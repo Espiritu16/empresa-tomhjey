@@ -1,0 +1,189 @@
+import {
+  autenticar,
+  clientePrivilegiado,
+  ErrorHttp,
+  exigirAdministrador,
+  exigirObjetoJson,
+  preflight,
+  responderJson,
+  respuestaError,
+  type SesionAutenticada,
+} from "../_shared/http.ts";
+import {
+  coincideConReserva,
+  crearClienteNubefact,
+  emitirReconciliando,
+  ErrorNubefact,
+  type PayloadNubefact,
+  type RespuestaNubefact,
+} from "./nubefact.ts";
+
+type ReservaComprobante = {
+  comprobante_id: string;
+  estado: string;
+  puede_emitir: boolean;
+  reconciliar: boolean;
+  serie?: string;
+  numero?: number;
+  payload: PayloadNubefact;
+};
+
+function leerCredenciales() {
+  const ruta = Deno.env.get("NUBEFACT_RUTA");
+  const token = Deno.env.get("NUBEFACT_TOKEN");
+  if (!ruta || !token) {
+    throw new ErrorHttp(
+      "La facturación todavía no está configurada.",
+      503,
+      "facturacion_no_configurada",
+    );
+  }
+  return { ruta, token };
+}
+
+async function registrarResultado(
+  cliente: ReturnType<typeof clientePrivilegiado>,
+  administradorId: string,
+  comprobanteId: string,
+  estado: "emitido" | "rechazado" | "error",
+  respuesta: Record<string, unknown>,
+  errorMostrable: string | null,
+) {
+  const { error } = await cliente.rpc("registrar_resultado_comprobante", {
+    administrador_objetivo: administradorId,
+    comprobante_objetivo: comprobanteId,
+    estado_resultado: estado,
+    respuesta,
+    error_mostrable: errorMostrable,
+  });
+  if (error)
+    throw new ErrorHttp(
+      "No se pudo guardar el resultado de emisión.",
+      500,
+      "resultado_no_guardado",
+    );
+}
+
+async function manejar(request: Request): Promise<Response> {
+  const cors = preflight(request);
+  if (cors) return cors;
+  let sesionActiva: SesionAutenticada | null = null;
+  let reservaActiva: ReservaComprobante | null = null;
+  try {
+    const sesion = await autenticar(request);
+    sesionActiva = sesion;
+    exigirAdministrador(sesion);
+    const cuerpo = exigirObjetoJson(await request.json().catch(() => null));
+    const ventaId = cuerpo.ventaId;
+    const tipo = cuerpo.tipo;
+    if (typeof ventaId !== "string" || !/^[0-9a-f-]{36}$/i.test(ventaId)) {
+      throw new ErrorHttp(
+        "Selecciona una venta válida.",
+        400,
+        "venta_invalida",
+      );
+    }
+    if (tipo !== "boleta" && tipo !== "factura") {
+      throw new ErrorHttp("Selecciona boleta o factura.", 400, "tipo_invalido");
+    }
+
+    const clienteInterno = clientePrivilegiado();
+    const { data, error } = await clienteInterno.rpc("reservar_comprobante", {
+      administrador_objetivo: sesion.usuarioId,
+      venta_objetivo: ventaId,
+      tipo_solicitado: tipo,
+    });
+    if (error) {
+      const forbidden = error.code === "42501";
+      throw new ErrorHttp(
+        error.message,
+        forbidden ? 403 : 422,
+        forbidden ? "rol_requerido" : "venta_no_emitible",
+      );
+    }
+    const reserva = data as ReservaComprobante;
+    reservaActiva = reserva;
+    if (!reserva.puede_emitir) {
+      return responderJson({
+        comprobanteId: reserva.comprobante_id,
+        estado: reserva.estado,
+        requiereReintento: reserva.estado === "emitiendo",
+      });
+    }
+
+    const credenciales = leerCredenciales();
+    const clienteNubefact = crearClienteNubefact(credenciales);
+    let resultado: RespuestaNubefact;
+    if (reserva.reconciliar && reserva.serie && reserva.numero) {
+      try {
+        const existente = await clienteNubefact.consultar(
+          reserva.payload.tipo_de_comprobante,
+          reserva.serie,
+          reserva.numero,
+        );
+        if (!coincideConReserva(existente, reserva.payload)) {
+          throw new ErrorNubefact(
+            "NubeFacT tiene ocupado el número con un comprobante distinto.",
+            23,
+            409,
+          );
+        }
+        resultado = existente;
+      } catch (consultaError) {
+        if (
+          !(consultaError instanceof ErrorNubefact) ||
+          consultaError.codigo !== 24
+        ) {
+          throw consultaError;
+        }
+        resultado = await emitirReconciliando(reserva.payload, credenciales);
+      }
+    } else {
+      resultado = await emitirReconciliando(reserva.payload, credenciales);
+    }
+
+    await registrarResultado(
+      clienteInterno,
+      sesion.usuarioId,
+      reserva.comprobante_id,
+      "emitido",
+      resultado,
+      null,
+    );
+    return responderJson({
+      comprobanteId: reserva.comprobante_id,
+      estado: "emitido",
+      respuesta: resultado,
+    });
+  } catch (error) {
+    if (error instanceof ErrorNubefact) {
+      const estado =
+        error.codigo === 21 || error.estadoHttp === 400 ? "rechazado" : "error";
+      if (
+        sesionActiva &&
+        reservaActiva?.comprobante_id &&
+        reservaActiva.puede_emitir
+      ) {
+        try {
+          await registrarResultado(
+            clientePrivilegiado(),
+            sesionActiva.usuarioId,
+            reservaActiva.comprobante_id,
+            estado,
+            { errors: error.message, codigo: error.codigo },
+            error.message,
+          );
+        } catch {
+          // El lease de emisión permite reconciliar si no se pudo guardar el error.
+        }
+      }
+      return responderJson(
+        { detalle: error.message, codigo: "error_facturacion" },
+        error.estadoHttp >= 500 ? 502 : 422,
+      );
+    }
+    return respuestaError(error);
+  }
+}
+
+Deno.serve(manejar);

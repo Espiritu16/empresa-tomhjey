@@ -74,6 +74,59 @@ async function manejar(request: Request): Promise<Response> {
     sesionActiva = sesion;
     exigirAdministrador(sesion);
     const cuerpo = exigirObjetoJson(await request.json().catch(() => null));
+    const clienteInterno = clientePrivilegiado();
+
+    if (cuerpo.operacion === "configurar_serie") {
+      const serie = cuerpo.serie;
+      const siguienteNumero = cuerpo.siguienteNumero;
+      if (
+        typeof serie !== "string" ||
+        typeof siguienteNumero !== "number" ||
+        !Number.isSafeInteger(siguienteNumero) ||
+        siguienteNumero <= 0
+      ) {
+        throw new ErrorHttp(
+          "Indica una serie F válida y un correlativo positivo.",
+          400,
+          "serie_invalida",
+        );
+      }
+
+      const { data: serieGuardada, error: errorSerie } =
+        await clienteInterno.rpc("configurar_serie_factura", {
+          administrador_objetivo: sesion.usuarioId,
+          serie_solicitada: serie,
+          siguiente_solicitado: siguienteNumero,
+        });
+      if (errorSerie) {
+        const forbidden = errorSerie.code === "42501";
+        throw new ErrorHttp(
+          errorSerie.message,
+          forbidden ? 403 : 422,
+          forbidden ? "rol_requerido" : "serie_no_configurada",
+        );
+      }
+      if (!serieGuardada) {
+        throw new ErrorHttp(
+          "No se pudo guardar la serie de factura.",
+          500,
+          "serie_no_configurada",
+        );
+      }
+      return responderJson({
+        serie: serieGuardada.serie,
+        siguienteNumero: serieGuardada.siguiente_numero,
+      });
+    }
+
+    if (cuerpo.operacion !== undefined) {
+      throw new ErrorHttp(
+        "La operación de facturación no es válida.",
+        400,
+        "operacion_invalida",
+      );
+    }
+
     const ventaId = cuerpo.ventaId;
     const tipo = cuerpo.tipo;
     if (typeof ventaId !== "string" || !/^[0-9a-f-]{36}$/i.test(ventaId)) {
@@ -83,11 +136,15 @@ async function manejar(request: Request): Promise<Response> {
         "venta_invalida",
       );
     }
-    if (tipo !== "boleta" && tipo !== "factura") {
-      throw new ErrorHttp("Selecciona boleta o factura.", 400, "tipo_invalido");
+    if (tipo !== "factura") {
+      throw new ErrorHttp(
+        "Solo se puede emitir factura.",
+        400,
+        "tipo_invalido",
+      );
     }
 
-    const clienteInterno = clientePrivilegiado();
+    const credenciales = leerCredenciales();
     const { data, error } = await clienteInterno.rpc("reservar_comprobante", {
       administrador_objetivo: sesion.usuarioId,
       venta_objetivo: ventaId,
@@ -107,11 +164,11 @@ async function manejar(request: Request): Promise<Response> {
       return responderJson({
         comprobanteId: reserva.comprobante_id,
         estado: reserva.estado,
+        aceptadaPorSunat: null,
         requiereReintento: reserva.estado === "emitiendo",
       });
     }
 
-    const credenciales = leerCredenciales();
     const clienteNubefact = crearClienteNubefact(credenciales);
     let resultado: RespuestaNubefact;
     if (reserva.reconciliar && reserva.serie && reserva.numero) {
@@ -153,6 +210,7 @@ async function manejar(request: Request): Promise<Response> {
     return responderJson({
       comprobanteId: reserva.comprobante_id,
       estado: "emitido",
+      aceptadaPorSunat: resultado.aceptada_por_sunat === true,
       respuesta: resultado,
     });
   } catch (error) {

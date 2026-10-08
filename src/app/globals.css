@@ -1,3 +1,5 @@
+@import "../funcionalidades/facturacion/estilos.css";
+
 @font-face {
   font-family: "Bricolage Grotesque";
   src: url("/fuentes/bricolage-700-800-latin.woff2") format("woff2");

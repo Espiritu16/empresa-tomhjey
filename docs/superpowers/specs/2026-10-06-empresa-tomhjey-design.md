@@ -164,23 +164,35 @@ proveedor ni un modo de facturación manual alternativo.
 - Las credenciales de NubeFacT se guardan como secretos del entorno de
   Supabase, y solo las lee la Edge Function de facturación. El navegador nunca
   las recibe.
-- La aplicación admite la emisión de boletas y facturas asociadas a una venta.
-  Los datos obligatorios se validan antes de reservar un número.
+- La primera entrega de facturación permite emitir **facturas** asociadas a una
+  venta confirmada. La emisión exige los datos fiscales válidos de la empresa y
+  el RUC del cliente antes de reservar un número. La boleta no se habilita en
+  esta entrega.
 - La función de emisión reserva y persiste el correlativo antes de llamar al
   proveedor. Un reintento reutiliza ese mismo número para evitar comprobantes
   fiscales duplicados.
 - Si el resultado de una llamada es incierto, la función consulta el documento
   al proveedor antes de reintentar. La respuesta de NubeFacT se conserva para
   soporte y trazabilidad sin guardar secretos.
-- Los estados de emisión son visibles desde la venta y el módulo de
-  facturación. Los errores transitorios permiten reintentar por una acción
-  autorizada o por una tarea backend idempotente.
+- El resultado de la emisión y la aceptación de SUNAT son datos distintos. La
+  interfaz solo presenta «Aceptada por SUNAT» cuando la respuesta guardada de
+  NubeFacT indica `aceptada_por_sunat: true`; un envío exitoso con aceptación
+  pendiente no se presenta como aceptado.
+- La persona puede iniciar la emisión desde una venta confirmada y consultar el
+  resultado desde la venta o el módulo de facturación. La respuesta persistida
+  incluye el enlace al PDF cuando NubeFacT lo devuelve. Los errores recuperables
+  permiten reintentar de forma autorizada con el mismo correlativo.
+- La integración conserva el parámetro de tipo de comprobante para reutilizar
+  el flujo de reserva, envío y reconciliación cuando se incorpore boleta. Esa
+  incorporación se hará después: una boleta podrá quedar pendiente de
+  aceptación y requerirá una operación de consulta posterior a NubeFacT. Esta
+  entrega no incorpora consulta periódica, cron ni pantalla de boletas.
 - La disponibilidad de NubeFacT no se convierte en un modo de producto ni en
   una ruta alternativa de emisión. Si el proveedor no responde, la operación
   queda con estado y error recuperables.
-- La emisión inicial cubre boletas y facturas. Notas de crédito y anulaciones
-  fiscales quedan fuera de la primera versión y requieren validación de la
-  empresa antes de iniciar desarrollo fiscal.
+- La entrega actual habilita factura únicamente. Boletas se incorporará después
+  con seguimiento de aceptación; notas de crédito y anulaciones fiscales quedan
+  fuera y requieren validación de la empresa antes de iniciar su desarrollo.
 
 La integración se implementará con base en el manual de NubeFacT ya verificado
 en Trayecto y se volverá a contrastar con el contrato vigente del proveedor
@@ -351,8 +363,9 @@ contratos compartidos de datos y permisos.
   cubrir talla, color y productos sin variantes.
 - Un vendedor consulta solo las ventas que registró; el administrador consulta
   todas.
-- La emisión inicial cubre boleta y factura por NubeFacT. Notas de crédito y
-  anulaciones fiscales quedan fuera hasta validación explícita de la empresa.
+- La primera entrega visible emite facturas por NubeFacT y distingue el envío de
+  la aceptación de SUNAT. Boletas, su consulta posterior, notas de crédito y
+  anulaciones fiscales quedan fuera de este alcance.
 - La IA usa una integración reemplazable y nunca confirma operaciones.
 - El sistema visual de Trayecto se reutiliza. La identidad gráfica de Tomhjey
   se trata aparte y no se reemplaza por la marca de Trayecto.

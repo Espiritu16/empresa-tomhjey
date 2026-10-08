@@ -12,9 +12,14 @@ administración puede configurar las series y emitir.
 - La venta debe estar confirmada y no tener ya un comprobante. La factura
   requiere RUC válido del cliente; la boleta puede emitirse sin documento hasta
   el límite fiscal aplicado por la reserva.
-- `NUBEFACT_RUTA` y `NUBEFACT_TOKEN` viven en
-  `supabase/functions/.env.local` para desarrollo local. Nunca se exponen en
-  variables `NEXT_PUBLIC_*`.
+- `NUBEFACT_RUTA`, `NUBEFACT_TOKEN`, `NUBEFACT_AMBIENTE` y
+  `NUBEFACT_RUC_EMISOR` viven en el `.env.local` raíz para desarrollo local.
+  El host de NubeFacT no identifica el ambiente: confirma con el proveedor que
+  la ruta y el token son de pruebas antes de declarar `NUBEFACT_AMBIENTE=pruebas`.
+- La emisión se bloquea si falta el ambiente, el RUC emisor o si ese RUC no
+  coincide con el RUC de Empresa. Producción requiere además
+  `NUBEFACT_PERMITIR_PRODUCCION=true`.
+- Nunca expongas esas variables en `NEXT_PUBLIC_*`.
 
 La Edge Function reserva el correlativo y persiste el payload antes de llamar a
 NubeFacT. Si una respuesta es incierta, el reintento consulta el mismo número y

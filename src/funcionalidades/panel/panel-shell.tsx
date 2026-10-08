@@ -12,8 +12,15 @@ const secciones = [
   { href: "/panel/productos", nombre: "Productos", icono: "productos" },
   { href: "/panel/inventario", nombre: "Inventario", icono: "inventario" },
   { href: "/panel/clientes", nombre: "Clientes", icono: "clientes" },
+  { href: "/panel/reportes", nombre: "Reportes", icono: "reportes" },
   { href: "/panel/facturacion", nombre: "Facturación", icono: "facturacion" },
   { href: "/panel/asistente", nombre: "Asistente IA", icono: "asistente" },
+  {
+    href: "/panel/empresa",
+    nombre: "Empresa",
+    icono: "empresa",
+    soloAdmin: true,
+  },
   {
     href: "/panel/usuarios",
     nombre: "Usuarios",
@@ -198,6 +205,18 @@ function Icono({ nombre }: { nombre: string }) {
       <>
         <path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z" />
         <path d="M9 8h6M9 12h6M9 16h3" />
+      </>
+    ),
+    reportes: (
+      <>
+        <path d="M4 19V5m0 14h17" />
+        <path d="m7 15 4-4 3 2 5-6" />
+      </>
+    ),
+    empresa: (
+      <>
+        <path d="M4 21V6l8-3v18M4 21h16V9l-8-3" />
+        <path d="M8 8v1m0 3v1m0 3v1m8-4v1m0 3v1" />
       </>
     ),
     asistente: (

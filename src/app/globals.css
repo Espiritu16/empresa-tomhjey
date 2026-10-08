@@ -1,4 +1,5 @@
 @import "../funcionalidades/facturacion/estilos.css";
+@import "../compartido/estilos/modulos.css";
 
 @font-face {
   font-family: "Bricolage Grotesque";

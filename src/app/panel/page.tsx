@@ -1,19 +1,36 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { connection } from "next/server";
+import { cargarResumenInicio } from "@/funcionalidades/inicio/consultas";
 
 export const metadata: Metadata = { title: "Inicio" };
 
-const indicadores = [
-  {
-    rotulo: "VENTAS DE HOY",
-    valor: "—",
-    nota: "Se mostrará al conectar la actividad",
-  },
-  { rotulo: "PRODUCTOS", valor: "—", nota: "Catálogo de la empresa" },
-  { rotulo: "POR REPONER", valor: "—", nota: "Alertas de existencias" },
-];
-
-export default function InicioPanel() {
+export default async function InicioPanel() {
+  await connection();
+  const datos = await cargarResumenInicio();
+  const resumen = datos.resumen;
+  const indicadores = [
+    {
+      rotulo: "VENTAS DE HOY",
+      valor: resumen ? String(resumen.ventas) : "—",
+      nota: resumen ? "Ventas confirmadas" : "No se pudo cargar el resumen",
+    },
+    {
+      rotulo: "TOTAL DE HOY",
+      valor: resumen ? formatearImporte(resumen.total) : "—",
+      nota: "Importe de ventas confirmadas",
+    },
+    {
+      rotulo: "PRODUCTOS",
+      valor: String(datos.productos),
+      nota: "Productos activos en el catálogo",
+    },
+    {
+      rotulo: "POR REPONER",
+      valor: resumen ? String(resumen.stockBajo) : "—",
+      nota: "Productos bajo el mínimo",
+    },
+  ];
   return (
     <>
       <div className="encabezado-seccion">
@@ -48,15 +65,41 @@ export default function InicioPanel() {
             </div>
             <Link href="/panel/ventas">Ver ventas</Link>
           </div>
-          <div className="actividad-vacia">
-            <span aria-hidden="true" className="actividad-vacia__simbolo">
-              ↗
-            </span>
-            <strong>Tu actividad aparecerá aquí</strong>
-            <span>
-              Cuando registres ventas, podrás consultarlas desde este resumen.
-            </span>
-          </div>
+          {datos.recientes.length ? (
+            <div className="actividad-lista">
+              {datos.recientes.map((venta) => (
+                <article className="actividad-lista__fila" key={venta.id}>
+                  <span aria-hidden="true" className="actividad-lista__simbolo">
+                    ↗
+                  </span>
+                  <div className="actividad-lista__detalle">
+                    <strong>
+                      {venta.clienteNombre ?? "Venta de mostrador"}
+                    </strong>
+                    <span>
+                      {venta.estado === "confirmada"
+                        ? "Venta confirmada"
+                        : venta.estado === "borrador"
+                          ? "Borrador"
+                          : "Venta descartada"}{" "}
+                      · {formatearFecha(venta.fecha)}
+                    </span>
+                  </div>
+                  <span className="actividad-lista__importe">
+                    {formatearImporte(venta.total, venta.moneda)}
+                  </span>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="actividad-vacia">
+              <span aria-hidden="true" className="actividad-vacia__simbolo">
+                ↗
+              </span>
+              <strong>Aún no hay ventas</strong>
+              <span>Las ventas recientes aparecerán aquí.</span>
+            </div>
+          )}
         </section>
 
         <AsistenteResumen />
@@ -76,8 +119,8 @@ function AsistenteResumen() {
       </p>
       <h2 id="asistente-titulo">Asistente para tu empresa</h2>
       <p>
-        Estamos preparando la asistencia en lenguaje natural para tus ventas e
-        inventario.
+        Consulta ventas, existencias y productos o prepara un borrador con ayuda
+        de la IA.
       </p>
       <div
         aria-label="Ejemplos de consultas"
@@ -95,4 +138,18 @@ function AsistenteResumen() {
       </Link>
     </section>
   );
+}
+
+function formatearImporte(importe: number, moneda = "PEN"): string {
+  return new Intl.NumberFormat("es-PE", {
+    style: "currency",
+    currency: moneda,
+  }).format(importe);
+}
+
+function formatearFecha(fecha: string): string {
+  return new Intl.DateTimeFormat("es-PE", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(new Date(fecha));
 }

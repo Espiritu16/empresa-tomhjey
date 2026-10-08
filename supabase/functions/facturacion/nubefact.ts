@@ -3,6 +3,13 @@ export type CredencialesNubefact = {
   token: string;
 };
 
+export type ConfiguracionEmisionNubefact = {
+  ambiente: string | null;
+  rucEmpresa: string | null;
+  rucEmisor: string | null;
+  permitirProduccion: boolean;
+};
+
 export type PayloadNubefact = {
   operacion?: string;
   tipo_de_comprobante: number;
@@ -25,6 +32,42 @@ export class ErrorNubefact extends Error {
     readonly estadoHttp: number,
   ) {
     super(message);
+  }
+}
+
+export function validarConfiguracionEmision({
+  ambiente,
+  rucEmpresa,
+  rucEmisor,
+  permitirProduccion,
+}: ConfiguracionEmisionNubefact): void {
+  if (ambiente !== "pruebas" && ambiente !== "produccion") {
+    throw new ErrorNubefact(
+      "Confirma el ambiente de NubeFacT antes de emitir.",
+      null,
+      503,
+    );
+  }
+  if (ambiente === "produccion" && !permitirProduccion) {
+    throw new ErrorNubefact(
+      "La emisión de producción requiere habilitación explícita.",
+      null,
+      503,
+    );
+  }
+  if (!/^\d{11}$/.test(rucEmpresa ?? "") || !/^\d{11}$/.test(rucEmisor ?? "")) {
+    throw new ErrorNubefact(
+      "Configura el RUC de la empresa y el RUC emisor de NubeFacT.",
+      null,
+      503,
+    );
+  }
+  if (rucEmpresa !== rucEmisor) {
+    throw new ErrorNubefact(
+      "El RUC de la empresa no coincide con la cuenta emisora de NubeFacT.",
+      null,
+      503,
+    );
   }
 }
 

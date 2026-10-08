@@ -100,19 +100,21 @@ test("el administrador puede recorrer los módulos y cerrar sesión", async ({
   await expect(page.getByText("Administración", { exact: true })).toBeVisible();
 
   const modulos = [
-    ["Ventas", "ventas"],
-    ["Productos", "productos"],
-    ["Inventario", "inventario"],
-    ["Clientes", "clientes"],
-    ["Facturación", "facturacion"],
-    ["Asistente IA", "asistente"],
-    ["Usuarios", "usuarios"],
+    ["Ventas", "ventas", "Ventas"],
+    ["Productos", "productos", "Productos"],
+    ["Inventario", "inventario", "Inventario"],
+    ["Clientes", "clientes", "Clientes"],
+    ["Reportes", "reportes", "Reportes"],
+    ["Facturación", "facturacion", "Facturación"],
+    ["Asistente IA", "asistente", "Asistente IA"],
+    ["Empresa", "empresa", "Empresa y configuración"],
+    ["Usuarios", "usuarios", "Usuarios"],
   ] as const;
 
-  for (const [nombre, ruta] of modulos) {
+  for (const [nombre, ruta, encabezado] of modulos) {
     await page.getByRole("link", { name: nombre, exact: true }).click();
     await expectRuta(page, `/panel/${ruta}`);
-    await expect(page.getByRole("heading", { name: nombre })).toBeVisible();
+    await expect(page.getByRole("heading", { name: encabezado })).toBeVisible();
   }
 
   await page.getByRole("button", { name: "Salir" }).click();
@@ -130,10 +132,26 @@ test("el vendedor no ve ni puede abrir el módulo de usuarios", async ({
   await expect(
     page.getByRole("link", { name: "Usuarios", exact: true }),
   ).toHaveCount(0);
+  await expect(
+    page.getByRole("link", { name: "Empresa", exact: true }),
+  ).toHaveCount(0);
 
   await page.goto("/panel/usuarios");
   await expectRuta(page, "/panel");
   await expect(page.getByRole("heading", { name: "Inicio" })).toBeVisible();
+
+  await page.goto("/panel/productos");
+  await expect(page.getByRole("heading", { name: "Productos" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Nuevo producto" }),
+  ).toHaveCount(0);
+  await page.goto("/panel/inventario");
+  await expect(page.getByRole("heading", { name: "Inventario" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Registrar ajuste" }),
+  ).toHaveCount(0);
+  await page.goto("/panel/empresa");
+  await expectRuta(page, "/panel");
 
   await page.getByRole("button", { name: "Salir" }).click();
   await expect(page).toHaveURL(/\/acceso$/);
@@ -147,6 +165,17 @@ test("el acceso y el panel caben en una pantalla móvil", async ({ page }) => {
   await iniciarSesion(page, usuarios.vendedor);
   await expect(page.getByRole("heading", { name: "Inicio" })).toBeVisible();
   await expectSinDesbordeHorizontal(page);
+  for (const ruta of [
+    "productos",
+    "inventario",
+    "clientes",
+    "ventas",
+    "reportes",
+    "asistente",
+  ]) {
+    await page.goto(`/panel/${ruta}`);
+    await expectSinDesbordeHorizontal(page);
+  }
 });
 
 async function iniciarSesion(

@@ -12,28 +12,35 @@ consulta el perfil activo y vuelve a comprobar el rol antes de ejecutar operacio
 El entorno local se inicia con:
 
 ```bash
-npx supabase functions serve --env-file supabase/functions/.env.local
+npm run supabase:functions:serve
 ```
 
-Antes de probar NubeFacT u OpenAI, copia `supabase/functions/.env.example` a
-`supabase/functions/.env.local` y completa `NUBEFACT_RUTA`, `NUBEFACT_TOKEN` y
-`OPENAI_API_KEY` con credenciales de prueba. `OPENAI_MODEL` ya usa el modelo por defecto
-del proyecto y se puede cambiar localmente. El archivo `.env.local` está ignorado por Git.
+Las Edge Functions locales cargan sus credenciales desde el `.env.local` de la raíz,
+el mismo archivo que usa Next.js. Completa `NUBEFACT_RUTA`, `NUBEFACT_TOKEN`,
+`NUBEFACT_AMBIENTE` y `NUBEFACT_RUC_EMISOR` solo después de confirmar en NubeFacT que
+la cuenta corresponde al ambiente elegido. El mismo host de API puede servir cuentas
+de prueba o producción; la URL por sí sola no confirma el ambiente. `OPENAI_API_KEY`
+configura el asistente y `OPENAI_MODEL` permite cambiar su modelo. Ese archivo está
+ignorado por Git.
 
 Variables necesarias:
 
-| Variable                    | Uso                                                                                           |
-| --------------------------- | --------------------------------------------------------------------------------------------- |
-| `NUBEFACT_RUTA`             | Ruta HTTPS de la cuenta sandbox de NubeFacT.                                                  |
-| `NUBEFACT_TOKEN`            | Token de la misma cuenta.                                                                     |
-| `OPENAI_API_KEY`            | Clave de servidor del proveedor de IA.                                                        |
-| `OPENAI_MODEL`              | Modelo configurable; por defecto `gpt-5.6-luna`.                                              |
-| `SUPABASE_URL`              | URL del proyecto local; la CLI la inyecta al servir funciones.                                |
-| `SUPABASE_ANON_KEY`         | Clave pública de Supabase para preservar RLS al consultar.                                    |
-| `SUPABASE_SERVICE_ROLE_KEY` | Solo la usa Auth Admin para invitar y la Edge Function para guardar respuestas del asistente. |
+| Variable                       | Uso                                                                                           |
+| ------------------------------ | --------------------------------------------------------------------------------------------- |
+| `NUBEFACT_RUTA`                | Ruta HTTPS de la cuenta NubeFacT.                                                             |
+| `NUBEFACT_TOKEN`               | Token de la misma cuenta.                                                                     |
+| `NUBEFACT_AMBIENTE`            | `pruebas` o `produccion`, según lo confirmado para esa cuenta.                                |
+| `NUBEFACT_RUC_EMISOR`          | RUC asociado a NubeFacT; debe coincidir con el RUC guardado en Empresa.                       |
+| `NUBEFACT_PERMITIR_PRODUCCION` | Debe ser `true` además de `NUBEFACT_AMBIENTE=produccion` para permitir emisiones reales.      |
+| `OPENAI_API_KEY`               | Clave de servidor del proveedor de IA.                                                        |
+| `OPENAI_MODEL`                 | Modelo configurable; por defecto `gpt-6-luna`.                                                |
+| `SUPABASE_URL`                 | URL del proyecto local; la CLI la inyecta al servir funciones.                                |
+| `SUPABASE_ANON_KEY`            | Clave pública de Supabase para preservar RLS al consultar.                                    |
+| `SUPABASE_SERVICE_ROLE_KEY`    | Solo la usa Auth Admin para invitar y la Edge Function para guardar respuestas del asistente. |
 
-No copies secretos de producción a local ni incluyas secretos en archivos de ejemplo. Para un
-proyecto remoto, configura secretos con `npx supabase secrets set --env-file <archivo-local>`
+No copies secretos de producción a local ni incluyas secretos en archivos de ejemplo. La
+emisión requiere ambiente y RUC emisor declarados; producción también requiere el permiso
+explícito anterior. Para un proyecto remoto, configura secretos con `npx supabase secrets set --env-file <archivo-local>`
 después de vincular el proyecto y revisar que el archivo no se vaya a versionar. Este
 repositorio no se ha vinculado ni desplegado a un proyecto remoto.
 

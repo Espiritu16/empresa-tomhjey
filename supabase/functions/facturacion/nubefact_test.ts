@@ -4,6 +4,7 @@ import {
   crearClienteNubefact,
   emitirReconciliando,
   ErrorNubefact,
+  validarConfiguracionEmision,
   type PayloadNubefact,
 } from "./nubefact.ts";
 
@@ -122,3 +123,57 @@ Deno.test(
     }
   },
 );
+
+Deno.test("bloquea emisiones si no se declara el ambiente de NubeFacT", () => {
+  try {
+    validarConfiguracionEmision({
+      ambiente: null,
+      rucEmpresa: "20100066603",
+      rucEmisor: "20100066603",
+      permitirProduccion: false,
+    });
+    throw new Error("Debió exigir el ambiente de NubeFacT.");
+  } catch (error) {
+    if (!(error instanceof ErrorNubefact)) throw error;
+  }
+});
+
+Deno.test(
+  "bloquea emisiones si la empresa y la cuenta NubeFacT tienen RUC distinta",
+  () => {
+    try {
+      validarConfiguracionEmision({
+        ambiente: "pruebas",
+        rucEmpresa: "20100066603",
+        rucEmisor: "20987654326",
+        permitirProduccion: false,
+      });
+      throw new Error("Debió rechazar la RUC emisora distinta.");
+    } catch (error) {
+      if (!(error instanceof ErrorNubefact)) throw error;
+    }
+  },
+);
+
+Deno.test("bloquea producción sin autorización explícita", () => {
+  try {
+    validarConfiguracionEmision({
+      ambiente: "produccion",
+      rucEmpresa: "20100066603",
+      rucEmisor: "20100066603",
+      permitirProduccion: false,
+    });
+    throw new Error("Debió bloquear la emisión de producción.");
+  } catch (error) {
+    if (!(error instanceof ErrorNubefact)) throw error;
+  }
+});
+
+Deno.test("permite pruebas cuando ambiente y RUC emisora coinciden", () => {
+  validarConfiguracionEmision({
+    ambiente: "pruebas",
+    rucEmpresa: "20100066603",
+    rucEmisor: "20100066603",
+    permitirProduccion: false,
+  });
+});

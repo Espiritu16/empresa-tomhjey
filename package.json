@@ -21,7 +21,7 @@
     "supabase:reset": "supabase db reset --local",
     "supabase:test": "supabase test db --local",
     "supabase:lint": "supabase db lint --local",
-    "supabase:functions:serve": "supabase functions serve --env-file supabase/functions/.env.local",
+    "supabase:functions:serve": "supabase functions serve --env-file .env.local",
     "functions:test": "deno test --allow-env supabase/functions/facturacion/nubefact_test.ts supabase/functions/asistente/asistente_test.ts",
     "functions:check": "deno check supabase/functions/facturacion/index.ts supabase/functions/asistente/index.ts supabase/functions/invitar-vendedor/index.ts"
   },

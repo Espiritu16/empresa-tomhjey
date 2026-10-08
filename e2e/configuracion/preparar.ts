@@ -3,6 +3,7 @@ import { chmod, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { crearClienteAdministradorLocal } from "./supabase-local";
+import { limpiarDatosE2E } from "./limpieza-datos";
 
 type UsuarioPrueba = {
   id: string;
@@ -13,6 +14,7 @@ type UsuarioPrueba = {
 type EstadoE2E = {
   administrador: UsuarioPrueba;
   vendedor: UsuarioPrueba;
+  empresaCreada: boolean;
 };
 
 export default async function preparar(): Promise<void> {
@@ -31,21 +33,37 @@ export default async function preparar(): Promise<void> {
 
     if (error) throw new Error("No se pudo preparar el rol de administrador.");
 
+    const { data: empresa, error: errorEmpresa } = await supabase
+      .from("empresa")
+      .select("unica")
+      .eq("unica", true)
+      .maybeSingle();
+    if (errorEmpresa) throw new Error("No se pudo revisar la empresa local.");
+    estado.empresaCreada = !empresa;
+    if (!empresa) {
+      const { error: errorInsercionEmpresa } = await supabase
+        .from("empresa")
+        .insert({
+          nombre: "Empresa E2E",
+          actualizado_por: estado.administrador.id,
+        });
+      if (errorInsercionEmpresa) {
+        throw new Error("No se pudo preparar la empresa temporal E2E.");
+      }
+    }
+
     rutaEstado = join(tmpdir(), `empresa-tomhjey-e2e-${randomUUID()}.json`);
     await writeFile(rutaEstado, JSON.stringify(estado), { mode: 0o600 });
     await chmod(rutaEstado, 0o600);
     process.env.EMPRESA_TOMHJEY_E2E_ESTADO = rutaEstado;
   } catch (error) {
     if (rutaEstado) await rm(rutaEstado, { force: true });
-    const limpiezas = await Promise.allSettled([
-      borrarUsuario(supabase, estado.vendedor?.id),
-      borrarUsuario(supabase, estado.administrador?.id),
-    ]);
-    if (limpiezas.some((resultado) => resultado.status === "rejected")) {
-      throw new Error(
-        "No se pudieron limpiar las cuentas temporales tras el setup.",
-      );
-    }
+    const usuarios = [estado.vendedor?.id, estado.administrador?.id].filter(
+      (id): id is string => Boolean(id),
+    );
+    await limpiarDatosE2E(supabase, usuarios, estado.empresaCreada ?? false);
+    await borrarUsuario(supabase, estado.vendedor?.id);
+    await borrarUsuario(supabase, estado.administrador?.id);
     throw error;
   }
 }

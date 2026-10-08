@@ -16,6 +16,7 @@ import {
   ErrorNubefact,
   type PayloadNubefact,
   type RespuestaNubefact,
+  validarConfiguracionEmision,
 } from "./nubefact.ts";
 
 type ReservaComprobante = {
@@ -46,6 +47,29 @@ function leerCredenciales() {
     );
   }
   return { ruta, token };
+}
+
+async function exigirConfiguracionEmision(
+  cliente: ReturnType<typeof clientePrivilegiado>,
+) {
+  const { data: empresa, error } = await cliente
+    .from("empresa")
+    .select("ruc")
+    .maybeSingle();
+  if (error) {
+    throw new ErrorHttp(
+      "No se pudo verificar el RUC de la empresa.",
+      503,
+      "emisor_no_verificado",
+    );
+  }
+
+  validarConfiguracionEmision({
+    ambiente: Deno.env.get("NUBEFACT_AMBIENTE") ?? null,
+    rucEmpresa: empresa?.ruc ?? null,
+    rucEmisor: Deno.env.get("NUBEFACT_RUC_EMISOR") ?? null,
+    permitirProduccion: Deno.env.get("NUBEFACT_PERMITIR_PRODUCCION") === "true",
+  });
 }
 
 async function registrarResultado(
@@ -230,6 +254,7 @@ async function manejar(request: Request): Promise<Response> {
     }
 
     const credenciales = leerCredenciales();
+    await exigirConfiguracionEmision(clienteInterno);
     const { data, error } = await clienteInterno.rpc("reservar_comprobante", {
       administrador_objetivo: sesion.usuarioId,
       venta_objetivo: ventaId,
@@ -323,7 +348,7 @@ async function manejar(request: Request): Promise<Response> {
       }
       return responderJson(
         { detalle: error.message, codigo: "error_facturacion" },
-        error.estadoHttp >= 500 ? 502 : 422,
+        error.estadoHttp >= 500 ? error.estadoHttp : 422,
       );
     }
     return respuestaError(error);

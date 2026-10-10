@@ -51,10 +51,13 @@ async function atender(request: Request): Promise<Response> {
     const admin = createClient(url, clavePrivada, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
+    const origen = new URL(Deno.env.get("APP_URL") ?? "http://127.0.0.1:3000");
+    if (origen.hostname === "localhost") origen.hostname = "127.0.0.1";
     const { error: errorInvitacion } = await admin.auth.admin.inviteUserByEmail(
       correo.trim().toLowerCase(),
       {
         data: { nombre: correo.trim().split("@")[0] },
+        redirectTo: new URL("/auth/confirm", origen).toString(),
       },
     );
     if (errorInvitacion) {

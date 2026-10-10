@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { cargarResumenInicio } from "@/funcionalidades/inicio/consultas";
+import { formatearTotalesPorMoneda } from "@/compartido/formato-moneda";
 
 export const metadata: Metadata = { title: "Inicio" };
+export const instant = false;
 
 export default async function InicioPanel() {
   await connection();
@@ -17,7 +19,12 @@ export default async function InicioPanel() {
     },
     {
       rotulo: "TOTAL DE HOY",
-      valor: resumen ? formatearImporte(resumen.total) : "—",
+      valor: resumen
+        ? formatearTotalesPorMoneda(
+            resumen.totalesPorMoneda,
+            resumen.monedaBase,
+          )
+        : "—",
       nota: "Importe de ventas confirmadas",
     },
     {

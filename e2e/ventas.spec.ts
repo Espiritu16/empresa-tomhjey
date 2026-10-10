@@ -13,6 +13,19 @@ test.beforeAll(async () => {
   usuarios = estado;
 });
 
+test("exige seleccionar un cliente antes de guardar una venta", async ({
+  page,
+}) => {
+  await iniciarSesion(page, usuarios.administrador);
+  await page.goto("/panel/ventas");
+  await page.getByRole("button", { name: "Nueva venta" }).click();
+
+  const cliente = page.getByLabel("Cliente");
+  await expect(cliente).toHaveJSProperty("validity.valueMissing", true);
+  await page.getByRole("button", { name: "Guardar borrador" }).click();
+  await expect(cliente).toHaveJSProperty("validity.valueMissing", true);
+});
+
 test("crea, edita y confirma un borrador con total y stock calculados en el servidor", async ({
   page,
 }) => {
@@ -51,13 +64,17 @@ test("crea, edita y confirma un borrador con total y stock calculados en el serv
   await page.getByRole("button", { name: "Agregar producto" }).click();
   await page.getByRole("button", { name: "Guardar borrador" }).click();
 
-  const borrador = page.getByRole("row", { name: /Borrador/ });
+  const borrador = page
+    .getByRole("row", { name: /Borrador/ })
+    .filter({ hasText: cliente });
   await expect(borrador).toContainText("S/ 10.00");
   await borrador.getByRole("button", { name: "Editar borrador" }).click();
   await page.getByLabel("Cantidad de producto 1").fill("2");
   await page.getByRole("button", { name: "Guardar cambios" }).click();
 
-  const actualizado = page.getByRole("row", { name: /Borrador/ });
+  const actualizado = page
+    .getByRole("row", { name: /Borrador/ })
+    .filter({ hasText: cliente });
   await expect(actualizado).toContainText("S/ 20.00");
   page.once("dialog", (dialog) => dialog.accept());
   await actualizado.getByRole("button", { name: "Confirmar venta" }).click();
@@ -98,6 +115,51 @@ test("crea, edita y confirma un borrador con total y stock calculados en el serv
   ).toBeVisible();
 });
 
+test("permite cancelar el descarte y luego descartar un borrador sin tocar stock", async ({
+  page,
+}) => {
+  await iniciarSesion(page, usuarios.administrador);
+  const sku = `E2E-D-${randomUUID().slice(0, 8)}`;
+  const nombre = `Producto ${sku}`;
+  await page.goto("/panel/productos");
+  await page.getByRole("button", { name: "Nuevo producto" }).click();
+  await page.getByLabel("SKU").fill(sku);
+  await page.getByLabel("Nombre del producto").fill(nombre);
+  await page.getByLabel("Precio unitario").fill("10");
+  await page.getByLabel("Existencias iniciales").fill("4");
+  await page.getByRole("button", { name: "Guardar producto" }).click();
+
+  const cliente = `Cliente ${sku}`;
+  await crearCliente(page, cliente);
+  await page.goto("/panel/ventas");
+  await page.getByRole("button", { name: "Nueva venta" }).click();
+  await page.getByLabel("Cliente").selectOption({ label: cliente });
+  await page
+    .getByLabel("Producto")
+    .selectOption({ label: `${sku} — ${nombre}` });
+  await page.getByLabel("Cantidad").fill("2");
+  await page.getByRole("button", { name: "Agregar producto" }).click();
+  await page.getByRole("button", { name: "Guardar borrador" }).click();
+
+  const borrador = page
+    .getByRole("row", { name: /Borrador/ })
+    .filter({ hasText: cliente });
+  await expect(borrador).toContainText("S/ 20.00");
+  page.once("dialog", (dialog) => dialog.dismiss());
+  await borrador.getByRole("button", { name: "Descartar borrador" }).click();
+  await expect(borrador).toContainText("Borrador");
+
+  page.once("dialog", (dialog) => dialog.accept());
+  await borrador.getByRole("button", { name: "Descartar borrador" }).click();
+  await expect(page.getByRole("row", { name: /Descartada/ })).toContainText(
+    "S/ 20.00",
+  );
+  await page.goto("/panel/inventario");
+  await expect(
+    page.getByRole("row", { name: new RegExp(sku) }).first(),
+  ).toContainText("4 NIU");
+});
+
 async function iniciarSesion(
   page: Page,
   usuario: EstadoE2E["administrador"],
@@ -107,4 +169,14 @@ async function iniciarSesion(
   await page.getByRole("textbox", { name: "Contraseña" }).fill(usuario.clave);
   await page.getByRole("button", { name: "Ingresar al panel" }).click();
   await expect(page).toHaveURL(/\/panel$/);
+}
+
+async function crearCliente(page: Page, nombre: string): Promise<void> {
+  await page.goto("/panel/clientes");
+  await page.getByRole("button", { name: "Nuevo cliente" }).click();
+  await page.getByLabel("Nombre del cliente").fill(nombre);
+  await page.getByRole("button", { name: "Guardar cliente" }).click();
+  await expect(
+    page.getByRole("row", { name: new RegExp(nombre) }),
+  ).toBeVisible();
 }

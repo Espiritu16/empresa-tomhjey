@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { connection } from "next/server";
 import { FormularioAcceso } from "@/funcionalidades/acceso/formulario-acceso";
 import { obtenerPerfilActual } from "@/compartido/supabase/perfil-actual";
 
@@ -17,6 +18,7 @@ export default function Acceso() {
 }
 
 async function AccesoConSesion() {
+  await connection();
   const perfil = await obtenerPerfilActual();
 
   if (perfil?.activo) redirect("/panel");

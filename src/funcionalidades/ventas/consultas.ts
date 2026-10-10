@@ -25,6 +25,8 @@ export type Venta = {
   id: string;
   clienteId: string | null;
   clienteNombre: string | null;
+  clienteTipoDocumento: string | null;
+  clienteNumeroDocumento: string | null;
   estado: string;
   moneda: "PEN" | "USD";
   subtotal: number;
@@ -33,6 +35,9 @@ export type Venta = {
   creadoEn: string;
   confirmadoEn: string | null;
   creadoPor: string;
+  tipoComprobante: "factura" | "boleta" | null;
+  estadoComprobante: string | null;
+  enlacePdf: string | null;
   lineas: LineaVenta[];
 };
 
@@ -40,6 +45,7 @@ export type ClienteVenta = {
   id: string;
   nombre: string;
   documento: string | null;
+  tipoDocumento: string | null;
 };
 
 export async function cargarVentas() {
@@ -56,7 +62,7 @@ export async function cargarVentas() {
     supabase
       .from("ventas")
       .select(
-        "id, cliente_id, cliente_nombre, estado, moneda, subtotal, igv, total, creado_en, confirmado_en, creado_por",
+        "id, cliente_id, cliente_nombre, cliente_tipo_documento, cliente_numero_documento, estado, moneda, subtotal, igv, total, creado_en, confirmado_en, creado_por, tipo_comprobante",
       )
       .order("creado_en", { ascending: false })
       .limit(200),
@@ -67,7 +73,7 @@ export async function cargarVentas() {
       ),
     supabase
       .from("clientes")
-      .select("id, nombre, numero_documento")
+      .select("id, nombre, tipo_documento, numero_documento")
       .eq("activo", true)
       .order("nombre"),
     supabase
@@ -106,7 +112,29 @@ export async function cargarVentas() {
     };
   }
 
+  const idsVentas = (ventas.data ?? []).map((venta) => venta.id);
+  const comprobantes = idsVentas.length
+    ? await supabase
+        .from("comprobantes")
+        .select("venta_id, estado, enlace_pdf")
+        .in("venta_id", idsVentas)
+    : { data: [], error: null };
+  if (comprobantes.error) {
+    return {
+      ventas: [],
+      clientes: [],
+      productos: [],
+      error: "No se pudo cargar el estado de los comprobantes.",
+    };
+  }
+
   const lineasPorVenta: Record<string, LineaVenta[]> = {};
+  const comprobantePorVenta = new Map(
+    (comprobantes.data ?? []).map((comprobante) => [
+      comprobante.venta_id,
+      { estado: comprobante.estado, enlacePdf: comprobante.enlace_pdf },
+    ]),
+  );
   for (const linea of lineas.data ?? []) {
     lineasPorVenta[linea.venta_id] ??= [];
     lineasPorVenta[linea.venta_id].push({
@@ -163,24 +191,37 @@ export async function cargarVentas() {
   }
 
   return {
-    ventas: (ventas.data ?? []).map((venta) => ({
-      id: venta.id,
-      clienteId: venta.cliente_id,
-      clienteNombre: venta.cliente_nombre,
-      estado: venta.estado,
-      moneda: venta.moneda,
-      subtotal: Number(venta.subtotal),
-      igv: Number(venta.igv),
-      total: Number(venta.total),
-      creadoEn: venta.creado_en,
-      confirmadoEn: venta.confirmado_en,
-      creadoPor: venta.creado_por,
-      lineas: lineasPorVenta[venta.id] ?? [],
-    })) as Venta[],
+    ventas: (ventas.data ?? []).map((venta) => {
+      const comprobante = comprobantePorVenta.get(venta.id);
+      return {
+        id: venta.id,
+        clienteId: venta.cliente_id,
+        clienteNombre: venta.cliente_nombre,
+        clienteTipoDocumento: venta.cliente_tipo_documento,
+        clienteNumeroDocumento: venta.cliente_numero_documento,
+        estado: venta.estado,
+        moneda: venta.moneda,
+        subtotal: Number(venta.subtotal),
+        igv: Number(venta.igv),
+        total: Number(venta.total),
+        creadoEn: venta.creado_en,
+        confirmadoEn: venta.confirmado_en,
+        creadoPor: venta.creado_por,
+        tipoComprobante:
+          venta.tipo_comprobante === "factura" ||
+          venta.tipo_comprobante === "boleta"
+            ? venta.tipo_comprobante
+            : null,
+        estadoComprobante: comprobante?.estado ?? null,
+        enlacePdf: comprobante?.enlacePdf ?? null,
+        lineas: lineasPorVenta[venta.id] ?? [],
+      };
+    }) as Venta[],
     clientes: (clientes.data ?? []).map((cliente) => ({
       id: cliente.id,
       nombre: cliente.nombre,
       documento: cliente.numero_documento,
+      tipoDocumento: cliente.tipo_documento,
     })) as ClienteVenta[],
     productos: catalogo,
     error: null,

@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import type { EstadoE2E } from "./configuracion/preparar";
 
 let administrador: EstadoE2E["administrador"];
+let identificadorE2E: string;
 
 test.beforeAll(async () => {
   const rutaEstado = process.env.EMPRESA_TOMHJEY_E2E_ESTADO;
@@ -11,6 +12,24 @@ test.beforeAll(async () => {
     throw new Error("Falta el estado temporal de las pruebas E2E.");
   const estado = JSON.parse(await readFile(rutaEstado, "utf8")) as EstadoE2E;
   administrador = estado.administrador;
+  identificadorE2E = estado.identificadorE2E;
+});
+
+test("el selector de combinaciones mantiene el checkbox compacto", async ({
+  page,
+}) => {
+  await iniciarSesion(page, administrador);
+  await page.goto("/panel/productos");
+  await page.getByRole("button", { name: "Nuevo producto" }).click();
+
+  const checkbox = page.getByRole("checkbox", {
+    name: "Este producto tiene tallas, colores u otras combinaciones",
+  });
+  const caja = await checkbox.boundingBox();
+  const etiqueta = checkbox.locator("xpath=..");
+  expect(caja?.width).toBe(18);
+  expect(caja?.height).toBe(18);
+  await expect(etiqueta).toHaveClass(/modulo-operativo__check/);
 });
 
 test("administración crea y edita un producto y el formulario rechaza campos vacíos", async ({
@@ -20,7 +39,7 @@ test("administración crea y edita un producto y el formulario rechaza campos va
   await page.goto("/panel/productos");
 
   await expect(page.getByRole("heading", { name: "Productos" })).toBeVisible();
-  const categoria = `E2E-${randomUUID().slice(0, 8)}`;
+  const categoria = `E2E-${identificadorE2E}-categoria-${randomUUID().slice(0, 8)}`;
   await page.getByRole("button", { name: "Nueva categoría" }).click();
   await page.getByLabel("Nombre de la categoría").fill(categoria);
   await page.getByRole("button", { name: "Guardar categoría" }).click();
@@ -58,6 +77,15 @@ test("administración crea y edita un producto y el formulario rechaza campos va
   const productoActualizado = page.getByRole("row", { name: new RegExp(sku) });
   await expect(productoActualizado).toContainText(nombreEditado);
   await expect(productoActualizado).toContainText("S/ 14.75");
+
+  await productoActualizado
+    .getByRole("button", { name: `Inactivar ${nombreEditado}` })
+    .click();
+  await expect(productoActualizado).toContainText("Inactivo");
+  await productoActualizado
+    .getByRole("button", { name: `Activar ${nombreEditado}` })
+    .click();
+  await expect(productoActualizado).toContainText("Activo");
 });
 
 test("crea combinaciones y permite usarlas en inventario y ventas", async ({
@@ -102,13 +130,16 @@ test("crea combinaciones y permite usarlas en inventario y ventas", async ({
   await page.getByLabel("Cantidad").fill("2");
   await page.getByRole("button", { name: "Agregar producto" }).click();
   await page.getByRole("button", { name: "Guardar borrador" }).click();
-  const borrador = page.getByRole("row", { name: /Borrador/ });
+  const borrador = page
+    .getByRole("row", { name: /Borrador/ })
+    .filter({ hasText: /50[,.]00/ });
   await expect(borrador).toContainText("S/ 50.00");
   page.once("dialog", (dialog) => dialog.accept());
   await borrador.getByRole("button", { name: "Confirmar venta" }).click();
-  await expect(page.getByRole("row", { name: /Confirmada/ })).toContainText(
-    "S/ 50.00",
-  );
+  const ventaConfirmada = page
+    .getByRole("row", { name: /Confirmada/ })
+    .filter({ hasText: /50[,.]00/ });
+  await expect(ventaConfirmada).toContainText("50.00");
   await page.goto("/panel/inventario");
   await expect(
     page.getByRole("row", { name: new RegExp(`${sku}-01`) }),

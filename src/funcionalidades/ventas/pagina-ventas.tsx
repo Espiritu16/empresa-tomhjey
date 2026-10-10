@@ -10,6 +10,10 @@ import type {
   ProductoVenta,
   Venta,
 } from "./consultas";
+import type { TipoComprobante } from "@/funcionalidades/facturacion/consultas";
+import { emitirComprobante } from "@/funcionalidades/facturacion/emision";
+import { enlacePdfSeguro } from "@/funcionalidades/facturacion/enlace-pdf";
+import { DialogoConfirmacion } from "@/compartido/componentes/dialogo-confirmacion";
 
 type Propiedades = {
   ventas: Venta[];
@@ -41,6 +45,10 @@ export function PaginaVentas({
   const [cantidadProducto, setCantidadProducto] = useState("1");
   const [lineas, setLineas] = useState<LineaBorrador[]>([]);
   const [operacionId, setOperacionId] = useState<string | null>(null);
+  const [ventaAConfirmar, setVentaAConfirmar] = useState<Venta | null>(null);
+  const [ventaADescartar, setVentaADescartar] = useState<Venta | null>(null);
+  const [tipoComprobante, setTipoComprobante] =
+    useState<TipoComprobante>("boleta");
   const [mensaje, setMensaje] = useState<string | null>(null);
   const [error, setError] = useState(errorInicial);
   const monedas = useMemo(
@@ -50,6 +58,15 @@ export function PaginaVentas({
       ),
     [productos],
   );
+  const clienteSeleccionado = clientes.find(
+    (cliente) => cliente.id === clienteId,
+  );
+  const facturaDisponible =
+    clienteSeleccionado?.tipoDocumento === "ruc" &&
+    Boolean(clienteSeleccionado.documento);
+  const facturaDisponibleConfirmacion =
+    ventaAConfirmar?.clienteTipoDocumento === "ruc" &&
+    Boolean(ventaAConfirmar.clienteNumeroDocumento);
 
   function abrirNueva() {
     setVentaEditada(null);
@@ -57,6 +74,7 @@ export function PaginaVentas({
     setProductoSeleccionado("");
     setCantidadProducto("1");
     setLineas([]);
+    setTipoComprobante("boleta");
     setError(null);
     setAbierto(true);
   }
@@ -64,6 +82,7 @@ export function PaginaVentas({
   function abrirEdicion(venta: Venta) {
     setVentaEditada(venta);
     setClienteId(venta.clienteId ?? "");
+    setTipoComprobante(venta.tipoComprobante ?? "boleta");
     setLineas(
       venta.lineas.map((linea) => ({
         producto:
@@ -121,13 +140,18 @@ export function PaginaVentas({
       setError("Las cantidades deben ser mayores que cero.");
       return;
     }
+    if (!clienteId) {
+      setError("Selecciona un cliente para guardar la venta.");
+      return;
+    }
 
     setOperacionId(ventaEditada?.id ?? "nueva");
     const { error: errorGuardar } = await crearClienteSupabase().rpc(
-      "crear_borrador_venta",
+      "crear_borrador_venta_con_comprobante",
       {
-        cliente_objetivo: clienteId || null,
+        cliente_objetivo: clienteId,
         lineas: lineasValidas,
+        tipo_comprobante_solicitado: tipoComprobante,
         venta_objetivo: ventaEditada?.id ?? null,
       },
     );
@@ -146,48 +170,94 @@ export function PaginaVentas({
   }
 
   async function confirmar(venta: Venta) {
-    if (
-      !window.confirm(
-        `¿Confirmas la venta por ${formatearImporte(venta.total, venta.moneda)}? Se actualizarán las existencias.`,
-      )
-    )
-      return;
+    setVentaAConfirmar(venta);
+    setTipoComprobante(venta.tipoComprobante ?? "boleta");
+    setError(null);
+    setMensaje(null);
+  }
+
+  async function confirmarYEmitir() {
+    if (!ventaAConfirmar) return;
+    const venta = ventaAConfirmar;
     setError(null);
     setMensaje(null);
     setOperacionId(venta.id);
-    const { error: errorConfirmar } = await crearClienteSupabase().rpc(
-      "confirmar_venta",
-      { venta_objetivo: venta.id },
-    );
-    setOperacionId(null);
+    const supabase = crearClienteSupabase();
+    let errorConfirmar: { message: string } | null;
+    try {
+      const resultado = await supabase.rpc("confirmar_venta_con_comprobante", {
+        venta_objetivo: venta.id,
+        tipo_comprobante_solicitado: tipoComprobante,
+      });
+      errorConfirmar = resultado.error;
+    } catch {
+      setOperacionId(null);
+      setVentaAConfirmar(null);
+      setError(
+        "No se recibió respuesta al confirmar. Revisa la venta y, si ya está confirmada, usa la acción para completar o reintentar el envío.",
+      );
+      router.refresh();
+      return;
+    }
     if (errorConfirmar) {
+      setOperacionId(null);
       setError(traducirError(errorConfirmar.message));
       return;
     }
-    setMensaje("La venta quedó confirmada y el inventario se actualizó.");
-    router.refresh();
+
+    setVentaAConfirmar(null);
+    setMensaje(`Venta confirmada. Enviando ${tipoComprobante} a NubeFacT…`);
+    try {
+      const respuesta = await emitirComprobante(
+        supabase,
+        venta.id,
+        tipoComprobante,
+      );
+      setMensaje(
+        respuesta.estado === "emitido"
+          ? tipoComprobante === "boleta"
+            ? "Venta confirmada y boleta enviada a NubeFacT. La aceptación de SUNAT se consultará después."
+            : respuesta.aceptadaPorSunat
+              ? "Venta confirmada y factura aceptada por SUNAT."
+              : "Venta confirmada y factura enviada a NubeFacT. La respuesta de SUNAT sigue pendiente."
+          : "Venta confirmada. El comprobante sigue en proceso; puedes revisar su estado en Facturación.",
+      );
+      setError(null);
+    } catch (errorEmision) {
+      setMensaje("La venta quedó confirmada y el inventario se actualizó.");
+      setError(
+        `No se pudo completar el envío del comprobante: ${errorEmision instanceof Error ? errorEmision.message : "error de conexión"} Revisa Facturación para reintentar.`,
+      );
+    } finally {
+      setOperacionId(null);
+      router.refresh();
+    }
   }
 
-  async function descartar(venta: Venta) {
-    if (
-      !window.confirm(
-        "¿Descartas este borrador? Esta acción no se puede deshacer.",
-      )
-    )
-      return;
+  async function descartar() {
+    if (!ventaADescartar) return;
+    const venta = ventaADescartar;
     setError(null);
     setOperacionId(venta.id);
-    const { error: errorDescartar } = await crearClienteSupabase().rpc(
-      "descartar_borrador_venta",
-      { venta_objetivo: venta.id },
-    );
-    setOperacionId(null);
-    if (errorDescartar) {
-      setError(traducirError(errorDescartar.message));
-      return;
+    try {
+      const { error: errorDescartar } = await crearClienteSupabase().rpc(
+        "descartar_borrador_venta",
+        { venta_objetivo: venta.id },
+      );
+      if (errorDescartar) {
+        setError(traducirError(errorDescartar.message));
+        return;
+      }
+      setVentaADescartar(null);
+      setMensaje("El borrador se descartó.");
+      router.refresh();
+    } catch {
+      setError(
+        "No se pudo descartar el borrador. Revisa tu conexión e inténtalo de nuevo.",
+      );
+    } finally {
+      setOperacionId(null);
     }
-    setMensaje("El borrador se descartó.");
-    router.refresh();
   }
 
   return (
@@ -241,6 +311,7 @@ export function PaginaVentas({
           <tbody>
             {ventas.map((venta) => {
               const propia = venta.creadoPor === usuarioId;
+              const enlacePdf = enlacePdfSeguro(venta.enlacePdf);
               const editable =
                 venta.estado === "borrador" && (esAdministrador || propia);
               return (
@@ -282,19 +353,55 @@ export function PaginaVentas({
                           aria-label="Descartar borrador"
                           className="modulo-operativo__boton-texto"
                           disabled={operacionId === venta.id}
-                          onClick={() => void descartar(venta)}
+                          onClick={() => {
+                            setError(null);
+                            setVentaADescartar(venta);
+                          }}
                           type="button"
                         >
                           Descartar
                         </button>
                       </>
-                    ) : venta.estado === "confirmada" ? (
-                      <Link
+                    ) : venta.estado === "confirmada" &&
+                      !venta.estadoComprobante &&
+                      !venta.tipoComprobante ? (
+                      <button
                         className="modulo-operativo__boton-texto"
-                        href="/panel/facturacion"
+                        disabled={operacionId === venta.id}
+                        onClick={() => void confirmar(venta)}
+                        type="button"
                       >
-                        Facturar
-                      </Link>
+                        Completar envío
+                      </button>
+                    ) : venta.estado === "confirmada" &&
+                      venta.tipoComprobante &&
+                      !venta.estadoComprobante ? (
+                      <button
+                        className="modulo-operativo__boton-texto"
+                        disabled={operacionId === venta.id}
+                        onClick={() => void confirmar(venta)}
+                        type="button"
+                      >
+                        Reintentar comprobante
+                      </button>
+                    ) : venta.estado === "confirmada" ? (
+                      enlacePdf ? (
+                        <a
+                          className="modulo-operativo__boton-texto"
+                          href={enlacePdf}
+                          rel="noopener noreferrer"
+                          target="_blank"
+                        >
+                          Ver comprobante
+                        </a>
+                      ) : (
+                        <Link
+                          className="modulo-operativo__boton-texto"
+                          href="/panel/facturacion"
+                        >
+                          Ver estado del comprobante
+                        </Link>
+                      )
                     ) : null}
                   </td>
                 </tr>
@@ -327,13 +434,51 @@ export function PaginaVentas({
               className="modulo-operativo__formulario"
               onSubmit={guardarBorrador}
             >
+              <fieldset className="modulo-operativo__opciones-comprobante modulo-operativo__ancho-completo">
+                <legend>¿Qué comprobante se enviará al confirmar?</legend>
+                <label>
+                  <input
+                    checked={tipoComprobante === "boleta"}
+                    name="tipo-comprobante-venta"
+                    onChange={() => setTipoComprobante("boleta")}
+                    type="radio"
+                  />
+                  Boleta
+                </label>
+                <label>
+                  <input
+                    checked={tipoComprobante === "factura"}
+                    disabled={!facturaDisponible}
+                    name="tipo-comprobante-venta"
+                    onChange={() => setTipoComprobante("factura")}
+                    type="radio"
+                  />
+                  Factura
+                </label>
+                {!facturaDisponible ? (
+                  <small className="modulo-operativo__ancho-completo">
+                    Para emitir factura, selecciona un cliente con RUC válido.
+                  </small>
+                ) : null}
+              </fieldset>
               <label className="campo modulo-operativo__ancho-completo">
                 <span>Cliente</span>
                 <select
-                  onChange={(evento) => setClienteId(evento.target.value)}
+                  onChange={(evento) => {
+                    const id = evento.target.value;
+                    setClienteId(id);
+                    const cliente = clientes.find((item) => item.id === id);
+                    if (
+                      tipoComprobante === "factura" &&
+                      (cliente?.tipoDocumento !== "ruc" || !cliente.documento)
+                    ) {
+                      setTipoComprobante("boleta");
+                    }
+                  }}
+                  required
                   value={clienteId}
                 >
-                  <option value="">Venta de mostrador, sin cliente</option>
+                  <option value="">Selecciona un cliente</option>
                   {clientes.map((cliente) => (
                     <option key={cliente.id} value={cliente.id}>
                       {cliente.nombre}
@@ -341,6 +486,12 @@ export function PaginaVentas({
                     </option>
                   ))}
                 </select>
+                {clientes.length === 0 ? (
+                  <small>
+                    Registra primero un cliente activo en{" "}
+                    <Link href="/panel/clientes">Clientes</Link>.
+                  </small>
+                ) : null}
               </label>
               <label className="campo">
                 <span>Producto</span>
@@ -457,8 +608,9 @@ export function PaginaVentas({
                 </p>
               )}
               <p className="modulo-operativo__ancho-completo modulo-operativo__nota">
-                El servidor vuelve a validar precios, impuestos y existencias
-                antes de confirmar.
+                Al confirmar, el sistema enviará esta venta como{" "}
+                {tipoComprobante}. El servidor vuelve a validar precios,
+                impuestos y existencias.
               </p>
               {error ? (
                 <p
@@ -493,6 +645,116 @@ export function PaginaVentas({
           </section>
         </div>
       ) : null}
+
+      {ventaAConfirmar ? (
+        <div className="modulo-operativo__dialogo-fondo">
+          <section
+            aria-labelledby="confirmar-venta-titulo"
+            aria-modal="true"
+            className="modulo-operativo__dialogo"
+            role="dialog"
+          >
+            <h2 id="confirmar-venta-titulo">
+              {ventaAConfirmar.estado === "confirmada"
+                ? "Completar envío del comprobante"
+                : "Confirmar venta y emitir comprobante"}
+            </h2>
+            <p>
+              {ventaAConfirmar.clienteNombre} ·{" "}
+              {formatearImporte(ventaAConfirmar.total, ventaAConfirmar.moneda)}
+            </p>
+            <p>
+              {ventaAConfirmar.estado === "confirmada"
+                ? "La venta ya está confirmada; el inventario no volverá a cambiar. El sistema enviará inmediatamente el comprobante a NubeFacT."
+                : "Al confirmar se actualizarán las existencias y el sistema enviará inmediatamente el comprobante a NubeFacT."}
+            </p>
+            {ventaAConfirmar.tipoComprobante ? (
+              <p className="modulo-operativo__nota">
+                Se enviará como {ventaAConfirmar.tipoComprobante}.
+              </p>
+            ) : (
+              <fieldset className="modulo-operativo__opciones-comprobante">
+                <legend>Tipo de comprobante</legend>
+                <label>
+                  <input
+                    checked={tipoComprobante === "boleta"}
+                    name="tipo-comprobante-confirmar"
+                    onChange={() => setTipoComprobante("boleta")}
+                    type="radio"
+                  />
+                  Boleta
+                </label>
+                <label>
+                  <input
+                    checked={tipoComprobante === "factura"}
+                    disabled={!facturaDisponibleConfirmacion}
+                    name="tipo-comprobante-confirmar"
+                    onChange={() => setTipoComprobante("factura")}
+                    type="radio"
+                  />
+                  Factura
+                </label>
+              </fieldset>
+            )}
+            {!facturaDisponibleConfirmacion ? (
+              <p className="modulo-operativo__nota">
+                La factura estará disponible cuando el cliente tenga un RUC
+                válido registrado.
+              </p>
+            ) : null}
+            {tipoComprobante === "boleta" &&
+            ventaAConfirmar.total > 700 &&
+            !ventaAConfirmar.clienteNumeroDocumento ? (
+              <p className="modulo-operativo__nota">
+                Esta boleta supera S/ 700 y requiere identificar al cliente.
+              </p>
+            ) : null}
+            <div className="modulo-operativo__acciones">
+              <button
+                className="boton-principal"
+                disabled={
+                  Boolean(operacionId) ||
+                  (tipoComprobante === "factura" &&
+                    !facturaDisponibleConfirmacion) ||
+                  (tipoComprobante === "boleta" &&
+                    ventaAConfirmar.total > 700 &&
+                    !ventaAConfirmar.clienteNumeroDocumento)
+                }
+                onClick={() => void confirmarYEmitir()}
+                type="button"
+              >
+                {operacionId === ventaAConfirmar.id
+                  ? "Confirmando y enviando…"
+                  : "Confirmar y enviar"}
+              </button>
+              <button
+                className="modulo-operativo__boton-secundario"
+                disabled={Boolean(operacionId)}
+                onClick={() => setVentaAConfirmar(null)}
+                type="button"
+              >
+                Cancelar
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
+      <DialogoConfirmacion
+        abierto={Boolean(ventaADescartar)}
+        descripcion="El borrador quedará descartado y ya no se podrá editar. Esta acción no descontará existencias."
+        error={ventaADescartar ? error : null}
+        onCancelar={() => {
+          if (!operacionId) setVentaADescartar(null);
+        }}
+        onConfirmar={descartar}
+        procesando={Boolean(
+          ventaADescartar && operacionId === ventaADescartar.id,
+        )}
+        textoCancelar="Seguir editando"
+        textoConfirmar="Descartar borrador"
+        titulo="¿Descartar este borrador?"
+        variante="peligro"
+      />
     </section>
   );
 }
@@ -515,6 +777,13 @@ function traducirError(mensaje: string): string {
     return "El precio cambió desde que guardaste el borrador. Actualízalo antes de confirmar.";
   if (mensaje.includes("impuestos cambió"))
     return "La configuración de impuestos cambió. Actualiza el borrador antes de confirmar.";
+  if (
+    mensaje.includes("RUC") ||
+    mensaje.includes("serie activa") ||
+    mensaje.includes("factura requiere") ||
+    mensaje.includes("boletas mayores")
+  )
+    return mensaje;
   if (mensaje.includes("borrador")) return mensaje;
   if (mensaje.includes("producto") || mensaje.includes("combinación"))
     return mensaje;

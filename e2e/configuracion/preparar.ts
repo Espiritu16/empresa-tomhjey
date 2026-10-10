@@ -11,15 +11,26 @@ type UsuarioPrueba = {
   clave: string;
 };
 
+type EmpresaE2E = {
+  nombre: string;
+  actualizado_por: string | null;
+  actualizado_en: string;
+};
+
 type EstadoE2E = {
   administrador: UsuarioPrueba;
   vendedor: UsuarioPrueba;
   empresaCreada: boolean;
+  empresaOriginal: EmpresaE2E | null;
+  identificadorE2E: string;
 };
 
 export default async function preparar(): Promise<void> {
   const supabase = crearClienteAdministradorLocal();
-  const estado: Partial<EstadoE2E> = {};
+  const estado: Partial<EstadoE2E> = {
+    identificadorE2E: randomUUID(),
+    empresaOriginal: null,
+  };
   let rutaEstado: string | undefined;
 
   try {
@@ -35,11 +46,18 @@ export default async function preparar(): Promise<void> {
 
     const { data: empresa, error: errorEmpresa } = await supabase
       .from("empresa")
-      .select("unica")
+      .select("unica, nombre, actualizado_por, actualizado_en")
       .eq("unica", true)
       .maybeSingle();
     if (errorEmpresa) throw new Error("No se pudo revisar la empresa local.");
     estado.empresaCreada = !empresa;
+    estado.empresaOriginal = empresa
+      ? {
+          nombre: empresa.nombre,
+          actualizado_por: empresa.actualizado_por,
+          actualizado_en: empresa.actualizado_en,
+        }
+      : null;
     if (!empresa) {
       const { error: errorInsercionEmpresa } = await supabase
         .from("empresa")
@@ -61,7 +79,12 @@ export default async function preparar(): Promise<void> {
     const usuarios = [estado.vendedor?.id, estado.administrador?.id].filter(
       (id): id is string => Boolean(id),
     );
-    await limpiarDatosE2E(supabase, usuarios, estado.empresaCreada ?? false);
+    await limpiarDatosE2E(
+      supabase,
+      usuarios,
+      estado.empresaCreada ?? false,
+      estado.identificadorE2E!,
+    );
     await borrarUsuario(supabase, estado.vendedor?.id);
     await borrarUsuario(supabase, estado.administrador?.id);
     throw error;

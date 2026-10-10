@@ -7,6 +7,7 @@ import {
 import { PaginaReportes } from "@/funcionalidades/reportes/pagina-reportes";
 
 export const metadata: Metadata = { title: "Reportes" };
+export const instant = false;
 
 export default async function ReportesPage() {
   await connection();

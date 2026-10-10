@@ -1,10 +1,13 @@
 import { crearClienteSupabaseServidor } from "@/compartido/supabase/servidor";
+import { adjuntarBorradores, type MensajeConVenta } from "./ventas-chat";
 
 export type MensajeAsistente = {
   id: string;
   rol: "usuario" | "asistente";
   contenido: string;
   creadoEn: string;
+  ventaId: string | null;
+  borradorVenta?: MensajeConVenta["borradorVenta"];
 };
 
 export type ConversacionAsistente = {
@@ -38,7 +41,7 @@ export async function cargarAsistente() {
     };
   const { data: mensajes, error: errorMensajes } = await supabase
     .from("mensajes")
-    .select("id, rol, contenido, creado_en")
+    .select("id, rol, contenido, creado_en, venta_id")
     .eq("conversacion_id", primera.id)
     .order("creado_en", { ascending: true });
   if (errorMensajes) {
@@ -49,18 +52,23 @@ export async function cargarAsistente() {
       error: "No se pudo cargar el historial del asistente.",
     };
   }
+  const mensajesConVenta = await adjuntarBorradores(
+    supabase,
+    (mensajes ?? []).map((item) => ({
+      id: item.id,
+      rol: item.rol as "usuario" | "asistente",
+      contenido: item.contenido,
+      creadoEn: item.creado_en,
+      ventaId: item.venta_id,
+    })),
+  );
   return {
     conversaciones: (conversaciones ?? []).map((item) => ({
       id: item.id,
       titulo: item.titulo,
       actualizadaEn: item.actualizada_en,
     })) as ConversacionAsistente[],
-    mensajes: (mensajes ?? []).map((item) => ({
-      id: item.id,
-      rol: item.rol,
-      contenido: item.contenido,
-      creadoEn: item.creado_en,
-    })) as MensajeAsistente[],
+    mensajes: mensajesConVenta as MensajeAsistente[],
     conversacionActual: primera.id,
     error: null,
   };

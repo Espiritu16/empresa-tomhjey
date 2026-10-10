@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { crearClienteSupabase } from "@/compartido/supabase/cliente";
+import { emitirComprobante } from "@/funcionalidades/facturacion/emision";
+import type { TipoComprobante } from "@/funcionalidades/facturacion/consultas";
+import { adjuntarBorradores, type BorradorVentaAsistente } from "./ventas-chat";
 import type { ConversacionAsistente, MensajeAsistente } from "./consultas";
 
 export function PaginaAsistente({
@@ -21,13 +24,27 @@ export function PaginaAsistente({
   const [conversacionId, setConversacionId] = useState(conversacionInicial);
   const [texto, setTexto] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [ventaConfirmando, setVentaConfirmando] = useState<string | null>(null);
+  const [estadoVenta, setEstadoVenta] = useState<string | null>(null);
   const [error, setError] = useState(errorInicial);
+  const mensajesRef = useRef<HTMLDivElement>(null);
+  const campoMensajeRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const contenedor = mensajesRef.current;
+    if (!contenedor) return;
+    contenedor.scrollTo({
+      top: contenedor.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [mensajes]);
 
   async function enviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     const mensaje = texto.trim();
     if (!mensaje || enviando) return;
     setError(null);
+    setEstadoVenta(null);
     setEnviando(true);
     setMensajes((actuales) => [
       ...actuales,
@@ -36,6 +53,7 @@ export function PaginaAsistente({
         rol: "usuario",
         contenido: mensaje,
         creadoEn: new Date().toISOString(),
+        ventaId: null,
       },
     ]);
     setTexto("");
@@ -50,16 +68,20 @@ export function PaginaAsistente({
       if (errorFuncion || !data?.mensaje || !data?.conversacionId) {
         throw new Error(await detalleError(errorFuncion));
       }
-      setConversacionId(data.conversacionId);
-      setMensajes((actuales) => [
-        ...actuales,
+      const mensajesAsistente = await adjuntarBorradores(supabase, [
         {
           id: `respuesta-${Date.now()}`,
           rol: "asistente",
           contenido: data.mensaje,
           creadoEn: new Date().toISOString(),
+          ventaId:
+            typeof data.borradorVentaId === "string"
+              ? data.borradorVentaId
+              : null,
         },
       ]);
+      setConversacionId(data.conversacionId);
+      setMensajes((actuales) => [...actuales, ...mensajesAsistente]);
       setConversaciones((actuales) => {
         const existente = actuales.find(
           (item) => item.id === data.conversacionId,
@@ -99,7 +121,7 @@ export function PaginaAsistente({
     const supabase = crearClienteSupabase();
     const { data, error: errorConsulta } = await supabase
       .from("mensajes")
-      .select("id, rol, contenido, creado_en")
+      .select("id, rol, contenido, creado_en, venta_id")
       .eq("conversacion_id", id)
       .order("creado_en", { ascending: true });
     if (errorConsulta) {
@@ -107,14 +129,80 @@ export function PaginaAsistente({
       return;
     }
     setConversacionId(id);
-    setMensajes(
-      (data ?? []).map((item) => ({
-        id: item.id,
-        rol: item.rol,
-        contenido: item.contenido,
-        creadoEn: item.creado_en,
-      })) as MensajeAsistente[],
+    const mensajesDeConversacion = (data ?? []).map((item) => ({
+      id: item.id,
+      rol: item.rol as "usuario" | "asistente",
+      contenido: item.contenido,
+      creadoEn: item.creado_en,
+      ventaId: item.venta_id,
+    }));
+    setMensajes(await adjuntarBorradores(supabase, mensajesDeConversacion));
+  }
+
+  async function confirmarBorrador(
+    mensajeId: string,
+    venta: BorradorVentaAsistente,
+    tipoComprobante: TipoComprobante,
+  ) {
+    setError(null);
+    setEstadoVenta(null);
+    setVentaConfirmando(venta.id);
+    const supabase = crearClienteSupabase();
+    let errorConfirmar: { message: string } | null;
+    try {
+      const resultado = await supabase.rpc("confirmar_venta_con_comprobante", {
+        venta_objetivo: venta.id,
+        tipo_comprobante_solicitado: tipoComprobante,
+      });
+      errorConfirmar = resultado.error;
+    } catch {
+      setVentaConfirmando(null);
+      setError(
+        "No se recibió respuesta al confirmar. Puedes volver a intentarlo; el sistema evita descontar el inventario dos veces.",
+      );
+      return;
+    }
+    if (errorConfirmar) {
+      setVentaConfirmando(null);
+      setError(traducirErrorVenta(errorConfirmar.message));
+      return;
+    }
+    setMensajes((actuales) =>
+      actuales.map((mensaje) =>
+        mensaje.id === mensajeId && mensaje.borradorVenta
+          ? {
+              ...mensaje,
+              borradorVenta: {
+                ...mensaje.borradorVenta,
+                estado: "confirmada",
+                tipoComprobante,
+              },
+            }
+          : mensaje,
+      ),
     );
+    try {
+      const respuesta = await emitirComprobante(
+        supabase,
+        venta.id,
+        tipoComprobante,
+      );
+      setEstadoVenta(
+        respuesta.estado === "emitido"
+          ? tipoComprobante === "boleta"
+            ? "Venta confirmada y boleta enviada a NubeFacT. La aceptación de SUNAT se consultará después."
+            : respuesta.aceptadaPorSunat
+              ? "Venta confirmada y factura aceptada por SUNAT."
+              : "Venta confirmada y factura enviada a NubeFacT. La respuesta de SUNAT sigue pendiente."
+          : "Venta confirmada. El comprobante sigue en proceso; revisa Facturación para ver el estado.",
+      );
+    } catch (errorEmision) {
+      setError(
+        `La venta quedó confirmada, pero no se pudo completar el envío: ${errorEmision instanceof Error ? errorEmision.message : "error de conexión"} Revisa Facturación para reintentar.`,
+      );
+    } finally {
+      setVentaConfirmando(null);
+    }
   }
 
   function nuevaConversacion() {
@@ -122,6 +210,7 @@ export function PaginaAsistente({
     setMensajes([]);
     setTexto("");
     setError(null);
+    campoMensajeRef.current?.focus();
   }
 
   return (
@@ -131,8 +220,8 @@ export function PaginaAsistente({
           <p className="rotulo">AYUDA PARA EL DÍA A DÍA</p>
           <h1>Asistente IA</h1>
           <p className="encabezado-seccion__texto">
-            Consulta información de tu empresa o pide ayuda para preparar un
-            borrador de venta.
+            Consulta información de los módulos, pide ayuda para el trabajo
+            diario o prepara un borrador de venta.
           </p>
         </div>
       </header>
@@ -143,6 +232,15 @@ export function PaginaAsistente({
           role="alert"
         >
           {error}
+        </p>
+      ) : null}
+      {estadoVenta ? (
+        <p
+          aria-live="polite"
+          className="modulo-operativo__aviso modulo-operativo__aviso--bien"
+          role="status"
+        >
+          {estadoVenta}
         </p>
       ) : null}
       <div className="asistente-modulo__rejilla">
@@ -185,7 +283,11 @@ export function PaginaAsistente({
           aria-label="Chat con el asistente"
           className="modulo-operativo__panel asistente-modulo__chat"
         >
-          <div aria-live="polite" className="asistente-modulo__mensajes">
+          <div
+            aria-live="polite"
+            className="asistente-modulo__mensajes"
+            ref={mensajesRef}
+          >
             {mensajes.length ? (
               mensajes.map((mensaje) => (
                 <article
@@ -193,17 +295,38 @@ export function PaginaAsistente({
                   key={mensaje.id}
                 >
                   <span>{mensaje.rol === "usuario" ? "Tú" : "Asistente"}</span>
-                  <p>{mensaje.contenido}</p>
+                  <p>{renderizarContenido(mensaje.contenido)}</p>
+                  {mensaje.borradorVenta ? (
+                    <TarjetaBorradorVenta
+                      confirmando={
+                        ventaConfirmando === mensaje.borradorVenta.id
+                      }
+                      onConfirmar={(tipo) =>
+                        void confirmarBorrador(
+                          mensaje.id,
+                          mensaje.borradorVenta!,
+                          tipo,
+                        )
+                      }
+                      venta={mensaje.borradorVenta}
+                    />
+                  ) : null}
                 </article>
               ))
             ) : (
               <div className="modulo-operativo__vacio">
                 <strong>¿Qué necesitas resolver?</strong>
                 <span>
-                  Pregunta por productos, existencias, ventas o el uso del
-                  panel.
+                  Pregunta por productos, existencias, clientes, ventas,
+                  facturación, reportes o el uso del panel.
                 </span>
                 <div className="asistente-modulo__ejemplos">
+                  <button
+                    onClick={() => setTexto("¿Cuántos productos tenemos?")}
+                    type="button"
+                  >
+                    ¿Cuántos productos tenemos?
+                  </button>
                   <button
                     onClick={() => setTexto("¿Qué productos debo reponer?")}
                     type="button"
@@ -216,6 +339,12 @@ export function PaginaAsistente({
                   >
                     Resume las ventas de hoy
                   </button>
+                  <button
+                    onClick={() => setTexto("Quiero armar una venta")}
+                    type="button"
+                  >
+                    Quiero armar una venta
+                  </button>
                 </div>
               </div>
             )}
@@ -227,7 +356,19 @@ export function PaginaAsistente({
                 aria-label="Mensaje para el asistente"
                 maxLength={4000}
                 onChange={(evento) => setTexto(evento.target.value)}
+                onKeyDown={(evento) => {
+                  if (
+                    evento.key !== "Enter" ||
+                    evento.shiftKey ||
+                    evento.nativeEvent.isComposing
+                  ) {
+                    return;
+                  }
+                  evento.preventDefault();
+                  evento.currentTarget.form?.requestSubmit();
+                }}
                 placeholder="Escribe tu consulta…"
+                ref={campoMensajeRef}
                 required
                 rows={3}
                 value={texto}
@@ -255,6 +396,158 @@ export function PaginaAsistente({
       </p>
     </section>
   );
+}
+
+function renderizarContenido(contenido: string) {
+  return contenido.split(/\r?\n/).flatMap((linea, indiceLinea) => {
+    const segmentos = linea.split(/(\*\*.*?\*\*)/g);
+    const contenidoLinea = segmentos.map((segmento, indiceSegmento) => {
+      if (segmento.startsWith("**") && segmento.endsWith("**")) {
+        return (
+          <strong key={`${indiceLinea}-${indiceSegmento}`}>
+            {segmento.slice(2, -2)}
+          </strong>
+        );
+      }
+      return segmento.replaceAll("**", "");
+    });
+    return indiceLinea === 0
+      ? contenidoLinea
+      : [<br key={`salto-${indiceLinea}`} />, ...contenidoLinea];
+  });
+}
+
+function TarjetaBorradorVenta({
+  venta,
+  confirmando,
+  onConfirmar,
+}: {
+  venta: BorradorVentaAsistente;
+  confirmando: boolean;
+  onConfirmar: (tipo: TipoComprobante) => void;
+}) {
+  const [tipoComprobante, setTipoComprobante] = useState<TipoComprobante>(
+    venta.tipoComprobante ?? "boleta",
+  );
+  const boletaIdentificada =
+    venta.total <= 700 || Boolean(venta.clienteNumeroDocumento);
+  const facturaDisponible =
+    venta.clienteTipoDocumento === "ruc" &&
+    Boolean(venta.clienteNumeroDocumento);
+  return (
+    <section
+      aria-label="Borrador de venta"
+      className="asistente-modulo__borrador-venta"
+    >
+      <div className="asistente-modulo__borrador-encabezado">
+        <strong>Venta para {venta.clienteNombre}</strong>
+        <span
+          className={`modulo-operativo__estado modulo-operativo__estado--${venta.estado}`}
+        >
+          {venta.estado === "borrador"
+            ? "Borrador"
+            : venta.estado === "confirmada"
+              ? "Confirmada"
+              : "Descartada"}
+        </span>
+      </div>
+      <ul className="asistente-modulo__borrador-lineas">
+        {venta.lineas.map((linea, indice) => (
+          <li key={`${linea.descripcion}-${indice}`}>
+            <span>{linea.descripcion}</span>
+            <span>{linea.cantidad} un.</span>
+            <strong>{formatearImporte(linea.total, venta.moneda)}</strong>
+          </li>
+        ))}
+      </ul>
+      <p className="asistente-modulo__borrador-total">
+        <span>Total</span>
+        <strong>{formatearImporte(venta.total, venta.moneda)}</strong>
+      </p>
+      {venta.estado === "borrador" ? (
+        <div className="asistente-modulo__borrador-confirmacion">
+          {venta.tipoComprobante ? (
+            <p className="modulo-operativo__nota">
+              Comprobante elegido: <strong>{venta.tipoComprobante}</strong>. Se
+              enviará automáticamente al confirmar.
+            </p>
+          ) : (
+            <fieldset className="modulo-operativo__opciones-comprobante">
+              <legend>Elige el comprobante</legend>
+              <label>
+                <input
+                  checked={tipoComprobante === "boleta"}
+                  name={`comprobante-${venta.id}`}
+                  onChange={() => setTipoComprobante("boleta")}
+                  type="radio"
+                />
+                Boleta
+              </label>
+              <label>
+                <input
+                  checked={tipoComprobante === "factura"}
+                  disabled={!facturaDisponible}
+                  name={`comprobante-${venta.id}`}
+                  onChange={() => setTipoComprobante("factura")}
+                  type="radio"
+                />
+                Factura
+              </label>
+            </fieldset>
+          )}
+          {!facturaDisponible ? (
+            <p className="modulo-operativo__nota">
+              La factura requiere un cliente con RUC válido registrado.
+            </p>
+          ) : null}
+          {!boletaIdentificada && tipoComprobante === "boleta" ? (
+            <p className="modulo-operativo__nota">
+              La boleta supera S/ 700 y requiere identificar al cliente.
+            </p>
+          ) : null}
+          <button
+            className="boton-principal"
+            disabled={
+              confirmando ||
+              (tipoComprobante === "boleta" && !boletaIdentificada)
+            }
+            onClick={() => onConfirmar(tipoComprobante)}
+            type="button"
+          >
+            {confirmando ? "Confirmando y enviando…" : "Confirmar y enviar"}
+          </button>
+        </div>
+      ) : (
+        <Link className="modulo-operativo__boton-texto" href="/panel/ventas">
+          Ver venta
+        </Link>
+      )}
+    </section>
+  );
+}
+
+function formatearImporte(total: number, moneda: "PEN" | "USD") {
+  return new Intl.NumberFormat("es-PE", {
+    style: "currency",
+    currency: moneda,
+  }).format(total);
+}
+
+function traducirErrorVenta(mensaje: string) {
+  if (mensaje.includes("existencias"))
+    return "No hay existencias suficientes. Revisa la venta antes de confirmarla.";
+  if (mensaje.includes("precio"))
+    return "El precio del producto cambió. Revisa el borrador en Ventas antes de confirmar.";
+  if (mensaje.includes("cliente"))
+    return "El cliente ya no está disponible. Actualiza la venta en Ventas.";
+  if (
+    mensaje.includes("RUC") ||
+    mensaje.includes("serie activa") ||
+    mensaje.includes("factura requiere") ||
+    mensaje.includes("boletas mayores")
+  )
+    return mensaje;
+  return "No se pudo confirmar la venta. Revisa el borrador e inténtalo de nuevo.";
 }
 
 async function detalleError(

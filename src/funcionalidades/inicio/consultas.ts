@@ -1,4 +1,5 @@
 import { crearClienteSupabaseServidor } from "@/compartido/supabase/servidor";
+import { convertirTotalesPorMoneda } from "@/compartido/formato-moneda";
 
 export type VentaReciente = {
   id: string;
@@ -49,7 +50,8 @@ export async function cargarResumenInicio() {
   return {
     resumen: {
       ventas: Number(valores.ventas ?? 0),
-      total: Number(valores.total_ventas ?? 0),
+      totalesPorMoneda: convertirTotalesPorMoneda(valores.totales_por_moneda),
+      monedaBase: valores.moneda_base === "USD" ? "USD" : "PEN",
       stockBajo: Number(valores.stock_bajo ?? 0),
     },
     productos: productos.count ?? 0,

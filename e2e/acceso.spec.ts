@@ -145,6 +145,9 @@ test("el vendedor no ve ni puede abrir el módulo de usuarios", async ({
   await expect(
     page.getByRole("button", { name: "Nuevo producto" }),
   ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: /^(Inactivar|Activar) / }),
+  ).toHaveCount(0);
   await page.goto("/panel/inventario");
   await expect(page.getByRole("heading", { name: "Inventario" })).toBeVisible();
   await expect(
@@ -152,6 +155,11 @@ test("el vendedor no ve ni puede abrir el módulo de usuarios", async ({
   ).toHaveCount(0);
   await page.goto("/panel/empresa");
   await expectRuta(page, "/panel");
+  await page.goto("/panel/clientes");
+  await expect(page.getByRole("heading", { name: "Clientes" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /^(Inactivar|Activar) / }),
+  ).toHaveCount(0);
 
   await page.getByRole("button", { name: "Salir" }).click();
   await expect(page).toHaveURL(/\/acceso$/);

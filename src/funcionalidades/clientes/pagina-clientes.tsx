@@ -3,12 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type FormEvent } from "react";
 import { crearClienteSupabase } from "@/compartido/supabase/cliente";
+import { documentoConsultable } from "./validaciones-documentos";
 import type { Cliente, VentaCliente } from "./consultas";
 
 type Propiedades = {
   clientes: Cliente[];
   ventasPorCliente: Record<string, VentaCliente[]>;
   usuarioId: string;
+  puedeEditarEstado: boolean;
   errorInicial: string | null;
 };
 
@@ -36,6 +38,7 @@ export function PaginaClientes({
   clientes,
   ventasPorCliente,
   usuarioId,
+  puedeEditarEstado,
   errorInicial,
 }: Propiedades) {
   const router = useRouter();
@@ -47,6 +50,12 @@ export function PaginaClientes({
   );
   const [formulario, setFormulario] = useState(formularioVacio);
   const [guardando, setGuardando] = useState(false);
+  const [consultandoDocumento, setConsultandoDocumento] = useState(false);
+  const [mensajeConsulta, setMensajeConsulta] = useState<string | null>(null);
+  const [errorConsulta, setErrorConsulta] = useState<string | null>(null);
+  const [clienteActualizando, setClienteActualizando] = useState<string | null>(
+    null,
+  );
   const [mensaje, setMensaje] = useState<string | null>(null);
   const [error, setError] = useState(errorInicial);
 
@@ -71,6 +80,8 @@ export function PaginaClientes({
     setClienteEditado(null);
     setFormulario(formularioVacio);
     setError(null);
+    setMensajeConsulta(null);
+    setErrorConsulta(null);
     setAbierto(true);
   }
 
@@ -86,7 +97,67 @@ export function PaginaClientes({
       notas: cliente.notas ?? "",
     });
     setError(null);
+    setMensajeConsulta(null);
+    setErrorConsulta(null);
     setAbierto(true);
+  }
+
+  async function consultarEnSunat() {
+    setMensajeConsulta(null);
+    setErrorConsulta(null);
+    const numeroDocumento = formulario.numeroDocumento.trim();
+    if (!documentoConsultable(formulario.tipoDocumento, numeroDocumento)) {
+      setErrorConsulta(
+        formulario.tipoDocumento === "dni"
+          ? "Escribe un DNI de ocho dígitos para consultar."
+          : "Escribe un RUC válido de once dígitos para consultar.",
+      );
+      return;
+    }
+
+    setConsultandoDocumento(true);
+    try {
+      const respuesta = await fetch("/api/clientes/consultar-documento", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tipoDocumento: formulario.tipoDocumento,
+          numeroDocumento,
+        }),
+      });
+      const resultado = (await respuesta.json()) as {
+        error?: string;
+        nombre?: string;
+        direccion?: string | null;
+      };
+
+      if (!respuesta.ok || resultado.error) {
+        setErrorConsulta(
+          resultado.error
+            ? resultado.error
+            : "No se pudieron consultar los datos en SUNAT.",
+        );
+        return;
+      }
+
+      setFormulario((actual) => ({
+        ...actual,
+        nombre:
+          resultado.nombre && formulario.tipoDocumento === "dni"
+            ? ordenarNombreDni(resultado.nombre)
+            : resultado.nombre || actual.nombre,
+        direccion: resultado.direccion || actual.direccion,
+      }));
+      setMensajeConsulta(
+        "Datos consultados en SUNAT. Verifica antes de guardar.",
+      );
+    } catch {
+      setErrorConsulta(
+        "No se pudo conectar con SUNAT. Puedes completar los datos a mano.",
+      );
+    } finally {
+      setConsultandoDocumento(false);
+    }
   }
 
   async function guardarCliente(evento: FormEvent<HTMLFormElement>) {
@@ -99,6 +170,21 @@ export function PaginaClientes({
         !formulario.numeroDocumento.trim())
     ) {
       setError("Escribe el nombre del cliente e identifica su documento.");
+      return;
+    }
+    if (
+      (formulario.tipoDocumento === "dni" ||
+        formulario.tipoDocumento === "ruc") &&
+      !documentoConsultable(
+        formulario.tipoDocumento,
+        formulario.numeroDocumento.trim(),
+      )
+    ) {
+      setError(
+        formulario.tipoDocumento === "dni"
+          ? "El DNI debe contener ocho dígitos."
+          : "El RUC debe tener once dígitos y un dígito verificador válido.",
+      );
       return;
     }
     const datos = {
@@ -147,6 +233,27 @@ export function PaginaClientes({
     } finally {
       setGuardando(false);
     }
+  }
+
+  async function cambiarEstado(cliente: Cliente) {
+    setError(null);
+    setMensaje(null);
+    setClienteActualizando(cliente.id);
+    const { error: errorCambio } = await crearClienteSupabase().rpc(
+      "cambiar_estado_cliente",
+      { cliente_objetivo: cliente.id, activar: !cliente.activo },
+    );
+    setClienteActualizando(null);
+    if (errorCambio) {
+      setError("No se pudo actualizar el estado del cliente.");
+      return;
+    }
+    setMensaje(
+      cliente.activo
+        ? "El cliente se inactivó. Puedes volver a activarlo cuando quieras."
+        : "El cliente se activó.",
+    );
+    router.refresh();
   }
 
   return (
@@ -253,6 +360,17 @@ export function PaginaClientes({
                     >
                       Editar
                     </button>
+                    {puedeEditarEstado ? (
+                      <button
+                        aria-label={`${cliente.activo ? "Inactivar" : "Activar"} ${cliente.nombre}`}
+                        className="modulo-operativo__boton-texto"
+                        disabled={clienteActualizando === cliente.id}
+                        onClick={() => void cambiarEstado(cliente)}
+                        type="button"
+                      >
+                        {cliente.activo ? "Inactivar" : "Activar"}
+                      </button>
+                    ) : null}
                   </td>
                 </tr>
               );
@@ -289,12 +407,14 @@ export function PaginaClientes({
               <label className="campo">
                 <span>Tipo de documento</span>
                 <select
-                  onChange={(evento) =>
+                  onChange={(evento) => {
+                    setMensajeConsulta(null);
+                    setErrorConsulta(null);
                     setFormulario((actual) => ({
                       ...actual,
                       tipoDocumento: evento.target.value,
-                    }))
-                  }
+                    }));
+                  }}
                   value={formulario.tipoDocumento}
                 >
                   <option value="sin_documento">Sin documento</option>
@@ -306,17 +426,97 @@ export function PaginaClientes({
               </label>
               <label className="campo">
                 <span>Número de documento</span>
-                <input
-                  disabled={formulario.tipoDocumento === "sin_documento"}
-                  onChange={(evento) =>
-                    setFormulario((actual) => ({
-                      ...actual,
-                      numeroDocumento: evento.target.value,
-                    }))
-                  }
-                  required={formulario.tipoDocumento !== "sin_documento"}
-                  value={formulario.numeroDocumento}
-                />
+                <div className="modulo-operativo__documento-control">
+                  <input
+                    autoComplete="off"
+                    disabled={formulario.tipoDocumento === "sin_documento"}
+                    onChange={(evento) => {
+                      setMensajeConsulta(null);
+                      setErrorConsulta(null);
+                      setFormulario((actual) => ({
+                        ...actual,
+                        numeroDocumento:
+                          actual.tipoDocumento === "dni" ||
+                          actual.tipoDocumento === "ruc"
+                            ? evento.target.value.replace(/\D/g, "")
+                            : evento.target.value,
+                      }));
+                    }}
+                    inputMode={
+                      formulario.tipoDocumento === "dni" ||
+                      formulario.tipoDocumento === "ruc"
+                        ? "numeric"
+                        : "text"
+                    }
+                    maxLength={
+                      formulario.tipoDocumento === "dni"
+                        ? 8
+                        : formulario.tipoDocumento === "ruc"
+                          ? 11
+                          : 40
+                    }
+                    placeholder={
+                      formulario.tipoDocumento === "dni"
+                        ? "8 dígitos"
+                        : formulario.tipoDocumento === "ruc"
+                          ? "11 dígitos"
+                          : "Número de documento"
+                    }
+                    required={formulario.tipoDocumento !== "sin_documento"}
+                    value={formulario.numeroDocumento}
+                  />
+                  {formulario.tipoDocumento === "dni" ||
+                  formulario.tipoDocumento === "ruc" ? (
+                    <button
+                      className="modulo-operativo__boton-secundario"
+                      disabled={
+                        consultandoDocumento ||
+                        !documentoConsultable(
+                          formulario.tipoDocumento,
+                          formulario.numeroDocumento.trim(),
+                        )
+                      }
+                      onClick={() => void consultarEnSunat()}
+                      type="button"
+                    >
+                      {consultandoDocumento ? "Consultando…" : "Consultar"}
+                    </button>
+                  ) : null}
+                </div>
+                {formulario.tipoDocumento === "dni" ||
+                formulario.tipoDocumento === "ruc" ? (
+                  <span className="modulo-operativo__nota">
+                    Al consultar, el número se envía a SUNAT.
+                  </span>
+                ) : null}
+                {formulario.tipoDocumento === "ruc" ? (
+                  <span className="modulo-operativo__nota" aria-live="polite">
+                    {formulario.numeroDocumento.startsWith("10")
+                      ? "RUC de persona natural"
+                      : formulario.numeroDocumento.startsWith("20")
+                        ? "RUC de persona jurídica"
+                        : formulario.numeroDocumento.length >= 2
+                          ? `RUC con prefijo ${formulario.numeroDocumento.slice(0, 2)}`
+                          : "El prefijo permite identificar el tipo de RUC."}
+                  </span>
+                ) : null}
+                {errorConsulta ? (
+                  <span
+                    className="modulo-operativo__aviso modulo-operativo__aviso--error"
+                    role="alert"
+                  >
+                    {errorConsulta}
+                  </span>
+                ) : null}
+                {mensajeConsulta ? (
+                  <span
+                    className="modulo-operativo__nota"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    {mensajeConsulta}
+                  </span>
+                ) : null}
               </label>
               <Campo
                 etiqueta="Nombre del cliente"
@@ -456,6 +656,15 @@ export function PaginaClientes({
       ) : null}
     </section>
   );
+}
+
+function ordenarNombreDni(nombre: string): string {
+  const separador = nombre.indexOf(",");
+  if (separador < 0) return nombre.trim();
+
+  const apellidos = nombre.slice(0, separador).trim();
+  const nombres = nombre.slice(separador + 1).trim();
+  return [nombres, apellidos].filter(Boolean).join(" ");
 }
 
 function Campo({

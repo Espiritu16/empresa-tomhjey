@@ -165,7 +165,9 @@ proveedor ni un modo de facturación manual alternativo.
   Supabase, y solo las lee la Edge Function de facturación. El navegador nunca
   las recibe.
 - La primera entrega de facturación permite emitir **facturas y boletas**
-  asociadas a una venta confirmada. La emisión exige el RUC válido de la empresa
+  asociadas a una venta. Al confirmar, quien registra la venta elige el tipo y
+  el sistema la envía inmediatamente a NubeFacT; no hay un paso posterior para
+  facturar. La emisión exige el RUC válido de la empresa
   antes de reservar un número. La factura exige además el RUC válido del
   cliente; la boleta admite un cliente sin documento hasta el límite fiscal
   configurado en la reserva, y exige identificarlo cuando lo supera.
@@ -182,10 +184,14 @@ proveedor ni un modo de facturación manual alternativo.
   continúa pendiente, se permite una consulta por día hasta conocer el estado.
   La respuesta de esa consulta es la que habilita «Aceptada por SUNAT» para una
   boleta.
-- La persona puede iniciar la emisión desde una venta confirmada y consultar el
-  resultado desde la venta o el módulo de facturación. La respuesta persistida
-  incluye el enlace al PDF cuando NubeFacT lo devuelve. Los errores recuperables
-  permiten reintentar de forma autorizada con el mismo correlativo.
+- La emisión forma parte de la confirmación de la venta, tanto en Ventas como en
+  la tarjeta del asistente. El vendedor solo puede emitir y reintentar
+  comprobantes de ventas propias; administración puede gestionar todas las
+  ventas, configurar series y consultar aceptación de boletas. Facturación es
+  una vista de seguimiento, reintento y descarga, no una cola de ventas por
+  emitir. La respuesta persistida incluye el enlace al PDF cuando NubeFacT lo
+  devuelve. Los errores recuperables permiten reintentar de forma autorizada
+  con el mismo correlativo.
 - La integración reutiliza la reserva, envío y reconciliación para ambos tipos.
   La consulta de aceptación de boletas se inicia desde el historial; no hay
   consulta periódica ni cron en esta entrega.
@@ -208,11 +214,27 @@ para poder reemplazarlos sin cambiar los módulos de ventas e inventario.
 
 El asistente puede:
 
-- Buscar productos y consultar sus precios y existencias.
-- Resumir ventas del usuario dentro de sus permisos.
-- Explicar las pantallas y el flujo de trabajo con contenido de ayuda curado.
-- Preparar o actualizar un borrador de venta, mostrando productos encontrados,
-  cantidades, precios calculados por servidor y advertencias.
+- Consultar datos de inicio, productos, inventario, clientes, ventas,
+  facturación, reportes, empresa y usuarios con herramientas de lectura
+  permitidas. Para ventas y comprobantes respeta las filas que el rol puede
+  consultar; la configuración de empresa y el equipo son exclusivos de
+  administración.
+- Responder conteos del catálogo sin pedir nombre o SKU, e identificar los
+  productos y combinaciones disponibles para resolver preguntas de seguimiento.
+- Consultar existencias y movimientos del inventario, y resumir ventas,
+  facturación y productos vendidos dentro del periodo indicado.
+- Separar los importes de ventas por moneda; nunca sumar PEN y USD como si fueran equivalentes.
+- Explicar los módulos del panel y sus flujos con contenido de ayuda curado.
+- Guiar la preparación de un borrador de venta asociado a un cliente activo:
+  aprovecha los datos ya dados, busca productos y clientes, y pide solo lo que
+  falte. Presenta en el chat una tarjeta con cliente, líneas e importe calculado
+  por el servidor. La persona confirma desde esa tarjeta o desde Ventas; la IA
+  nunca confirma por su cuenta y no se descuenta inventario antes de aceptar.
+- No responder sobre tecnología interna, código, infraestructura, credenciales
+  ni configuración de los proveedores. Solo enviar el nombre de un cliente
+  cuando su consulta lo requiera; excluir siempre sus documentos, teléfonos,
+  correos y notas. El chat presenta respuestas simples sin dejar marcadores de
+  Markdown visibles.
 
 El asistente no consulta Postgres libremente ni recibe una herramienta que
 confirme, emita, anule o ajuste inventario. Cada llamada de herramienta pasa por
@@ -285,12 +307,12 @@ neutral del producto.
 - Supabase SSR usa un cliente de servidor y otro de navegador. El Proxy de
   Next.js renueva cookies de sesión, pero las operaciones verifican usuario y
   permisos en RLS o en la función correspondiente.
-- Tailwind CSS 4 se incorpora con el plugin PostCSS compatible con Next.js.
-  Sus utilidades sirven para disposición, rejillas y espaciado. Color,
-  tipografía y apariencia visual salen del sistema de diseño.
-- La hoja global se importa desde el layout raíz. Tailwind se procesa antes
-  que el CSS del sistema; los estilos base del sistema conservan el orden de
-  importación aprobado en Trayecto.
+- El MVP usa CSS del sistema visual, propiedades personalizadas y estilos
+  específicos por módulo. No incorpora Tailwind ni añade otra capa de
+  utilidades.
+- `src/app/globals.css` se importa desde el layout raíz y carga los estilos
+  compartidos y los específicos de facturación. El orden de importación y los
+  tokens del sistema visual se mantienen como parte del contrato de diseño.
 - Las fuentes se sirven desde el dominio de la aplicación, con los mismos
   pesos y subconjuntos del sistema existente.
 - Prettier mantiene formato uniforme junto con ESLint y TypeScript.
@@ -305,8 +327,8 @@ La aplicación incluye:
 - Inventario y movimientos.
 - Clientes.
 - Ventas: lista, detalle y creación.
-- Facturación: comprobante, estado, reintento y descarga si el proveedor la
-  ofrece.
+- Facturación: estado del comprobante, reintento y descarga si el proveedor la
+  ofrece; la emisión ocurre al confirmar la venta.
 - Asistente de IA, accesible desde las páginas de operación y desde la
   navegación principal.
 - Reportes básicos.
@@ -331,8 +353,9 @@ inferior y las restantes se agrupan en una hoja de navegación.
 - Las tablas incluyen rótulos de columna para lectura móvil. Los datos numéricos
   y monetarios conservan alineación y formato legibles.
 - El asistente muestra la diferencia entre una consulta, una propuesta y una
-  acción confirmada. Una propuesta de venta se representa como borrador con el
-  precio y las advertencias devueltos por el servidor.
+  acción confirmada. Una propuesta de venta exige cliente y se representa en el
+  chat como borrador con el detalle e importe devueltos por el servidor; la
+  persona la confirma explícitamente desde la tarjeta o Ventas.
 
 ### 4.5 Roles reflejados en interfaz
 
@@ -365,9 +388,10 @@ contratos compartidos de datos y permisos.
   cubrir talla, color y productos sin variantes.
 - Un vendedor consulta solo las ventas que registró; el administrador consulta
   todas.
-- La primera entrega visible emite facturas por NubeFacT y distingue el envío de
-  la aceptación de SUNAT. Boletas, su consulta posterior, notas de crédito y
-  anulaciones fiscales quedan fuera de este alcance.
+- La primera entrega visible emite facturas y boletas por NubeFacT y distingue
+  el envío de la aceptación de SUNAT. La aceptación de las boletas se consulta
+  manualmente después de siete días; notas de crédito y anulaciones fiscales
+  quedan fuera de este alcance.
 - La IA usa una integración reemplazable y nunca confirma operaciones.
 - El sistema visual de Trayecto se reutiliza. La identidad gráfica de Tomhjey
   se trata aparte y no se reemplaza por la marca de Trayecto.

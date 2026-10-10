@@ -96,13 +96,25 @@
 }
 
 .modulo-operativo__formulario .campo {
+  align-content: start;
   min-width: 0;
 }
 
-.modulo-operativo__formulario input,
+.modulo-operativo__documento-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.modulo-operativo__documento-control button {
+  white-space: nowrap;
+}
+
+.modulo-operativo__formulario input:not([type="checkbox"]),
 .modulo-operativo__formulario select,
 .modulo-operativo__formulario textarea,
-.modulo-operativo__panel input,
+.modulo-operativo__panel input:not([type="checkbox"]),
 .modulo-operativo__panel select {
   width: 100%;
   min-height: var(--toque);
@@ -219,6 +231,81 @@
 .asistente-modulo__mensaje p {
   margin: 0;
   line-height: 1.55;
+}
+
+.asistente-modulo__borrador-venta {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 0.8rem;
+  padding: 0.9rem;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-campo);
+  background: var(--papel);
+  color: var(--tinta);
+}
+
+.asistente-modulo__borrador-confirmacion {
+  display: grid;
+  justify-items: start;
+  gap: 0.7rem;
+}
+
+.modulo-operativo__opciones-comprobante {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem 1.2rem;
+  margin: 0;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-campo);
+}
+
+.modulo-operativo__opciones-comprobante legend {
+  padding: 0 0.25rem;
+  color: var(--tinta-suave);
+  font-size: 0.84rem;
+  font-weight: 650;
+}
+
+.modulo-operativo__opciones-comprobante label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+}
+
+.modulo-operativo__opciones-comprobante input {
+  accent-color: var(--acento);
+}
+
+.asistente-modulo__borrador-encabezado,
+.asistente-modulo__borrador-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.asistente-modulo__borrador-lineas {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.asistente-modulo__borrador-lineas li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.75rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid var(--borde);
+}
+
+.asistente-modulo__borrador-total {
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--borde);
 }
 
 .asistente-modulo__formulario {

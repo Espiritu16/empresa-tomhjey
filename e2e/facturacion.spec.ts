@@ -27,9 +27,19 @@ test("muestra los flujos de factura y boleta y bloquea emisión sin datos fiscal
   await expect(
     page.getByRole("heading", { name: "Serie de boleta" }),
   ).toBeVisible();
-  await expect(
-    page.getByText("No hay ventas listas para emitir"),
-  ).toBeVisible();
+  const ventasFacturables = page.getByRole("button", {
+    name: "Emitir factura",
+  });
+  if ((await ventasFacturables.count()) === 0) {
+    await expect(
+      page.getByText("No hay ventas listas para emitir"),
+    ).toBeVisible();
+  } else {
+    await expect(ventasFacturables.first()).toBeDisabled();
+    await expect(
+      page.getByRole("button", { name: "Emitir boleta" }).first(),
+    ).toBeDisabled();
+  }
   await expect(page.getByRole("button", { name: "Guardar serie" })).toHaveCount(
     2,
   );

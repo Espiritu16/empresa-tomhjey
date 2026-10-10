@@ -17,7 +17,7 @@ electrónica con asistencia de IA. El producto no administra otras empresas como
 8. **Facturación electrónica:** emisión y seguimiento de comprobantes mediante NubeFacT.
 9. **Asistente con IA:** consultas del negocio y preparación de acciones; la persona confirma
    antes de guardar cambios.
-10. **Reportes básicos:** ventas por periodo, productos vendidos y existencias.
+10. **Reportes básicos:** ventas por periodo, productos vendidos y existencias; los importes se presentan separados por moneda.
 
 ## Roles
 
@@ -39,6 +39,11 @@ empresa antes de implementar esa consulta.
 
 - Administración configura una serie F para facturas y una B para boletas; el correlativo no
   puede retroceder.
+- Al armar una venta, la persona elige factura o boleta y esa elección queda guardada en el
+  borrador. Al confirmarla, el sistema la envía a NubeFacT inmediatamente. No existe un paso
+  posterior de «facturar».
+- El vendedor puede emitir y reintentar únicamente comprobantes de sus propias ventas. La
+  configuración fiscal y la consulta de aceptación de boletas quedan para administración.
 - Facturas requieren RUC válido de la empresa y del cliente. Las boletas siguen la validación
   fiscal de identificación del cliente aplicada en el backend.
 - La emisión exitosa de una factura muestra la aceptación que devuelve NubeFacT. La boleta se
@@ -46,6 +51,8 @@ empresa antes de implementar esa consulta.
   con consultas separadas por al menos 24 horas mientras siga pendiente.
 - No hay consulta automática ni cron. Notas de crédito y anulaciones fiscales quedan fuera del
   MVP actual.
+- Facturación sirve para consultar estados, reintentar envíos recuperables y revisar PDF; no
+  ofrece una lista de ventas pendientes para emitir manualmente.
 
 ## Límites
 
@@ -55,8 +62,8 @@ empresa antes de implementar esa consulta.
 - Sin sucursales, locales o stock separado por sede.
 - NubeFacT es la integración de facturación prevista. No se incluye selector de proveedor ni
   modo manual alternativo.
-- La IA respeta los permisos del usuario. No confirma operaciones ni evita las validaciones
-  del servidor.
+- La IA respeta los permisos del usuario. Para preparar una venta pregunta si será factura o
+  boleta cuando aún no se indicó; no confirma operaciones ni evita las validaciones del servidor.
 - Sin compras a proveedores, predicción de demanda, tienda en línea, catálogo público,
   analítica avanzada, planes o suscripciones.
 

@@ -158,3 +158,24 @@
 - [x] Actualizar la especificación y README; verificar formato, lint, tipos, build, Edge Functions y diff. No ejecutar pruebas, aplicar migraciones ni llamar al proveedor.
 
 **Entrega comprobable:** administración emite facturas y boletas; factura muestra aceptación inmediata si NubeFacT la confirma, y boleta solo cambia su aceptación tras consulta manual disponible desde el séptimo día.
+
+## Ajuste aprobado: elección al armar y emisión al confirmar
+
+El 9 de octubre de 2026 se aprobó que emitir sea parte de confirmar una venta:
+
+- Al armar una venta en Ventas o con el asistente, se elige factura o boleta; el
+  servidor guarda esa elección en el borrador. Al confirmar, el servidor guarda
+  la venta y luego se llama a la Edge Function de facturación.
+- El asistente pregunta si corresponde factura o boleta antes de crear el
+  borrador y la tarjeta muestra el tipo elegido.
+- Facturación deja de listar ventas pendientes de emisión. Queda para consultar
+  el estado, reintentar errores recuperables y descargar el PDF.
+- El vendedor emite y reintenta solo comprobantes de ventas propias. La
+  configuración de series y la consulta de boletas siguen siendo de
+  administración.
+- Si el envío falla tras confirmar, la venta conserva su tipo y el reintento
+  no vuelve a descontar existencias. La reserva de comprobante conserva el
+  correlativo y reconcilia respuestas inciertas.
+- Se implementa con `supabase/migrations/20261010022710_emision_automatica_venta_confirmada.sql`
+  y se aplica solo al Supabase local. No se llama a NubeFacT durante esta
+  implementación.

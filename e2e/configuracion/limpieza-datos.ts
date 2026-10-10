@@ -4,8 +4,11 @@ export async function limpiarDatosE2E(
   supabase: SupabaseClient,
   usuarioIds: string[],
   empresaCreada: boolean,
+  identificadorE2E: string,
 ): Promise<void> {
   const errores: string[] = [];
+  const prefijoInvitacion = `e2e-invitado-${identificadorE2E}-`;
+  const prefijoCategoria = `E2E-${identificadorE2E}-`;
   const usuariosInvitados = await supabase.auth.admin.listUsers({
     page: 1,
     perPage: 1000,
@@ -14,7 +17,7 @@ export async function limpiarDatosE2E(
     throw new Error("No se pudieron revisar las cuentas invitadas E2E.");
   }
   const invitadosE2E = usuariosInvitados.data.users.filter((usuario) =>
-    usuario.email?.startsWith("e2e-invitado-"),
+    usuario.email?.startsWith(prefijoInvitacion),
   );
   const ventas = usuarioIds.length
     ? await supabase.from("ventas").select("id").in("creado_por", usuarioIds)
@@ -65,7 +68,7 @@ export async function limpiarDatosE2E(
   const { error: errorInvitacionesTemporales } = await supabase
     .from("invitaciones")
     .delete()
-    .like("correo", "e2e-invitado-%@example.com");
+    .like("correo", `${prefijoInvitacion}%@example.com`);
   if (errorInvitacionesTemporales) errores.push("invitaciones temporales");
   if (productoIds.length) {
     const { error } = await supabase
@@ -95,7 +98,7 @@ export async function limpiarDatosE2E(
   const { error: errorCategorias } = await supabase
     .from("categorias")
     .delete()
-    .like("nombre", "E2E-%");
+    .like("nombre", `${prefijoCategoria}%`);
   if (errorCategorias) errores.push("categorías");
 
   if (empresaCreada) {

@@ -20,7 +20,7 @@ import {
   type RespuestaProveedor,
 } from "./proveedor.ts";
 
-const maximoDeVueltasDeHerramienta = 3;
+const maximoDeVueltasDeHerramienta = 8;
 const maximoDeCaracteres = 4000;
 const limiteHistorial = 12;
 
@@ -126,7 +126,7 @@ async function atender(request: Request): Promise<Response> {
         503,
         "ia_no_configurada",
       );
-    const model = Deno.env.get("OPENAI_MODEL") ?? "gpt-5.6-luna";
+    const model = Deno.env.get("OPENAI_MODEL") ?? "gpt-6-luna";
     const entrada = (historial ?? []).reverse().map((item) => ({
       role: item.rol === "usuario" ? ("user" as const) : ("assistant" as const),
       content: item.contenido,
@@ -137,6 +137,7 @@ async function atender(request: Request): Promise<Response> {
       { apiKey, model },
       herramientas,
     );
+    let borradorVentaId: string | null = null;
     let vueltas = 0;
     while (true) {
       const llamadas = extraerLlamadas(respuesta);
@@ -175,7 +176,17 @@ async function atender(request: Request): Promise<Response> {
             sesion.cliente,
             nombre,
             argumentos,
+            sesion.perfil.rol,
           );
+          if (
+            nombre === "armar_borrador_venta" &&
+            salida &&
+            typeof salida === "object" &&
+            "ventaId" in salida &&
+            typeof salida.ventaId === "string"
+          ) {
+            borradorVentaId = salida.ventaId;
+          }
           resultados.push({
             type: "function_call_output",
             call_id: callId,
@@ -228,6 +239,7 @@ async function atender(request: Request): Promise<Response> {
         conversacion_id: conversacionId,
         rol: "asistente",
         contenido: respuestaTexto,
+        venta_id: borradorVentaId,
       });
     if (errorRespuesta)
       throw new ErrorHttp(
@@ -241,7 +253,11 @@ async function atender(request: Request): Promise<Response> {
       .eq("id", conversacionId)
       .eq("usuario_id", sesion.usuarioId);
 
-    return responderJson({ conversacionId, mensaje: respuestaTexto });
+    return responderJson({
+      conversacionId,
+      mensaje: respuestaTexto,
+      ...(borradorVentaId ? { borradorVentaId } : {}),
+    });
   } catch (error) {
     if (error instanceof Error && !(error instanceof ErrorHttp)) {
       console.error("Fallo del proveedor o del asistente", error.name);

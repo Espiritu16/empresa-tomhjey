@@ -1,7 +1,9 @@
 import { crearClienteSupabaseServidor } from "@/compartido/supabase/servidor";
+import { convertirTotalesPorMoneda } from "@/compartido/formato-moneda";
 
 export type FilaReporte = {
   descripcion: string;
+  moneda: "PEN" | "USD";
   ventas: number;
   unidades: number;
   total: number;
@@ -9,7 +11,8 @@ export type FilaReporte = {
 
 export type ResumenReporte = {
   ventas: number;
-  total: number;
+  totalesPorMoneda: Partial<Record<"PEN" | "USD", number>>;
+  monedaBase: "PEN" | "USD";
   stockBajo: number;
 };
 
@@ -50,6 +53,7 @@ export async function consultarReporte(desde: string, hasta: string) {
   const datos = (resumen.data ?? {}) as Record<string, unknown>;
   const filas = (reporte.data ?? []) as {
     descripcion: string;
+    moneda: "PEN" | "USD";
     ventas: number;
     unidades: number;
     total: number;
@@ -57,13 +61,15 @@ export async function consultarReporte(desde: string, hasta: string) {
   return {
     filas: filas.map((fila) => ({
       descripcion: fila.descripcion,
+      moneda: fila.moneda,
       ventas: Number(fila.ventas),
       unidades: Number(fila.unidades),
       total: Number(fila.total),
     })) as FilaReporte[],
     resumen: {
       ventas: Number(datos.ventas ?? 0),
-      total: Number(datos.total_ventas ?? 0),
+      totalesPorMoneda: convertirTotalesPorMoneda(datos.totales_por_moneda),
+      monedaBase: datos.moneda_base === "USD" ? "USD" : "PEN",
       stockBajo: Number(datos.stock_bajo ?? 0),
     } satisfies ResumenReporte,
     error: null,

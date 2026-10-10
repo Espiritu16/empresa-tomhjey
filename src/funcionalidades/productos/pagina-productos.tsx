@@ -55,6 +55,9 @@ export function PaginaProductos({
   const [nombreOpcion2, setNombreOpcion2] = useState("Color");
   const [valoresOpcion2, setValoresOpcion2] = useState("");
   const [guardando, setGuardando] = useState(false);
+  const [productoActualizando, setProductoActualizando] = useState<
+    string | null
+  >(null);
   const [mensaje, setMensaje] = useState<string | null>(null);
   const [error, setError] = useState(errorInicial);
 
@@ -267,6 +270,29 @@ export function PaginaProductos({
     router.refresh();
   }
 
+  async function cambiarEstado(producto: Producto) {
+    setError(null);
+    setMensaje(null);
+    setProductoActualizando(producto.id);
+    const { data, error: errorCambio } = await crearClienteSupabase()
+      .from("productos")
+      .update({ activo: !producto.activo })
+      .eq("id", producto.id)
+      .select("id")
+      .maybeSingle();
+    setProductoActualizando(null);
+    if (errorCambio || !data) {
+      setError("No se pudo actualizar el estado del producto.");
+      return;
+    }
+    setMensaje(
+      producto.activo
+        ? "El producto se inactivó. Puedes volver a activarlo cuando quieras."
+        : "El producto se activó.",
+    );
+    router.refresh();
+  }
+
   return (
     <section className="modulo-operativo">
       <header className="encabezado-seccion">
@@ -401,6 +427,15 @@ export function PaginaProductos({
                     >
                       Editar
                     </button>
+                    <button
+                      aria-label={`${producto.activo ? "Inactivar" : "Activar"} ${producto.nombre}`}
+                      className="modulo-operativo__boton-texto"
+                      disabled={productoActualizando === producto.id}
+                      onClick={() => void cambiarEstado(producto)}
+                      type="button"
+                    >
+                      {producto.activo ? "Inactivar" : "Activar"}
+                    </button>
                   </td>
                 ) : null}
               </tr>
@@ -489,7 +524,7 @@ export function PaginaProductos({
                 </select>
               </label>
               {!productoEditado ? (
-                <label className="campo modulo-operativo__ancho-completo">
+                <label className="campo modulo-operativo__check modulo-operativo__ancho-completo">
                   <input
                     checked={usaCombinaciones}
                     onChange={(evento) =>

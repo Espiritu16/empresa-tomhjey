@@ -2,6 +2,10 @@
 
 import { useState, type FormEvent } from "react";
 import { crearClienteSupabase } from "@/compartido/supabase/cliente";
+import {
+  convertirTotalesPorMoneda,
+  formatearTotalesPorMoneda,
+} from "@/compartido/formato-moneda";
 import type { FilaReporte, ResumenReporte } from "./consultas";
 
 export function PaginaReportes({
@@ -51,6 +55,7 @@ export function PaginaReportes({
     const datos = (resumenRespuesta.data ?? {}) as Record<string, unknown>;
     const filasRespuesta = (reporte.data ?? []) as {
       descripcion: string;
+      moneda: "PEN" | "USD";
       ventas: number;
       unidades: number;
       total: number;
@@ -58,6 +63,7 @@ export function PaginaReportes({
     setFilas(
       filasRespuesta.map((fila) => ({
         descripcion: fila.descripcion,
+        moneda: fila.moneda,
         ventas: Number(fila.ventas),
         unidades: Number(fila.unidades),
         total: Number(fila.total),
@@ -65,7 +71,8 @@ export function PaginaReportes({
     );
     setResumen({
       ventas: Number(datos.ventas ?? 0),
-      total: Number(datos.total_ventas ?? 0),
+      totalesPorMoneda: convertirTotalesPorMoneda(datos.totales_por_moneda),
+      monedaBase: datos.moneda_base === "USD" ? "USD" : "PEN",
       stockBajo: Number(datos.stock_bajo ?? 0),
     });
   }
@@ -137,7 +144,14 @@ export function PaginaReportes({
         />
         <Indicador
           rotulo="TOTAL VENDIDO"
-          valor={resumen ? importe(resumen.total) : "—"}
+          valor={
+            resumen
+              ? formatearTotalesPorMoneda(
+                  resumen.totalesPorMoneda,
+                  resumen.monedaBase,
+                )
+              : "—"
+          }
         />
         <Indicador
           rotulo="PRODUCTOS POR REPONER"
@@ -164,7 +178,7 @@ export function PaginaReportes({
             </thead>
             <tbody>
               {filas.map((fila) => (
-                <tr key={fila.descripcion}>
+                <tr key={`${fila.moneda}-${fila.descripcion}`}>
                   <td>
                     <strong>{fila.descripcion}</strong>
                   </td>
@@ -174,7 +188,9 @@ export function PaginaReportes({
                       maximumFractionDigits: 3,
                     }).format(fila.unidades)}
                   </td>
-                  <td>{importe(fila.total)}</td>
+                  <td>
+                    {formatearTotalesPorMoneda({ [fila.moneda]: fila.total })}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -198,11 +214,4 @@ function Indicador({ rotulo, valor }: { rotulo: string; valor: string }) {
       <p className="tarjeta-indicador__valor">{valor}</p>
     </article>
   );
-}
-
-function importe(valor: number) {
-  return new Intl.NumberFormat("es-PE", {
-    style: "currency",
-    currency: "PEN",
-  }).format(valor);
 }

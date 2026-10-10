@@ -1,0 +1,144 @@
+.dialogo {
+  width: min(100% - 2rem, 31rem);
+  max-width: 31rem;
+  max-height: min(90dvh, 42rem);
+  margin: auto;
+  padding: 1.5rem;
+  overflow: auto;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-tarjeta-alta);
+  background: var(--papel);
+  color: var(--tinta);
+  box-shadow: var(--sombra-tarjeta);
+}
+
+.dialogo::backdrop {
+  background: rgb(20 24 39 / 48%);
+  backdrop-filter: blur(3px);
+}
+
+.contenido {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.icono {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgb(168 51 43 / 16%);
+  border-radius: 50%;
+  background: #fbefed;
+  color: var(--error);
+  font-family: var(--familia-titulo);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.texto {
+  min-width: 0;
+  padding-top: 0.12rem;
+}
+
+.titulo {
+  font-size: 1.35rem;
+}
+
+.descripcion {
+  margin-top: 0.65rem;
+  color: var(--tinta-suave);
+  line-height: 1.6;
+}
+
+.error {
+  margin-top: 1rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid rgb(168 51 43 / 20%);
+  border-radius: var(--radio-caja);
+  background: #fbefed;
+  color: var(--error);
+  font-size: 0.9rem;
+}
+
+.acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  margin-top: 1.6rem;
+}
+
+.secundario,
+.confirmar,
+.peligro {
+  min-height: var(--toque);
+  padding: 0.65rem 1rem;
+  border: 1px solid transparent;
+  border-radius: var(--radio-campo);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
+}
+
+.secundario {
+  border-color: var(--borde);
+  background: var(--papel);
+  color: var(--tinta);
+}
+
+.secundario:hover:not(:disabled) {
+  background: var(--niebla);
+}
+
+.confirmar {
+  background: var(--acento);
+  color: var(--sobre-acento);
+}
+
+.confirmar:hover:not(:disabled) {
+  background: var(--acento-viva);
+}
+
+.peligro {
+  background: var(--error);
+  color: var(--sobre-acento);
+}
+
+.peligro:hover:not(:disabled) {
+  background: #8d2923;
+}
+
+.secundario:active:not(:disabled),
+.confirmar:active:not(:disabled),
+.peligro:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.secundario:disabled,
+.confirmar:disabled,
+.peligro:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+@media (max-width: 480px) {
+  .dialogo {
+    padding: 1.2rem;
+    border-radius: var(--radio-tarjeta);
+  }
+
+  .acciones {
+    flex-direction: column-reverse;
+  }
+
+  .secundario,
+  .confirmar,
+  .peligro {
+    width: 100%;
+  }
+}

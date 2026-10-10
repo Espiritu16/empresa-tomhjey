@@ -7,12 +7,12 @@ import type {
   ComprobanteFacturacion,
   PaginaFacturacion as DatosFacturacion,
   TipoComprobante,
-  VentaFacturable,
 } from "./consultas";
+import { enlacePdfSeguro } from "./enlace-pdf";
 
-type Propiedades = { datos: DatosFacturacion };
+type Propiedades = { datos: DatosFacturacion; esAdministrador: boolean };
 
-export function PaginaFacturacion({ datos }: Propiedades) {
+export function PaginaFacturacion({ datos, esAdministrador }: Propiedades) {
   const router = useRouter();
   const [serieFormularios, setSerieFormularios] = useState(() => ({
     factura: {
@@ -100,10 +100,6 @@ export function PaginaFacturacion({ datos }: Propiedades) {
     } finally {
       setGuardandoSerie(null);
     }
-  }
-
-  async function emitir(venta: VentaFacturable, tipo: TipoComprobante) {
-    await ejecutarEmision(venta.id, venta.clienteNombre, tipo, "Emitir");
   }
 
   async function reintentar(comprobante: ComprobanteFacturacion) {
@@ -195,14 +191,6 @@ export function PaginaFacturacion({ datos }: Propiedades) {
 
   const serieDe = (tipo: TipoComprobante) =>
     datos.series.find((serie) => serie.tipo === tipo);
-  const puedeEmitir = (venta: VentaFacturable, tipo: TipoComprobante) => {
-    if (!datos.empresa?.ruc || !serieDe(tipo)) return false;
-    const tieneDocumento = Boolean(venta.clienteNumeroDocumento?.trim());
-    if (tipo === "factura") {
-      return venta.clienteTipoDocumento === "ruc" && tieneDocumento;
-    }
-    return venta.total <= 700 || tieneDocumento;
-  };
   const aceptadas = datos.comprobantes.filter(fueAceptada).length;
   const pendientes = datos.comprobantes.filter(
     (comprobante) =>
@@ -217,8 +205,8 @@ export function PaginaFacturacion({ datos }: Propiedades) {
           <p className="rotulo">DOCUMENTOS FISCALES</p>
           <h1>Facturación</h1>
           <p className="encabezado-seccion__texto">
-            Emite facturas y boletas de tus ventas confirmadas y consulta la
-            respuesta de NubeFacT.
+            Revisa el estado de los comprobantes que se enviaron al confirmar
+            cada venta y recupera los envíos que lo requieran.
           </p>
         </div>
       </header>
@@ -268,187 +256,99 @@ export function PaginaFacturacion({ datos }: Propiedades) {
         </article>
       </section>
 
-      {(["factura", "boleta"] as const).map((tipo) => {
-        const prefijo = tipo === "factura" ? "F" : "B";
-        const serieActiva = serieDe(tipo);
-        const formulario = serieFormularios[tipo];
-        return (
-          <section
-            aria-labelledby={`serie-${tipo}-titulo`}
-            className="facturacion__tarjeta"
-            key={tipo}
-          >
-            <div className="facturacion__titulo-bloque">
-              <div>
-                <p className="rotulo">CONFIGURACIÓN FISCAL</p>
-                <h2 id={`serie-${tipo}-titulo`}>
-                  Serie de {tipo === "factura" ? "factura" : "boleta"}
-                </h2>
-              </div>
-              {serieActiva ? (
-                <span className="facturacion__serie-activa">
-                  {serieActiva.serie}
-                </span>
-              ) : null}
-            </div>
-            <p className="facturacion__descripcion">
-              Usa la serie y el siguiente correlativo habilitados en tu cuenta
-              de NubeFacT. El sistema no permite retroceder el número.
-            </p>
-            <form
-              className="facturacion__formulario-serie"
-              onSubmit={(evento) => void guardarSerie(evento, tipo)}
-            >
-              <label>
-                <span>Serie</span>
-                <input
-                  autoComplete="off"
-                  maxLength={4}
-                  onChange={(evento) =>
-                    setSerieFormularios((actual) => ({
-                      ...actual,
-                      [tipo]: {
-                        ...actual[tipo],
-                        serie: evento.target.value.toUpperCase(),
-                      },
-                    }))
-                  }
-                  pattern={`${prefijo}[A-Z0-9]{3}`}
-                  placeholder={`${prefijo}001`}
-                  required
-                  value={formulario.serie}
-                />
-              </label>
-              <label>
-                <span>Siguiente correlativo</span>
-                <input
-                  inputMode="numeric"
-                  min="1"
-                  onChange={(evento) =>
-                    setSerieFormularios((actual) => ({
-                      ...actual,
-                      [tipo]: {
-                        ...actual[tipo],
-                        siguienteNumero: evento.target.value,
-                      },
-                    }))
-                  }
-                  placeholder="1"
-                  required
-                  step="1"
-                  type="number"
-                  value={formulario.siguienteNumero}
-                />
-              </label>
-              <button
-                className="boton-principal"
-                disabled={guardandoSerie !== null}
-                type="submit"
+      {esAdministrador
+        ? (["factura", "boleta"] as const).map((tipo) => {
+            const prefijo = tipo === "factura" ? "F" : "B";
+            const serieActiva = serieDe(tipo);
+            const formulario = serieFormularios[tipo];
+            return (
+              <section
+                aria-labelledby={`serie-${tipo}-titulo`}
+                className="facturacion__tarjeta"
+                key={tipo}
               >
-                {guardandoSerie === tipo ? "Guardando…" : "Guardar serie"}
-              </button>
-            </form>
-          </section>
-        );
-      })}
+                <div className="facturacion__titulo-bloque">
+                  <div>
+                    <p className="rotulo">CONFIGURACIÓN FISCAL</p>
+                    <h2 id={`serie-${tipo}-titulo`}>
+                      Serie de {tipo === "factura" ? "factura" : "boleta"}
+                    </h2>
+                  </div>
+                  {serieActiva ? (
+                    <span className="facturacion__serie-activa">
+                      {serieActiva.serie}
+                    </span>
+                  ) : null}
+                </div>
+                <p className="facturacion__descripcion">
+                  Usa la serie y el siguiente correlativo habilitados en tu
+                  cuenta de NubeFacT. El sistema no permite retroceder el
+                  número.
+                </p>
+                <form
+                  className="facturacion__formulario-serie"
+                  onSubmit={(evento) => void guardarSerie(evento, tipo)}
+                >
+                  <label>
+                    <span>Serie</span>
+                    <input
+                      autoComplete="off"
+                      maxLength={4}
+                      onChange={(evento) =>
+                        setSerieFormularios((actual) => ({
+                          ...actual,
+                          [tipo]: {
+                            ...actual[tipo],
+                            serie: evento.target.value.toUpperCase(),
+                          },
+                        }))
+                      }
+                      pattern={`${prefijo}[A-Z0-9]{3}`}
+                      placeholder={`${prefijo}001`}
+                      required
+                      value={formulario.serie}
+                    />
+                  </label>
+                  <label>
+                    <span>Siguiente correlativo</span>
+                    <input
+                      inputMode="numeric"
+                      min="1"
+                      onChange={(evento) =>
+                        setSerieFormularios((actual) => ({
+                          ...actual,
+                          [tipo]: {
+                            ...actual[tipo],
+                            siguienteNumero: evento.target.value,
+                          },
+                        }))
+                      }
+                      placeholder="1"
+                      required
+                      step="1"
+                      type="number"
+                      value={formulario.siguienteNumero}
+                    />
+                  </label>
+                  <button
+                    className="boton-principal"
+                    disabled={guardandoSerie !== null}
+                    type="submit"
+                  >
+                    {guardandoSerie === tipo ? "Guardando…" : "Guardar serie"}
+                  </button>
+                </form>
+              </section>
+            );
+          })
+        : null}
 
-      <section
-        aria-labelledby="ventas-facturables-titulo"
-        className="facturacion__tarjeta"
-      >
-        <div className="facturacion__titulo-bloque">
-          <div>
-            <p className="rotulo">VENTAS CONFIRMADAS</p>
-            <h2 id="ventas-facturables-titulo">Listas para emitir</h2>
-          </div>
-          <span className="facturacion__contador">
-            {datos.ventasElegibles.length}
-          </span>
-        </div>
-        {!datos.empresa?.ruc ? (
-          <p className="facturacion__nota">
-            Completa el RUC de la empresa para habilitar la emisión.
-          </p>
-        ) : null}
-        {datos.ventasElegibles.length === 0 ? (
-          <div className="facturacion__vacio">
-            <strong>No hay ventas listas para emitir</strong>
-            <span>
-              Aquí aparecerán las ventas confirmadas que todavía no tengan
-              comprobante.
-            </span>
-          </div>
-        ) : (
-          <div className="facturacion__tabla-contenedor">
-            <table className="facturacion__tabla">
-              <thead>
-                <tr>
-                  <th scope="col">Fecha</th>
-                  <th scope="col">Cliente</th>
-                  <th scope="col">Documento</th>
-                  <th scope="col">Total</th>
-                  <th scope="col">
-                    <span className="visualmente-oculto">Acción</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {datos.ventasElegibles.map((venta) => (
-                  <tr key={venta.id}>
-                    <td>{formatearFecha(venta.confirmadoEn)}</td>
-                    <td>{venta.clienteNombre}</td>
-                    <td className="facturacion__mono">
-                      {etiquetaDocumento(
-                        venta.clienteTipoDocumento,
-                        venta.clienteNumeroDocumento,
-                      )}
-                    </td>
-                    <td className="facturacion__mono">
-                      {formatearImporte(venta.total, venta.moneda)}
-                    </td>
-                    <td className="facturacion__accion">
-                      <button
-                        className="facturacion__boton-secundario"
-                        disabled={
-                          !puedeEmitir(venta, "factura") || operacionId !== null
-                        }
-                        onClick={() => void emitir(venta, "factura")}
-                        title={
-                          !puedeEmitir(venta, "factura")
-                            ? "Para emitir factura, el cliente debe tener RUC."
-                            : undefined
-                        }
-                        type="button"
-                      >
-                        {operacionId === venta.id
-                          ? "Enviando…"
-                          : "Emitir factura"}
-                      </button>
-                      <button
-                        className="facturacion__boton-secundario"
-                        disabled={
-                          !puedeEmitir(venta, "boleta") || operacionId !== null
-                        }
-                        onClick={() => void emitir(venta, "boleta")}
-                        title={
-                          !puedeEmitir(venta, "boleta")
-                            ? "La boleta requiere identificar al cliente cuando supera S/ 700."
-                            : undefined
-                        }
-                        type="button"
-                      >
-                        {operacionId === venta.id
-                          ? "Enviando…"
-                          : "Emitir boleta"}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+      {!esAdministrador ? (
+        <p className="facturacion__nota">
+          Puedes revisar y reintentar los comprobantes de tus ventas. La
+          configuración fiscal está disponible para administración.
+        </p>
+      ) : null}
 
       <section
         aria-labelledby="historial-facturas-titulo"
@@ -457,7 +357,7 @@ export function PaginaFacturacion({ datos }: Propiedades) {
         <div className="facturacion__titulo-bloque">
           <div>
             <p className="rotulo">SEGUIMIENTO</p>
-            <h2 id="historial-facturas-titulo">Comprobantes emitidos</h2>
+            <h2 id="historial-facturas-titulo">Comprobantes y envíos</h2>
           </div>
         </div>
         {datos.comprobantes.length === 0 ? (
@@ -537,7 +437,8 @@ export function PaginaFacturacion({ datos }: Propiedades) {
                               : "Reintentar"}
                         </button>
                       ) : null}
-                      {comprobante.tipo === "boleta" &&
+                      {esAdministrador &&
+                      comprobante.tipo === "boleta" &&
                       comprobante.estado === "emitido" &&
                       !fueAceptada(comprobante) ? (
                         <>
@@ -651,21 +552,6 @@ function claseEstado(comprobante: ComprobanteFacturacion) {
   return "facturacion__estado facturacion__estado--pendiente";
 }
 
-function etiquetaDocumento(tipo: string | null, numero: string | null) {
-  if (!numero) return "Sin documento";
-  const etiqueta =
-    tipo === "ruc"
-      ? "RUC"
-      : tipo === "dni"
-        ? "DNI"
-        : tipo === "ce"
-          ? "CE"
-          : tipo === "pasaporte"
-            ? "Pasaporte"
-            : "Documento";
-  return `${etiqueta} ${numero}`;
-}
-
 function fechaProximaConsulta(
   comprobante: ComprobanteFacturacion,
 ): Date | null {
@@ -687,18 +573,4 @@ function puedeConsultarBoleta(comprobante: ComprobanteFacturacion) {
 function consultaBoletaEnProceso(comprobante: ComprobanteFacturacion) {
   if (!comprobante.consultaEnProcesoHasta) return false;
   return new Date(comprobante.consultaEnProcesoHasta).getTime() > Date.now();
-}
-
-function enlacePdfSeguro(enlace: string | null) {
-  if (!enlace) return null;
-  try {
-    const url = new URL(enlace);
-    return url.protocol === "https:" &&
-      (url.hostname === "nubefact.com" ||
-        url.hostname.endsWith(".nubefact.com"))
-      ? url.toString()
-      : null;
-  } catch {
-    return null;
-  }
 }

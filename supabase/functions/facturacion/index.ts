@@ -103,11 +103,11 @@ async function manejar(request: Request): Promise<Response> {
   try {
     const sesion = await autenticar(request);
     sesionActiva = sesion;
-    exigirAdministrador(sesion);
     const cuerpo = exigirObjetoJson(await request.json().catch(() => null));
     const clienteInterno = clientePrivilegiado();
 
     if (cuerpo.operacion === "consultar_boleta") {
+      exigirAdministrador(sesion);
       const comprobanteId = cuerpo.comprobanteId;
       if (
         typeof comprobanteId !== "string" ||
@@ -187,6 +187,7 @@ async function manejar(request: Request): Promise<Response> {
     }
 
     if (cuerpo.operacion === "configurar_serie") {
+      exigirAdministrador(sesion);
       const tipo = cuerpo.tipo;
       const serie = cuerpo.serie;
       const siguienteNumero = cuerpo.siguienteNumero;
@@ -251,6 +252,16 @@ async function manejar(request: Request): Promise<Response> {
     }
     if (tipo !== "factura" && tipo !== "boleta") {
       throw new ErrorHttp("Selecciona factura o boleta.", 400, "tipo_invalido");
+    }
+    if (
+      sesion.perfil.rol !== "administrador" &&
+      sesion.perfil.rol !== "vendedor"
+    ) {
+      throw new ErrorHttp(
+        "La cuenta no puede emitir comprobantes.",
+        403,
+        "rol_requerido",
+      );
     }
 
     const credenciales = leerCredenciales();

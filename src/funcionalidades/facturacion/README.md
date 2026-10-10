@@ -1,7 +1,10 @@
 # Facturación
 
-Emisión y seguimiento de facturas y boletas mediante NubeFacT. Solo
-administración puede configurar las series y emitir.
+Emisión y seguimiento de facturas y boletas mediante NubeFacT. Al armar una
+venta, la persona elige el tipo de comprobante y queda guardado en el borrador;
+al confirmarla, el sistema lo envía de inmediato. Administración configura las series y consulta la aceptación de
+boletas; un vendedor puede emitir y reintentar solo comprobantes de sus propias
+ventas.
 
 ## Antes de emitir
 
@@ -9,7 +12,11 @@ administración puede configurar las series y emitir.
 - Configura por separado la serie F para facturas y B para boletas, con el
   siguiente correlativo que NubeFacT tiene habilitado. El sistema no permite
   retroceder un correlativo y conserva las series anteriores como inactivas.
-- La venta debe estar confirmada y no tener ya un comprobante. La factura
+- La venta se prepara desde Ventas o desde el asistente y se le asigna un único
+  tipo de comprobante antes de confirmarla. Facturación no presenta ventas para
+  emisión manual; muestra el estado, permite recuperar envíos y descargar el
+  PDF.
+- La factura
   requiere RUC válido del cliente; la boleta puede emitirse sin documento hasta
   el límite fiscal aplicado por la reserva.
 - `NUBEFACT_RUTA`, `NUBEFACT_TOKEN`, `NUBEFACT_AMBIENTE` y
@@ -28,5 +35,9 @@ puede reflejar la aceptación informada durante el envío. Una boleta siempre
 queda pendiente al enviarse: la consulta manual de aceptación se habilita
 después de siete días y, si sigue pendiente, una vez al día. El panel presenta
 el PDF solo cuando el proveedor devuelve un enlace HTTPS de NubeFacT.
+
+Si falla la llamada después de confirmar la venta, el inventario no se vuelve a
+descontar. La persona puede reintentar desde Facturación; la reserva conserva el
+mismo correlativo y reconcilia una respuesta incierta antes de volver a emitir.
 
 Esta entrega no habilita notas de crédito ni anulaciones fiscales.

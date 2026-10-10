@@ -1,12 +1,13 @@
 import type { ReactNode } from "react";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { PanelShell } from "@/funcionalidades/panel/panel-shell";
 import { obtenerPerfilActual } from "@/compartido/supabase/perfil-actual";
 
 export const instant = false;
 
-export default function PanelLayout({
+export default async function PanelLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
   return (
@@ -17,6 +18,7 @@ export default function PanelLayout({
 }
 
 async function PanelProtegido({ children }: Readonly<{ children: ReactNode }>) {
+  await connection();
   const perfil = await obtenerPerfilActual();
 
   if (!perfil?.activo) redirect("/acceso");

@@ -1,5 +1,5 @@
 begin;
-select plan(8);
+select plan(10);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password,
@@ -10,6 +10,15 @@ values (
   '00000000-0000-0000-0000-000000000000',
   'authenticated', 'authenticated', 'reportes-moneda@test.local', '', now(),
   '{"nombre":"Administración reportes"}', now(), now()
+);
+insert into auth.users (
+  id, instance_id, aud, role, email, encrypted_password,
+  email_confirmed_at, raw_user_meta_data, created_at, updated_at
+) values (
+  '72000000-0000-4000-8000-000000000002',
+  '00000000-0000-0000-0000-000000000000',
+  'authenticated', 'authenticated', 'vendedor-reportes@test.local', '', now(),
+  '{"nombre":"Vendedor reportes"}', now(), now()
 );
 update public.perfiles
 set rol = 'administrador'
@@ -100,6 +109,18 @@ select is(
   public.resumen_inicio('2999-01-01 00:00:00+00', '2999-01-02 00:00:00+00') -> 'totales_por_moneda',
   '{"PEN": 20, "USD": 30}'::jsonb,
   'Inicio conserva un total separado para cada moneda'
+);
+
+select set_config('request.jwt.claim.sub', '72000000-0000-4000-8000-000000000002', true);
+select is(
+  (select count(*) from public.reporte_ventas('2999-01-01 00:00:00+00', '2999-01-02 00:00:00+00')),
+  2::bigint,
+  'el vendedor ve en reportes las ventas de todos los usuarios'
+);
+select is(
+  public.asistente_resumen_ventas('2999-01-01 00:00:00+00', '2999-01-02 00:00:00+00') -> 'totales_por_moneda',
+  '{"PEN": 20, "USD": 30}'::jsonb,
+  'el resumen del asistente también incluye las ventas de todo el equipo'
 );
 
 select * from finish();

@@ -29,12 +29,12 @@ electrónica con asistencia de IA. El producto no administra otras empresas como
 | Consultar existencias                   | Sí            | Sí            |
 | Ajustar existencias                     | Sí            | No            |
 | Registrar ventas                        | Sí            | Sí            |
-| Consultar reportes generales            | Sí            | Según permiso |
+| Consultar reportes generales            | Sí            | Sí            |
 | Usar el asistente con IA                | Sí            | Sí            |
 
 La autorización se aplica en servidor y base de datos. La interfaz no es una barrera de
-seguridad. El detalle de qué ventas puede consultar el vendedor se debe confirmar con la
-empresa antes de implementar esa consulta.
+seguridad. Las ventas y sus reportes son compartidos por el equipo; el rol controla el acceso
+a funciones administrativas, no filtra los totales por la persona que registró la venta.
 
 ## Facturación del MVP
 

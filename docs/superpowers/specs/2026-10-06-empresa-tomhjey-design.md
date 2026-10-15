@@ -148,9 +148,10 @@ se venden por unidad, metro, kilo, docena u otra unidad configurada.
 - Confirmar una venta ejecuta una única operación transaccional que valida la
   venta, calcula sus importes, descuenta existencias y registra un movimiento
   por cada línea. Si cualquier paso falla, no queda una confirmación parcial.
-- La política inicial permite que el vendedor consulte sus propias ventas y el
-  administrador consulte todas. Esta visibilidad queda como supuesto para
-  confirmar con Tomhjey durante la revisión funcional.
+- Ventas, reportes, comprobantes y movimientos de ventas son compartidos por
+  todo el equipo. El vendedor y administración consultan los mismos registros y
+  totales. Las operaciones de cada venta y las funciones administrativas siguen
+  sujetas a los permisos definidos para cada rol.
 - El vendedor puede crear, editar e inactivar productos del catálogo. Solo
   administración crea categorías y registra existencias iniciales o ajustes de
   stock; cada movimiento conserva motivo y usuario. La creación de productos
@@ -395,8 +396,8 @@ contratos compartidos de datos y permisos.
   devolución.
 - El catálogo conserva los ejes configurables de producto de Trayecto para
   cubrir talla, color y productos sin variantes.
-- Un vendedor consulta solo las ventas que registró; el administrador consulta
-  todas.
+- Vendedor y administrador consultan las ventas de todo el equipo y los mismos
+  totales del negocio.
 - La primera entrega visible emite facturas y boletas por NubeFacT y distingue
   el envío de la aceptación de SUNAT. La aceptación de las boletas se consulta
   manualmente después de siete días; notas de crédito y anulaciones fiscales

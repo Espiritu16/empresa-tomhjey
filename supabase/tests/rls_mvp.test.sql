@@ -1,5 +1,5 @@
 begin;
-select plan(24);
+select plan(27);
 
 insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_user_meta_data, created_at, updated_at)
 values
@@ -18,6 +18,20 @@ insert into public.ventas (id, cliente_id, cliente_nombre, estado, total, creado
 values
   ('40000000-0000-4000-8000-000000000001', '32000000-0000-4000-8000-000000000001', 'Cliente RLS', 'confirmada', 10, '10000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000002', '2999-01-01 00:00:00+00'),
   ('40000000-0000-4000-8000-000000000002', '32000000-0000-4000-8000-000000000001', 'Cliente RLS', 'confirmada', 10, '10000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', '2999-01-01 00:00:00+00');
+insert into public.lineas_venta (
+  venta_id, producto_id, descripcion_congelada, sku_congelado, unidad_medida,
+  cantidad, precio_unitario, subtotal, igv, total
+) values
+  ('40000000-0000-4000-8000-000000000001', '30000000-0000-4000-8000-000000000001', 'Producto prueba', 'TEST-001', 'NIU', 1, 10, 10, 0, 10),
+  ('40000000-0000-4000-8000-000000000002', '30000000-0000-4000-8000-000000000001', 'Producto prueba', 'TEST-001', 'NIU', 1, 10, 10, 0, 10);
+insert into public.comprobantes (venta_id, tipo, serie, numero, estado, payload, solicitado_por)
+values ('40000000-0000-4000-8000-000000000002', 'boleta', 'B001', 99, 'emitido', '{}'::jsonb, '10000000-0000-4000-8000-000000000001');
+insert into public.movimientos_inventario (
+  producto_id, tipo, cantidad, existencias_resultantes, motivo, venta_id, usuario_id
+) values (
+  '30000000-0000-4000-8000-000000000001', 'venta', -1, 9, 'Venta compartida',
+  '40000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000001'
+);
 insert into public.conversaciones (id, usuario_id) values
   ('50000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000002'),
   ('50000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000001');
@@ -29,9 +43,14 @@ select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002
 select set_config('request.jwt.claim.role', 'authenticated', true);
 select is((select count(*) from public.ventas where id in (
   '40000000-0000-4000-8000-000000000001', '40000000-0000-4000-8000-000000000002'
-)), 1::bigint, 'el vendedor solo ve sus ventas de prueba');
-select is((public.asistente_resumen_ventas('2999-01-01 00:00:00+00', '2999-01-02 00:00:00+00') ->> 'cantidad'), '1', 'el asistente resume solo las ventas del vendedor');
-select is((public.resumen_inicio('2999-01-01 00:00:00+00', '2999-01-02 00:00:00+00') ->> 'total_ventas'), '10.00', 'el inicio calcula solo el total visible al vendedor');
+)), 2::bigint, 'el vendedor ve las ventas de todo el equipo');
+select is((select count(*) from public.lineas_venta where venta_id in (
+  '40000000-0000-4000-8000-000000000001', '40000000-0000-4000-8000-000000000002'
+)), 2::bigint, 'el vendedor ve los detalles de ventas de todo el equipo');
+select is((select count(*) from public.comprobantes where venta_id = '40000000-0000-4000-8000-000000000002'), 1::bigint, 'el vendedor ve comprobantes de ventas de otros usuarios');
+select is((select count(*) from public.movimientos_inventario where venta_id = '40000000-0000-4000-8000-000000000002'), 1::bigint, 'el vendedor ve los movimientos de inventario de ventas de otros usuarios');
+select is((public.asistente_resumen_ventas('2999-01-01 00:00:00+00', '2999-01-02 00:00:00+00') ->> 'cantidad'), '2', 'el asistente resume las ventas de todo el equipo');
+select is((public.resumen_inicio('2999-01-01 00:00:00+00', '2999-01-02 00:00:00+00') ->> 'total_ventas'), '20.00', 'el inicio calcula el total de ventas de todo el equipo');
 select is((select count(*) from public.productos where id = '30000000-0000-4000-8000-000000000001'), 1::bigint, 'el vendedor puede consultar catálogo');
 select lives_ok(
   $$insert into public.productos (sku, nombre, precio, creado_por)

@@ -102,8 +102,9 @@ select set_config('request.jwt.claim.sub', '70000000-0000-4000-8000-000000000002
 select ok(
   public.asistente_consultar_modulo('ventas') -> 'ventas'
     @> '[{"venta_id":"73000000-0000-4000-8000-000000000002"}]'::jsonb
-    and not (public.asistente_consultar_modulo('ventas')::text like '%73000000-0000-4000-8000-000000000001%'),
-  'las consultas del vendedor solo incluyen sus ventas'
+    and public.asistente_consultar_modulo('ventas') -> 'ventas'
+      @> '[{"venta_id":"73000000-0000-4000-8000-000000000001"}]'::jsonb,
+  'las consultas del vendedor incluyen las ventas de todo el equipo'
 );
 select throws_ok(
   $$select public.asistente_consultar_modulo('empresa')$$,

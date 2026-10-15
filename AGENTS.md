@@ -48,8 +48,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   impuestos, totales y correlativos se calculan o reservan en Postgres.
 - Los borradores usan `crear_borrador_venta`; confirmar usa `confirmar_venta`, que descuenta
   stock y registra movimientos atómicamente. Una confirmación repetida es idempotente.
-- El vendedor consulta sus ventas y administración consulta todas. Toda RPC que reciba un id
-  valida permiso dentro del backend.
+- Ventas, reportes, comprobantes y movimientos de ventas son información compartida: ambos
+  roles consultan los datos de todo el equipo. Toda RPC que reciba un id valida permiso
+  dentro del backend.
 - `facturacion`, `asistente` y `crear-usuario` requieren JWT. NubeFacT, OpenAI y service role
   solo se usan del lado servidor.
 

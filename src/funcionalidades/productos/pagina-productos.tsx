@@ -54,11 +54,6 @@ export function PaginaProductos({
   const [formulario, setFormulario] = useState(formularioVacio);
   const [categoriaNueva, setCategoriaNueva] = useState("");
   const [crearCategoria, setCrearCategoria] = useState(false);
-  const [usaCombinaciones, setUsaCombinaciones] = useState(false);
-  const [nombreOpcion1, setNombreOpcion1] = useState("Talla");
-  const [valoresOpcion1, setValoresOpcion1] = useState("");
-  const [nombreOpcion2, setNombreOpcion2] = useState("Color");
-  const [valoresOpcion2, setValoresOpcion2] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [productoActualizando, setProductoActualizando] = useState<
     string | null
@@ -79,11 +74,6 @@ export function PaginaProductos({
   function abrirNuevo() {
     setProductoEditado(null);
     setFormulario(formularioVacio);
-    setUsaCombinaciones(false);
-    setNombreOpcion1("Talla");
-    setValoresOpcion1("");
-    setNombreOpcion2("Color");
-    setValoresOpcion2("");
     setError(null);
     setAbierto(true);
   }
@@ -100,7 +90,6 @@ export function PaginaProductos({
       existenciasIniciales: "0",
       stockMinimo: producto.stockMinimo.toString(),
     });
-    setUsaCombinaciones(producto.usaCombinaciones);
     setError(null);
     setAbierto(true);
   }
@@ -111,10 +100,6 @@ export function PaginaProductos({
     const precio = Number(formulario.precio);
     const stockInicial = Number(formulario.existenciasIniciales);
     const stockMinimo = Number(formulario.stockMinimo);
-    const opciones = [
-      { nombre: nombreOpcion1.trim(), valores: separarValores(valoresOpcion1) },
-      { nombre: nombreOpcion2.trim(), valores: separarValores(valoresOpcion2) },
-    ].filter((opcion, indice) => indice === 0 || opcion.valores.length > 0);
     if (
       !formulario.sku.trim() ||
       !formulario.nombre.trim() ||
@@ -129,17 +114,6 @@ export function PaginaProductos({
       setError("Revisa el SKU, nombre, precio y existencias del producto.");
       return;
     }
-    if (
-      usaCombinaciones &&
-      !productoEditado &&
-      opciones.some((opcion) => !opcion.nombre || opcion.valores.length === 0)
-    ) {
-      setError(
-        "Cada combinación necesita un nombre de opción y al menos un valor separado por comas.",
-      );
-      return;
-    }
-
     setGuardando(true);
     const supabase = crearClienteSupabase();
     try {
@@ -169,29 +143,6 @@ export function PaginaProductos({
         }
         notificaciones.exito("Los cambios del producto se guardaron.");
       } else {
-        if (usaCombinaciones) {
-          const { error: errorCombinaciones } = await supabase.rpc(
-            "crear_producto_con_combinaciones",
-            {
-              sku_producto: formulario.sku.trim(),
-              nombre_producto: formulario.nombre.trim(),
-              categoria_objetivo: formulario.categoriaId || null,
-              unidad: formulario.unidadMedida.trim().toUpperCase(),
-              precio_base: precio,
-              minimo_stock: stockMinimo,
-              opciones,
-            },
-          );
-          if (errorCombinaciones) throw errorCombinaciones;
-          notificaciones.exito(
-            esAdministrador
-              ? "El producto y sus combinaciones se crearon. Registra las existencias desde Inventario."
-              : "El producto y sus combinaciones se crearon. La administración puede registrar las existencias desde Inventario.",
-          );
-          setAbierto(false);
-          router.refresh();
-          return;
-        }
         const { data: creado, error: errorCreacion } = await supabase
           .from("productos")
           .insert({
@@ -525,27 +476,9 @@ export function PaginaProductos({
               <option value="DZN">Docena</option>
             </select>
           </label>
-          {!productoEditado ? (
-            <label className="campo modulo-operativo__check modulo-operativo__ancho-completo">
-              <input
-                checked={usaCombinaciones}
-                onChange={(evento) =>
-                  setUsaCombinaciones(evento.target.checked)
-                }
-                type="checkbox"
-              />
-              <span>
-                Este producto tiene tallas, colores u otras combinaciones
-              </span>
-            </label>
-          ) : null}
           {!productoEditado?.usaCombinaciones ? (
             <Campo
-              etiqueta={
-                usaCombinaciones
-                  ? "Precio base por combinación"
-                  : "Precio unitario"
-              }
+              etiqueta="Precio unitario"
               minimo="0"
               step="0.01"
               tipo="number"
@@ -556,38 +489,7 @@ export function PaginaProductos({
               }
             />
           ) : null}
-          {usaCombinaciones && !productoEditado ? (
-            <>
-              <Campo
-                etiqueta="Nombre de la primera opción"
-                required
-                value={nombreOpcion1}
-                onChange={setNombreOpcion1}
-              />
-              <Campo
-                etiqueta="Valores de la primera opción"
-                required
-                value={valoresOpcion1}
-                onChange={setValoresOpcion1}
-              />
-              <Campo
-                etiqueta="Nombre de la segunda opción"
-                value={nombreOpcion2}
-                onChange={setNombreOpcion2}
-              />
-              <Campo
-                etiqueta="Valores de la segunda opción"
-                value={valoresOpcion2}
-                onChange={setValoresOpcion2}
-              />
-              <p className="modulo-operativo__nota modulo-operativo__ancho-completo">
-                Separa los valores con comas. Por ejemplo: Talla: S, M, L y
-                Color: Negro, Blanco. Cada combinación inicia sin existencias;
-                agrégalas en Inventario.
-              </p>
-            </>
-          ) : null}
-          {!productoEditado && !usaCombinaciones && esAdministrador ? (
+          {!productoEditado && esAdministrador ? (
             <Campo
               etiqueta="Existencias iniciales"
               minimo="0"
@@ -700,15 +602,4 @@ function formatearImporte(importe: number): string {
 
 function formatearCantidad(cantidad: number, unidad: string): string {
   return `${new Intl.NumberFormat("es-PE", { maximumFractionDigits: 3 }).format(cantidad)} ${unidad}`;
-}
-
-function separarValores(texto: string): string[] {
-  return [
-    ...new Set(
-      texto
-        .split(",")
-        .map((valor) => valor.trim())
-        .filter(Boolean),
-    ),
-  ];
 }

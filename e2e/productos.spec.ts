@@ -15,21 +15,18 @@ test.beforeAll(async () => {
   identificadorE2E = estado.identificadorE2E;
 });
 
-test("el selector de combinaciones mantiene el checkbox compacto", async ({
+test("el modal de producto solo ofrece los campos simples del MVP", async ({
   page,
 }) => {
   await iniciarSesion(page, administrador);
   await page.goto("/panel/productos");
   await page.getByRole("button", { name: "Nuevo producto" }).click();
 
-  const checkbox = page.getByRole("checkbox", {
-    name: "Este producto tiene tallas, colores u otras combinaciones",
-  });
-  const caja = await checkbox.boundingBox();
-  const etiqueta = checkbox.locator("xpath=..");
-  expect(caja?.width).toBe(18);
-  expect(caja?.height).toBe(18);
-  await expect(etiqueta).toHaveClass(/modulo-operativo__check/);
+  await expect(page.getByRole("checkbox")).toHaveCount(0);
+  await expect(page.getByLabel("Precio unitario")).toBeVisible();
+  await expect(page.getByLabel("Existencias iniciales")).toBeVisible();
+  await expect(page.getByLabel("Talla para agregar")).toHaveCount(0);
+  await expect(page.getByLabel("Color para agregar")).toHaveCount(0);
 });
 
 test("administración crea y edita un producto y el formulario rechaza campos vacíos", async ({
@@ -86,79 +83,6 @@ test("administración crea y edita un producto y el formulario rechaza campos va
     .getByRole("button", { name: `Activar ${nombreEditado}` })
     .click();
   await expect(productoActualizado).toContainText("Activo");
-});
-
-test("crea combinaciones y permite usarlas en inventario y borradores de venta", async ({
-  page,
-}) => {
-  await iniciarSesion(page, administrador);
-  const sku = `E2E-C-${randomUUID().slice(0, 6)}`;
-  const nombre = `Polo ${sku}`;
-  await page.goto("/panel/productos");
-  await page.getByRole("button", { name: "Nuevo producto" }).click();
-  await page.getByLabel("SKU").fill(sku);
-  await page.getByLabel("Nombre del producto").fill(nombre);
-  await page
-    .getByLabel("Este producto tiene tallas, colores u otras combinaciones")
-    .check();
-  await page.getByLabel("Precio base por combinación").fill("25");
-  await page.getByLabel("Valores de la primera opción").fill("S, M");
-  await page.getByRole("button", { name: "Guardar producto" }).click();
-  await expect(page.getByRole("row", { name: new RegExp(sku) })).toContainText(
-    "Por combinación",
-  );
-
-  await page.goto("/panel/inventario");
-  await page.getByRole("button", { name: "Registrar ajuste" }).click();
-  const opcionInventario = page.getByLabel("Producto o combinación");
-  await expect(opcionInventario).toContainText(`${sku}-01 — ${nombre} Talla S`);
-  await opcionInventario.selectOption({
-    label: `${sku}-01 — ${nombre} Talla S`,
-  });
-  await expect(page.getByLabel("Stock actual")).toHaveValue("0");
-  await page.getByLabel("Nuevo stock").fill("4");
-  await page.getByLabel("Motivo del ajuste").fill("Ingreso de prueba E2E");
-  await page.getByRole("button", { name: "Guardar ajuste" }).click();
-  await expect(
-    page.getByRole("row", { name: new RegExp(`${sku}-01`) }),
-  ).toContainText("4 NIU");
-
-  const cliente = `Cliente ${sku}`;
-  const documentoCliente = String(Date.now()).slice(-8);
-  await page.goto("/panel/clientes");
-  await page.getByRole("button", { name: "Nuevo cliente" }).click();
-  await page.getByLabel("Tipo de documento").selectOption("dni");
-  await page.getByLabel("Nombre del cliente").fill(cliente);
-  await page.getByLabel("Número de documento").fill(documentoCliente);
-  await page.getByRole("button", { name: "Guardar cliente" }).click();
-
-  await page.goto("/panel/ventas");
-  await page.getByRole("button", { name: "Nueva venta" }).click();
-  const busquedaCliente = page.getByRole("combobox", {
-    name: "DNI del cliente",
-  });
-  await busquedaCliente.fill(documentoCliente);
-  await page
-    .getByRole("listbox", { name: "Clientes disponibles" })
-    .getByRole("option", { name: new RegExp(cliente) })
-    .click();
-  const busquedaProducto = page.getByRole("combobox", { name: "Producto" });
-  await busquedaProducto.fill(`${sku}-01`);
-  await page
-    .getByRole("listbox", { name: "Productos disponibles" })
-    .getByRole("option", { name: new RegExp(`${nombre} Talla S`) })
-    .click();
-  await page.getByLabel("Cantidad").fill("2");
-  await page.getByRole("button", { name: "Agregar producto" }).click();
-  await page.getByRole("button", { name: "Guardar borrador" }).click();
-  const borrador = page
-    .getByRole("row", { name: /Borrador/ })
-    .filter({ hasText: /50[,.]00/ });
-  await expect(borrador).toContainText("S/ 50.00");
-  await page.goto("/panel/inventario");
-  await expect(
-    page.getByRole("row", { name: new RegExp(`${sku}-01`) }),
-  ).toContainText("4 NIU");
 });
 
 async function iniciarSesion(

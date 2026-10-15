@@ -24,7 +24,8 @@ electrónica con asistencia de IA. El producto no administra otras empresas como
 | Capacidad                               | Administrador | Vendedor      |
 | --------------------------------------- | ------------- | ------------- |
 | Gestionar equipo y configuración fiscal | Sí            | No            |
-| Crear y editar productos                | Sí            | Consultar     |
+| Crear, editar e inactivar productos     | Sí            | Sí            |
+| Crear categorías                        | Sí            | No            |
 | Consultar existencias                   | Sí            | Sí            |
 | Ajustar existencias                     | Sí            | No            |
 | Registrar ventas                        | Sí            | Sí            |
@@ -44,11 +45,12 @@ empresa antes de implementar esa consulta.
   posterior de «facturar».
 - El vendedor puede emitir y reintentar únicamente comprobantes de sus propias ventas. La
   configuración fiscal y la consulta de aceptación de boletas quedan para administración.
-- Facturas requieren RUC válido de la empresa y del cliente. Las boletas siguen la validación
-  fiscal de identificación del cliente aplicada en el backend.
-- La emisión exitosa de una factura muestra la aceptación que devuelve NubeFacT. La boleta se
-  muestra como pendiente y permite consultar su aceptación manualmente desde el séptimo día,
-  con consultas separadas por al menos 24 horas mientras siga pendiente.
+- Facturas requieren RUC válido de la empresa y del cliente. Una boleta simple puede emitirse
+  sin cliente si el total es menor de S/ 700; desde S/ 700 exactos se identifica al cliente.
+- La emisión exitosa de una factura muestra la aceptación que devuelve NubeFacT. Si queda
+  pendiente, administración puede consultar su estado manualmente. La boleta se muestra como
+  pendiente y permite consultar su aceptación desde el séptimo día, con consultas separadas
+  por al menos 24 horas mientras siga pendiente.
 - No hay consulta automática ni cron. Notas de crédito y anulaciones fiscales quedan fuera del
   MVP actual.
 - Facturación sirve para consultar estados, reintentar envíos recuperables y revisar PDF; no
@@ -63,7 +65,8 @@ empresa antes de implementar esa consulta.
 - NubeFacT es la integración de facturación prevista. No se incluye selector de proveedor ni
   modo manual alternativo.
 - La IA respeta los permisos del usuario. Para preparar una venta pregunta si será factura o
-  boleta cuando aún no se indicó; no confirma operaciones ni evita las validaciones del servidor.
+  boleta cuando aún no se indicó; puede preparar una boleta simple sin cliente por debajo de
+  S/ 700, pero no confirma operaciones ni evita las validaciones del servidor.
 - Sin compras a proveedores, predicción de demanda, tienda en línea, catálogo público,
   analítica avanzada, planes o suscripciones.
 

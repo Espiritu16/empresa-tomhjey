@@ -12,12 +12,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const cuerpo = await request.json().catch(() => null);
+  const cuerpo: unknown = await request.json().catch(() => null);
+  const datos =
+    typeof cuerpo === "object" && cuerpo !== null
+      ? (cuerpo as Record<string, unknown>)
+      : {};
   const tipoDocumento =
-    typeof cuerpo?.tipoDocumento === "string" ? cuerpo.tipoDocumento : "";
+    typeof datos.tipoDocumento === "string" ? datos.tipoDocumento : "";
   const numeroDocumento =
-    typeof cuerpo?.numeroDocumento === "string"
-      ? cuerpo.numeroDocumento.trim()
+    typeof datos.numeroDocumento === "string"
+      ? datos.numeroDocumento.trim()
       : "";
 
   if (!documentoConsultable(tipoDocumento, numeroDocumento)) {

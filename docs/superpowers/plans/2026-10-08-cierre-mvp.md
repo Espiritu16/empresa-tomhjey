@@ -204,10 +204,10 @@ Expected: PASS; no existe escritura de total o stock desde la interfaz y el vend
 
 **Interfaces:**
 
-- Consumes: RPC `guardar_empresa`, `invitar_vendedor`, `cambiar_estado_vendedor`; Edge Function `invitar-vendedor`; tablas `empresa`, `perfiles`, `invitaciones`.
-- Produces: configuración fiscal/comercial con validación de RUC; lista del equipo, envío de invitación y activación/desactivación de vendedores.
+- Consumes: RPC `guardar_empresa`, `cambiar_estado_vendedor`; Edge Function `crear-usuario`; tablas `empresa` y `perfiles`.
+- Produces: configuración fiscal/comercial con validación de RUC; creación directa de cuentas por administración y activación/desactivación de vendedores.
 
-- [x] **Step 1: Añadir E2E de guardado de empresa, RUC inválido, invitación vacía y rol**
+- [x] **Step 1: Añadir E2E de guardado de empresa y RUC inválido**
 - [x] **Step 2: Verificar que las pruebas fallan por ruta ausente o marcador**
 - [x] **Step 3: Implementar configuración de empresa por RPC sin cambiar el RUC desde una ruta no autorizada**
 - [x] **Step 4: Implementar usuarios con funciones protegidas y mensajes de error; no permitir elevar el rol desde el navegador**

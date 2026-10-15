@@ -1,5 +1,5 @@
 begin;
-select plan(24);
+select plan(28);
 
 insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_user_meta_data, created_at, updated_at)
 values
@@ -29,15 +29,52 @@ update public.series_comprobante set activa = false where tipo = 'boleta' and ac
 insert into public.series_comprobante (tipo, serie, siguiente_numero)
 values ('boleta', 'B001', 1)
 on conflict (tipo, serie) do update set activa = true;
-insert into public.invitaciones (correo, invitado_por)
-values
-  ('invited-ops@test.local', '11000000-0000-4000-8000-000000000001'),
-  ('other-ops@test.local', '11000000-0000-4000-8000-000000000001');
 insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_user_meta_data, created_at, updated_at)
-values ('11000000-0000-4000-8000-000000000003', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'invited-ops@test.local', '', null, '{"nombre":"Invitado operaciones"}', now(), now());
+values ('11000000-0000-4000-8000-000000000003', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'metadata-ops@test.local', '', now(), '{"nombre":"Cuenta de metadatos","rol":"administrador"}', now(), now());
+select is(
+  (select rol from public.perfiles where id = '11000000-0000-4000-8000-000000000003'),
+  'vendedor', 'Auth ignora cualquier rol enviado en user_metadata'
+);
+select is(
+  (select correo from public.perfiles where id = '11000000-0000-4000-8000-000000000003'),
+  'metadata-ops@test.local', 'el perfil conserva el correo de acceso'
+);
 update auth.users
-set email_confirmed_at = now()
+set email = 'correo-actualizado-ops@test.local'
 where id = '11000000-0000-4000-8000-000000000003';
+select is(
+  (select correo from public.perfiles where id = '11000000-0000-4000-8000-000000000003'),
+  'correo-actualizado-ops@test.local', 'Auth sincroniza los cambios de correo al perfil'
+);
+select ok(
+  not has_function_privilege(
+    'authenticated', 'private.sincronizar_correo_auth()', 'EXECUTE'
+  ), 'los usuarios no pueden invocar el trigger que sincroniza correos'
+);
+select ok(
+  not exists (
+    select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'invitar_vendedor'
+  ), 'el MVP ya no ofrece una RPC para invitar usuarios'
+);
+select ok(
+  not exists (
+    select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'invitar_usuario'
+  ), 'el MVP ya no ofrece la RPC de invitaciones por rol'
+);
+select ok(
+  not exists (
+    select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'private' and p.proname = 'aceptar_invitacion_confirmada'
+  ), 'Auth ya no tiene trigger que procese invitaciones'
+);
+select ok(
+  not exists (
+    select 1 from pg_trigger where tgrelid = 'auth.users'::regclass
+      and tgname = 'aceptar_invitacion_confirmada' and not tgisinternal
+  ), 'no queda activo el trigger que aceptaba invitaciones'
+);
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '11000000-0000-4000-8000-000000000002', true);
@@ -47,7 +84,7 @@ select throws_ok(
     null,
     '[{"producto_id":"31000000-0000-4000-8000-000000000001","cantidad":1}]'::jsonb
   )$$,
-  '23514', null, 'no se puede crear una venta sin cliente'
+  '42501', null, 'la RPC base no permite saltarse la validación de tipo de comprobante'
 );
 select set_config('test.venta_id', public.crear_borrador_venta_con_comprobante(
   '32000000-0000-4000-8000-000000000001',
@@ -84,9 +121,10 @@ select is(
   false, 'el cliente queda inactivo'
 );
 select throws_ok(
-  $$select public.crear_borrador_venta(
+  $$select public.crear_borrador_venta_con_comprobante(
     '32000000-0000-4000-8000-000000000001',
-    '[{"producto_id":"31000000-0000-4000-8000-000000000001","cantidad":1}]'::jsonb
+    '[{"producto_id":"31000000-0000-4000-8000-000000000001","cantidad":1}]'::jsonb,
+    'boleta'
   )$$,
   'P0002', null, 'no se puede usar un cliente inactivo en una venta'
 );
@@ -98,28 +136,8 @@ select is(
   (select activo from public.clientes where id = '32000000-0000-4000-8000-000000000001'),
   true, 'el cliente vuelve a quedar activo'
 );
-select set_config('request.jwt.claim.sub', '11000000-0000-4000-8000-000000000003', true);
-select set_config('request.jwt.claim.role', 'authenticated', true);
-select set_config('request.jwt.claims', '{"sub":"11000000-0000-4000-8000-000000000003","role":"authenticated","email":"invited-ops@test.local"}', true);
-select throws_ok(
-  $$update public.invitaciones set estado = 'aceptada' where correo = 'other-ops@test.local'$$,
-  '42501', null, 'la persona invitada no puede modificar invitaciones directamente'
-);
 select set_config('request.jwt.claim.sub', '11000000-0000-4000-8000-000000000001', true);
 select set_config('request.jwt.claims', '{"sub":"11000000-0000-4000-8000-000000000001","role":"authenticated","email":"admin-ops@test.local"}', true);
-select is(
-  (select estado from public.invitaciones where correo = 'invited-ops@test.local'),
-  'aceptada', 'la invitación propia queda aceptada'
-);
-select is(
-  (select perfil_id from public.invitaciones where correo = 'invited-ops@test.local'),
-  '11000000-0000-4000-8000-000000000003'::uuid,
-  'la invitación queda vinculada al perfil creado por Auth'
-);
-select is(
-  (select estado from public.invitaciones where correo = 'other-ops@test.local'),
-  'pendiente', 'la invitación de otra persona permanece pendiente'
-);
 select set_config('test.borrador_precio_cambio', public.crear_borrador_venta_con_comprobante(
   '32000000-0000-4000-8000-000000000001',
   '[{"producto_id":"31000000-0000-4000-8000-000000000001","cantidad":1}]'::jsonb,
@@ -131,16 +149,15 @@ select throws_ok(
   '55000', null, 'no confirma un borrador con un precio que ya cambió'
 );
 select is((select total from public.ventas where id = current_setting('test.venta_id')::uuid), 23.6::numeric, 'el total de venta incluye IGV cuando los precios son netos');
-select set_config('test.borrador_sin_stock', public.crear_borrador_venta_con_comprobante(
-  '32000000-0000-4000-8000-000000000001',
-  '[{"producto_id":"31000000-0000-4000-8000-000000000001","cantidad":99}]'::jsonb,
-  'boleta'
-)::text, true);
 select throws_ok(
-  $$select public.confirmar_venta_con_comprobante(current_setting('test.borrador_sin_stock')::uuid, 'boleta')$$,
-  '23514', null, 'la venta sin stock suficiente falla'
+  $$select public.crear_borrador_venta_con_comprobante(
+    '32000000-0000-4000-8000-000000000001',
+    '[{"producto_id":"31000000-0000-4000-8000-000000000001","cantidad":99}]'::jsonb,
+    'boleta'
+  )$$,
+  '23514', null, 'no crea un borrador cuando la cantidad supera las existencias'
 );
-select is((select existencias from public.productos where id = '31000000-0000-4000-8000-000000000001'), 6::numeric, 'la venta fallida no altera existencias');
+select is((select existencias from public.productos where id = '31000000-0000-4000-8000-000000000001'), 6::numeric, 'el borrador rechazado no altera existencias');
 
 select * from finish();
 rollback;

@@ -1,5 +1,5 @@
 begin;
-select plan(18);
+select plan(24);
 
 insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_user_meta_data, created_at, updated_at)
 values
@@ -33,6 +33,32 @@ select is((select count(*) from public.ventas where id in (
 select is((public.asistente_resumen_ventas('2999-01-01 00:00:00+00', '2999-01-02 00:00:00+00') ->> 'cantidad'), '1', 'el asistente resume solo las ventas del vendedor');
 select is((public.resumen_inicio('2999-01-01 00:00:00+00', '2999-01-02 00:00:00+00') ->> 'total_ventas'), '10.00', 'el inicio calcula solo el total visible al vendedor');
 select is((select count(*) from public.productos where id = '30000000-0000-4000-8000-000000000001'), 1::bigint, 'el vendedor puede consultar catálogo');
+select lives_ok(
+  $$insert into public.productos (sku, nombre, precio, creado_por)
+    values ('VEN-001', 'Producto del vendedor', 12.50, '10000000-0000-4000-8000-000000000002')$$,
+  'el vendedor puede crear productos'
+);
+select lives_ok(
+  $$update public.productos set nombre = 'Producto editado por vendedor' where sku = 'VEN-001'$$,
+  'el vendedor puede editar los datos comerciales del producto'
+);
+select lives_ok(
+  $$update public.productos set activo = false where sku = 'VEN-001'$$,
+  'el vendedor puede inactivar un producto'
+);
+select throws_ok(
+  $$update public.productos set existencias = 50 where sku = 'VEN-001'$$,
+  '42501', null, 'el vendedor no puede alterar existencias fuera de Inventario'
+);
+select throws_ok(
+  $$insert into public.productos (sku, nombre, usa_combinaciones, precio, creado_por)
+    values ('VEN-COMB-INVALIDO', 'Combinación directa', true, null, '10000000-0000-4000-8000-000000000002')$$,
+  '42501', null, 'el vendedor debe crear combinaciones mediante la operación validada'
+);
+select throws_ok(
+  $$update public.productos set usa_combinaciones = true, precio = null where sku = 'VEN-001'$$,
+  '42501', null, 'el vendedor no puede cambiar la estructura del producto directamente'
+);
 select is((select count(*) from public.perfiles where id in ('10000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000002')), 1::bigint, 'el vendedor solo ve su propio perfil');
 select is((select count(*) from public.conversaciones), 1::bigint, 'el vendedor solo ve sus conversaciones');
 select is((select count(*) from public.mensajes), 1::bigint, 'el vendedor solo ve los mensajes de su conversación');

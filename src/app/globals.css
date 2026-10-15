@@ -89,7 +89,9 @@ body {
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
 }
 
@@ -106,7 +108,9 @@ a {
 
 button:focus-visible,
 a:focus-visible,
-input:focus-visible {
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
   outline: 2px solid var(--acento);
   outline-offset: 3px;
 }
@@ -1016,11 +1020,17 @@ h3 {
     overflow-x: auto;
     margin-inline: -0.4rem;
     padding: 0 0.4rem 0.25rem;
-    scrollbar-width: none;
+    scrollbar-color: var(--borde) transparent;
+    scrollbar-width: thin;
   }
 
   .carril-panel::-webkit-scrollbar {
-    display: none;
+    height: 4px;
+  }
+
+  .carril-panel::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: var(--borde);
   }
 
   .carril-panel__empresa,
@@ -1035,7 +1045,7 @@ h3 {
   }
 
   .nav-panel a {
-    min-height: 40px;
+    min-height: var(--toque);
     gap: 0.42rem;
     border-color: var(--borde);
     background: var(--papel);

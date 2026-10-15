@@ -14,8 +14,7 @@ ventas.
   retroceder un correlativo y conserva las series anteriores como inactivas.
 - La venta se prepara desde Ventas o desde el asistente y se le asigna un único
   tipo de comprobante antes de confirmarla. Facturación no presenta ventas para
-  emisión manual; muestra el estado, permite recuperar envíos y descargar el
-  PDF.
+  emisión manual; muestra el estado y permite recuperar envíos.
 - La factura
   requiere RUC válido del cliente; la boleta puede emitirse sin documento hasta
   el límite fiscal aplicado por la reserva.
@@ -32,9 +31,16 @@ La Edge Function reserva el correlativo y persiste el payload antes de llamar a
 NubeFacT. Si una respuesta es incierta, el reintento consulta el mismo número y
 lo compara con los datos reservados antes de considerarlo propio. La factura
 puede reflejar la aceptación informada durante el envío. Una boleta siempre
-queda pendiente al enviarse: la consulta manual de aceptación se habilita
-después de siete días y, si sigue pendiente, una vez al día. El panel presenta
-el PDF solo cuando el proveedor devuelve un enlace HTTPS de NubeFacT.
+queda pendiente al enviarse, pero puede consultarse desde Facturación
+inmediatamente. Si sigue pendiente después de consultarla, se permite volver a
+consultar al día siguiente. El historial abre una representación impresa propia
+para los comprobantes emitidos. «Ver comprobante» abre el PDF propio en el visor
+nativo del navegador, con descarga e impresión disponibles desde su barra. El
+PDF tiene ancho de 80 mm para impresión térmica y usa los datos estáticos del
+emisor definidos en `generar-pdf.ts`, sin leer nombre, RUC ni dirección del
+módulo Empresa. El QR se dibuja desde `comprobantes.cadena_qr`, que almacena la
+cadena entregada por NubeFacT al emitir o consultar; si falta esa cadena, no se
+genera una representación incompleta.
 
 Si falla la llamada después de confirmar la venta, el inventario no se vuelve a
 descontar. La persona puede reintentar desde Facturación; la reserva conserva el

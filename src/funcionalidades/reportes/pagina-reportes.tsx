@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { crearClienteSupabase } from "@/compartido/supabase/cliente";
+import { useNotificaciones } from "@/compartido/notificaciones/proveedor-notificaciones";
 import {
   convertirTotalesPorMoneda,
   formatearTotalesPorMoneda,
@@ -19,6 +20,7 @@ export function PaginaReportes({
   resumenInicial: ResumenReporte | null;
   errorInicial: string | null;
 }) {
+  const notificaciones = useNotificaciones();
   const [periodo, setPeriodo] = useState(periodoInicial);
   const [filas, setFilas] = useState(filasIniciales);
   const [resumen, setResumen] = useState(resumenInicial);
@@ -36,45 +38,54 @@ export function PaginaReportes({
     const inicio = new Date(`${periodo.desde}T00:00:00-05:00`).toISOString();
     const fin = new Date(`${periodo.hasta}T00:00:00-05:00`);
     fin.setDate(fin.getDate() + 1);
-    const supabase = crearClienteSupabase();
-    const [reporte, resumenRespuesta] = await Promise.all([
-      supabase.rpc("reporte_ventas", {
-        desde: inicio,
-        hasta: fin.toISOString(),
-      }),
-      supabase.rpc("resumen_inicio", {
-        desde: inicio,
-        hasta: fin.toISOString(),
-      }),
-    ]);
-    setCargando(false);
-    if (reporte.error || resumenRespuesta.error) {
-      setError("No se pudo cargar el reporte. Inténtalo de nuevo.");
-      return;
+    try {
+      const supabase = crearClienteSupabase();
+      const [reporte, resumenRespuesta] = await Promise.all([
+        supabase.rpc("reporte_ventas", {
+          desde: inicio,
+          hasta: fin.toISOString(),
+        }),
+        supabase.rpc("resumen_inicio", {
+          desde: inicio,
+          hasta: fin.toISOString(),
+        }),
+      ]);
+      if (reporte.error || resumenRespuesta.error) {
+        notificaciones.error(
+          "No se pudo cargar el reporte. Inténtalo de nuevo.",
+        );
+        return;
+      }
+      const datos = (resumenRespuesta.data ?? {}) as Record<string, unknown>;
+      const filasRespuesta = (reporte.data ?? []) as {
+        descripcion: string;
+        moneda: "PEN" | "USD";
+        ventas: number;
+        unidades: number;
+        total: number;
+      }[];
+      setFilas(
+        filasRespuesta.map((fila) => ({
+          descripcion: fila.descripcion,
+          moneda: fila.moneda,
+          ventas: Number(fila.ventas),
+          unidades: Number(fila.unidades),
+          total: Number(fila.total),
+        })),
+      );
+      setResumen({
+        ventas: Number(datos.ventas ?? 0),
+        totalesPorMoneda: convertirTotalesPorMoneda(datos.totales_por_moneda),
+        monedaBase: datos.moneda_base === "USD" ? "USD" : "PEN",
+        stockBajo: Number(datos.stock_bajo ?? 0),
+      });
+    } catch {
+      notificaciones.error(
+        "No se pudo conectar para actualizar el reporte. Inténtalo de nuevo.",
+      );
+    } finally {
+      setCargando(false);
     }
-    const datos = (resumenRespuesta.data ?? {}) as Record<string, unknown>;
-    const filasRespuesta = (reporte.data ?? []) as {
-      descripcion: string;
-      moneda: "PEN" | "USD";
-      ventas: number;
-      unidades: number;
-      total: number;
-    }[];
-    setFilas(
-      filasRespuesta.map((fila) => ({
-        descripcion: fila.descripcion,
-        moneda: fila.moneda,
-        ventas: Number(fila.ventas),
-        unidades: Number(fila.unidades),
-        total: Number(fila.total),
-      })),
-    );
-    setResumen({
-      ventas: Number(datos.ventas ?? 0),
-      totalesPorMoneda: convertirTotalesPorMoneda(datos.totales_por_moneda),
-      monedaBase: datos.moneda_base === "USD" ? "USD" : "PEN",
-      stockBajo: Number(datos.stock_bajo ?? 0),
-    });
   }
 
   return (
@@ -137,7 +148,11 @@ export function PaginaReportes({
         </button>
       </form>
 
-      <section aria-label="Resumen de ventas" className="tarjetas-indicadores">
+      <section
+        aria-busy={cargando}
+        aria-label="Resumen de ventas"
+        className="tarjetas-indicadores"
+      >
         <Indicador
           rotulo="VENTAS CONFIRMADAS"
           valor={resumen ? String(resumen.ventas) : "—"}
@@ -159,7 +174,7 @@ export function PaginaReportes({
         />
       </section>
 
-      <section className="tarjeta-panel">
+      <section aria-busy={cargando} className="tarjeta-panel">
         <div className="tarjeta-panel__encabezado">
           <div>
             <p className="rotulo">VENTAS POR PRODUCTO</p>

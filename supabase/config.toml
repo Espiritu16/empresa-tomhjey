@@ -245,11 +245,6 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
-# Uncomment to customize email template
-[auth.email.template.invite]
-subject = "Te invitaron a Empresa Tomhjey"
-content_path = "./supabase/templates/invite.html"
-
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
 # enabled = true
@@ -421,5 +416,5 @@ verify_jwt = true
 [functions.asistente]
 verify_jwt = true
 
-[functions.invitar-vendedor]
+[functions.crear-usuario]
 verify_jwt = true

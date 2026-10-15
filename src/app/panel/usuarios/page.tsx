@@ -14,10 +14,6 @@ export default async function UsuariosPage() {
   if (perfil?.rol !== "administrador") redirect("/panel");
   const datos = await cargarEquipo();
   return (
-    <PaginaUsuarios
-      usuarios={datos.usuarios}
-      invitaciones={datos.invitaciones}
-      errorInicial={datos.error}
-    />
+    <PaginaUsuarios usuarios={datos.usuarios} errorInicial={datos.error} />
   );
 }

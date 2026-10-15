@@ -26,14 +26,24 @@ cp .env.example .env.local
 
 Completa en `.env.local` la URL y la clave publicable del proyecto Supabase. No coloques
 claves privadas de NubeFacT o del proveedor de IA en variables `NEXT_PUBLIC_*`; esas
-credenciales se configurarán como secretos de las Edge Functions. Conserva
-`APP_URL=http://127.0.0.1:3000` para que los enlaces de invitación vuelvan al mismo host local
-que usa Auth.
+credenciales se configurarán como secretos de las Edge Functions.
 
 ## Desarrollo local
 
 ```bash
 npm run supabase:start
+```
+
+En una terminal, sirve las Edge Functions, necesarias para la asistencia IA y las
+integraciones locales:
+
+```bash
+npm run supabase:functions:serve
+```
+
+En otra terminal, inicia Next.js:
+
+```bash
 npm run dev
 ```
 

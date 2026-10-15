@@ -90,6 +90,30 @@ Deno.test(
 );
 
 Deno.test(
+  "consulta una factura ya emitida por tipo, serie y número sin llamar a emitir",
+  async () => {
+    let cuerpo: Record<string, unknown> | undefined;
+    const fetcher: typeof fetch = async (_url, init) => {
+      cuerpo = JSON.parse(String(init?.body)) as Record<string, unknown>;
+      return Response.json({ aceptada_por_sunat: true });
+    };
+    const cliente = crearClienteNubefact(credenciales, fetcher);
+    await cliente.consultar(1, "F001", 84);
+
+    if (cuerpo?.operacion !== "consultar_comprobante") {
+      throw new Error("Debe consultar el estado, sin emitir otra factura.");
+    }
+    if (
+      cuerpo.tipo_de_comprobante !== 1 ||
+      cuerpo.serie !== "F001" ||
+      cuerpo.numero !== 84
+    ) {
+      throw new Error("La consulta debe identificar el comprobante emitido.");
+    }
+  },
+);
+
+Deno.test(
   "no acepta como propia una respuesta con QR de otra venta",
   async () => {
     const fetcher: typeof fetch = async () =>

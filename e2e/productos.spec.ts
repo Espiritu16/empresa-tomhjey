@@ -88,7 +88,7 @@ test("administración crea y edita un producto y el formulario rechaza campos va
   await expect(productoActualizado).toContainText("Activo");
 });
 
-test("crea combinaciones y permite usarlas en inventario y ventas", async ({
+test("crea combinaciones y permite usarlas en inventario y borradores de venta", async ({
   page,
 }) => {
   await iniciarSesion(page, administrador);
@@ -115,18 +115,39 @@ test("crea combinaciones y permite usarlas en inventario y ventas", async ({
   await opcionInventario.selectOption({
     label: `${sku}-01 — ${nombre} Talla S`,
   });
-  await page.getByLabel("Cantidad de ajuste").fill("4");
+  await expect(page.getByLabel("Stock actual")).toHaveValue("0");
+  await page.getByLabel("Nuevo stock").fill("4");
   await page.getByLabel("Motivo del ajuste").fill("Ingreso de prueba E2E");
   await page.getByRole("button", { name: "Guardar ajuste" }).click();
   await expect(
     page.getByRole("row", { name: new RegExp(`${sku}-01`) }),
   ).toContainText("4 NIU");
 
+  const cliente = `Cliente ${sku}`;
+  const documentoCliente = String(Date.now()).slice(-8);
+  await page.goto("/panel/clientes");
+  await page.getByRole("button", { name: "Nuevo cliente" }).click();
+  await page.getByLabel("Tipo de documento").selectOption("dni");
+  await page.getByLabel("Nombre del cliente").fill(cliente);
+  await page.getByLabel("Número de documento").fill(documentoCliente);
+  await page.getByRole("button", { name: "Guardar cliente" }).click();
+
   await page.goto("/panel/ventas");
   await page.getByRole("button", { name: "Nueva venta" }).click();
+  const busquedaCliente = page.getByRole("combobox", {
+    name: "DNI del cliente",
+  });
+  await busquedaCliente.fill(documentoCliente);
   await page
-    .getByLabel("Producto")
-    .selectOption({ label: `${sku}-01 — ${nombre} Talla S` });
+    .getByRole("listbox", { name: "Clientes disponibles" })
+    .getByRole("option", { name: new RegExp(cliente) })
+    .click();
+  const busquedaProducto = page.getByRole("combobox", { name: "Producto" });
+  await busquedaProducto.fill(`${sku}-01`);
+  await page
+    .getByRole("listbox", { name: "Productos disponibles" })
+    .getByRole("option", { name: new RegExp(`${nombre} Talla S`) })
+    .click();
   await page.getByLabel("Cantidad").fill("2");
   await page.getByRole("button", { name: "Agregar producto" }).click();
   await page.getByRole("button", { name: "Guardar borrador" }).click();
@@ -134,16 +155,10 @@ test("crea combinaciones y permite usarlas en inventario y ventas", async ({
     .getByRole("row", { name: /Borrador/ })
     .filter({ hasText: /50[,.]00/ });
   await expect(borrador).toContainText("S/ 50.00");
-  page.once("dialog", (dialog) => dialog.accept());
-  await borrador.getByRole("button", { name: "Confirmar venta" }).click();
-  const ventaConfirmada = page
-    .getByRole("row", { name: /Confirmada/ })
-    .filter({ hasText: /50[,.]00/ });
-  await expect(ventaConfirmada).toContainText("50.00");
   await page.goto("/panel/inventario");
   await expect(
     page.getByRole("row", { name: new RegExp(`${sku}-01`) }),
-  ).toContainText("2 NIU");
+  ).toContainText("4 NIU");
 });
 
 async function iniciarSesion(

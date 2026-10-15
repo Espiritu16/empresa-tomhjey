@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { crearClienteSupabase } from "@/compartido/supabase/cliente";
+import { useNotificaciones } from "@/compartido/notificaciones/proveedor-notificaciones";
 import type {
   ComprobanteFacturacion,
   PaginaFacturacion as DatosFacturacion,
@@ -14,6 +15,7 @@ type Propiedades = { datos: DatosFacturacion; esAdministrador: boolean };
 
 export function PaginaFacturacion({ datos, esAdministrador }: Propiedades) {
   const router = useRouter();
+  const notificaciones = useNotificaciones();
   const [serieFormularios, setSerieFormularios] = useState(() => ({
     factura: {
       serie:
@@ -35,7 +37,6 @@ export function PaginaFacturacion({ datos, esAdministrador }: Propiedades) {
     null,
   );
   const [operacionId, setOperacionId] = useState<string | null>(null);
-  const [mensaje, setMensaje] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(datos.error);
 
   async function guardarSerie(
@@ -44,7 +45,6 @@ export function PaginaFacturacion({ datos, esAdministrador }: Propiedades) {
   ) {
     evento.preventDefault();
     setError(null);
-    setMensaje(null);
 
     const formulario = serieFormularios[tipo];
     const numero = Number(formulario.siguienteNumero);
@@ -80,11 +80,11 @@ export function PaginaFacturacion({ datos, esAdministrador }: Propiedades) {
         });
 
       if (errorFuncion) {
-        setError(await leerErrorFuncion(errorFuncion));
+        notificaciones.error(await leerErrorFuncion(errorFuncion));
         return;
       }
 
-      setMensaje(
+      notificaciones.exito(
         `La serie ${respuesta.serie} quedó lista desde el número ${respuesta.siguienteNumero}.`,
       );
       setSerieFormularios((actual) => ({
@@ -96,7 +96,9 @@ export function PaginaFacturacion({ datos, esAdministrador }: Propiedades) {
       }));
       router.refresh();
     } catch {
-      setError(`No se pudo guardar la serie de ${tipo}. Inténtalo de nuevo.`);
+      notificaciones.error(
+        `No se pudo guardar la serie de ${tipo}. Inténtalo de nuevo.`,
+      );
     } finally {
       setGuardandoSerie(null);
     }
@@ -113,7 +115,6 @@ export function PaginaFacturacion({ datos, esAdministrador }: Propiedades) {
 
   async function consultarBoleta(comprobante: ComprobanteFacturacion) {
     setError(null);
-    setMensaje(null);
     setOperacionId(comprobante.id);
     try {
       const supabase = crearClienteSupabase();
@@ -125,21 +126,55 @@ export function PaginaFacturacion({ datos, esAdministrador }: Propiedades) {
           },
         });
       if (errorFuncion) {
-        setError(await leerErrorFuncion(errorFuncion));
+        notificaciones.error(await leerErrorFuncion(errorFuncion));
         router.refresh();
         return;
       }
-      setMensaje(
+      notificaciones.exito(
         !respuesta.encontrada
-          ? "NubeFacT aún no encuentra la boleta para consultar su estado. Sigue pendiente; podrás volver a consultar mañana."
+          ? "NubeFacT aún no encuentra la boleta. Sigue pendiente; puedes volver a consultar cuando quieras."
           : respuesta.aceptadaPorSunat
             ? `La boleta de ${comprobante.clienteNombre} fue aceptada por SUNAT.`
-            : `SUNAT todavía no acepta la boleta de ${comprobante.clienteNombre}. Podrás volver a consultar mañana.`,
+            : `SUNAT todavía no acepta la boleta de ${comprobante.clienteNombre}. Puedes volver a consultar cuando quieras.`,
       );
       router.refresh();
     } catch {
-      setError(
+      notificaciones.error(
         "No se pudo consultar la aceptación de la boleta. Inténtalo de nuevo.",
+      );
+    } finally {
+      setOperacionId(null);
+    }
+  }
+
+  async function consultarFactura(comprobante: ComprobanteFacturacion) {
+    setError(null);
+    setOperacionId(comprobante.id);
+    try {
+      const supabase = crearClienteSupabase();
+      const { data: respuesta, error: errorFuncion } =
+        await supabase.functions.invoke("facturacion", {
+          body: {
+            operacion: "consultar_factura",
+            comprobanteId: comprobante.id,
+          },
+        });
+      if (errorFuncion) {
+        notificaciones.error(await leerErrorFuncion(errorFuncion));
+        router.refresh();
+        return;
+      }
+      notificaciones.exito(
+        !respuesta.encontrada
+          ? `NubeFacT todavía no encuentra la factura de ${comprobante.clienteNombre}. Puedes volver a consultar cuando quieras.`
+          : respuesta.aceptadaPorSunat
+            ? `La factura de ${comprobante.clienteNombre} fue aceptada por SUNAT.`
+            : `La factura de ${comprobante.clienteNombre} sigue pendiente de aceptación por SUNAT.`,
+      );
+      router.refresh();
+    } catch {
+      notificaciones.error(
+        "No se pudo consultar el estado de la factura. Inténtalo de nuevo.",
       );
     } finally {
       setOperacionId(null);
@@ -153,7 +188,6 @@ export function PaginaFacturacion({ datos, esAdministrador }: Propiedades) {
     accion: string,
   ) {
     setError(null);
-    setMensaje(null);
     setOperacionId(ventaId);
 
     try {
@@ -164,23 +198,23 @@ export function PaginaFacturacion({ datos, esAdministrador }: Propiedades) {
         });
 
       if (errorFuncion) {
-        setError(await leerErrorFuncion(errorFuncion));
+        notificaciones.error(await leerErrorFuncion(errorFuncion));
         router.refresh();
         return;
       }
 
-      setMensaje(
+      notificaciones.exito(
         respuesta.estado === "emitiendo"
           ? `La ${tipo} de ${clienteNombre} sigue en proceso. Puedes verificar su resultado sin cambiar el correlativo.`
           : tipo === "boleta"
-            ? `La boleta de ${clienteNombre} se envió a NubeFacT. La aceptación de SUNAT se podrá consultar después de siete días.`
+            ? `La boleta de ${clienteNombre} se envió a NubeFacT. Ya puedes consultar su estado desde Facturación.`
             : respuesta.aceptadaPorSunat === true
               ? `La factura de ${clienteNombre} fue aceptada por SUNAT.`
               : `La factura de ${clienteNombre} se envió a NubeFacT. La respuesta aún no confirma aceptación de SUNAT.`,
       );
       router.refresh();
     } catch {
-      setError(
+      notificaciones.error(
         `No se pudo ${accion.toLowerCase()} la ${tipo}. Puedes volver a intentarlo.`,
       );
       router.refresh();
@@ -217,14 +251,6 @@ export function PaginaFacturacion({ datos, esAdministrador }: Propiedades) {
           className="facturacion__aviso facturacion__aviso--error"
         >
           {error}
-        </p>
-      ) : null}
-      {mensaje ? (
-        <p
-          aria-live="polite"
-          className="facturacion__aviso facturacion__aviso--bien"
-        >
-          {mensaje}
         </p>
       ) : null}
 
@@ -384,7 +410,7 @@ export function PaginaFacturacion({ datos, esAdministrador }: Propiedades) {
               </thead>
               <tbody>
                 {datos.comprobantes.map((comprobante) => (
-                  <tr key={comprobante.id}>
+                  <tr id={`comprobante-${comprobante.id}`} key={comprobante.id}>
                     <td>
                       <span className="facturacion__tipo-documento">
                         {comprobante.tipo === "factura" ? "Factura" : "Boleta"}
@@ -410,7 +436,16 @@ export function PaginaFacturacion({ datos, esAdministrador }: Propiedades) {
                     </td>
                     <td>{formatearFecha(comprobante.actualizadoEn)}</td>
                     <td className="facturacion__accion">
-                      {enlacePdfSeguro(comprobante.enlacePdf) ? (
+                      {comprobante.estado === "emitido" ? (
+                        <a
+                          className="facturacion__enlace-pdf"
+                          href={`/api/comprobantes/${comprobante.id}/pdf`}
+                          rel="noopener noreferrer"
+                          target="_blank"
+                        >
+                          Ver comprobante
+                        </a>
+                      ) : enlacePdfSeguro(comprobante.enlacePdf) ? (
                         <a
                           className="facturacion__enlace-pdf"
                           href={
@@ -419,7 +454,7 @@ export function PaginaFacturacion({ datos, esAdministrador }: Propiedades) {
                           rel="noopener noreferrer"
                           target="_blank"
                         >
-                          Ver PDF
+                          Ver PDF de NubeFacT
                         </a>
                       ) : null}
                       {comprobante.estado === "error" ||
@@ -438,28 +473,53 @@ export function PaginaFacturacion({ datos, esAdministrador }: Propiedades) {
                         </button>
                       ) : null}
                       {esAdministrador &&
-                      comprobante.tipo === "boleta" &&
-                      comprobante.estado === "emitido" &&
-                      !fueAceptada(comprobante) ? (
+                      comprobante.tipo === "factura" &&
+                      comprobante.estado === "emitido" ? (
                         <>
-                          {puedeConsultarBoleta(comprobante) ? (
-                            <button
-                              className="facturacion__enlace-accion"
-                              disabled={operacionId !== null}
-                              onClick={() => void consultarBoleta(comprobante)}
-                              type="button"
-                            >
-                              {operacionId === comprobante.id
-                                ? "Consultando…"
-                                : "Consultar aceptación"}
-                            </button>
-                          ) : (
-                            <span className="facturacion__detalle-estado">
-                              {consultaBoletaEnProceso(comprobante)
+                          <button
+                            className="facturacion__enlace-accion"
+                            disabled={
+                              operacionId !== null || fueAceptada(comprobante)
+                            }
+                            onClick={() => void consultarFactura(comprobante)}
+                            type="button"
+                          >
+                            {operacionId === comprobante.id
+                              ? "Consultando…"
+                              : "Consultar comprobante"}
+                          </button>
+                          <span className="facturacion__detalle-estado">
+                            {fueAceptada(comprobante)
+                              ? "Aceptada por SUNAT; no requiere otra consulta."
+                              : consultaFacturaEnProceso(comprobante)
                                 ? "Consulta en proceso."
-                                : `Consulta disponible ${formatearFechaHora(fechaProximaConsulta(comprobante))}.`}
-                            </span>
-                          )}
+                                : null}
+                          </span>
+                        </>
+                      ) : null}
+                      {esAdministrador &&
+                      comprobante.tipo === "boleta" &&
+                      comprobante.estado === "emitido" ? (
+                        <>
+                          <button
+                            className="facturacion__enlace-accion"
+                            disabled={
+                              operacionId !== null || fueAceptada(comprobante)
+                            }
+                            onClick={() => void consultarBoleta(comprobante)}
+                            type="button"
+                          >
+                            {operacionId === comprobante.id
+                              ? "Consultando…"
+                              : "Consultar comprobante"}
+                          </button>
+                          <span className="facturacion__detalle-estado">
+                            {fueAceptada(comprobante)
+                              ? "Aceptada por SUNAT; no requiere otra consulta."
+                              : consultaBoletaEnProceso(comprobante)
+                                ? "Consulta en proceso."
+                                : null}
+                          </span>
                         </>
                       ) : null}
                     </td>
@@ -510,37 +570,34 @@ function formatearFecha(fecha: string | Date | null) {
   }).format(valor);
 }
 
-function formatearFechaHora(fecha: Date | null) {
-  if (!fecha || Number.isNaN(fecha.getTime())) return "más adelante";
-  return new Intl.DateTimeFormat("es-PE", {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(fecha);
-}
-
 function fueAceptada(comprobante: ComprobanteFacturacion) {
   const respuesta =
-    comprobante.tipo === "boleta"
-      ? comprobante.respuestaConsultaSunat
-      : comprobante.respuestaProveedor;
+    comprobante.respuestaConsultaSunat ?? comprobante.respuestaProveedor;
   return respuesta?.aceptada_por_sunat === true;
 }
 
 function etiquetaEstado(comprobante: ComprobanteFacturacion) {
   if (fueAceptada(comprobante)) return "Aceptada por SUNAT";
-  if (comprobante.estado === "emitido" && comprobante.tipo === "boleta") {
-    if (!comprobante.consultadoSunatEn) return "Enviada · aceptación pendiente";
+  if (comprobante.estado === "emitido" && comprobante.consultadoSunatEn) {
     return comprobante.respuestaConsultaSunat
       ? "SUNAT aún pendiente"
       : "Sin resultado de consulta";
+  }
+  if (comprobante.estado === "emitido" && comprobante.tipo === "boleta") {
+    if (!comprobante.consultadoSunatEn) return "Enviada · aceptación pendiente";
   }
   if (comprobante.estado === "emitido") return "Enviada a NubeFacT";
   if (comprobante.estado === "emitiendo") return "En proceso";
   if (comprobante.estado === "rechazado") return "Rechazada";
   if (comprobante.estado === "error") return "No se completó";
   return "Pendiente";
+}
+
+function consultaFacturaEnProceso(comprobante: ComprobanteFacturacion) {
+  return Boolean(
+    comprobante.consultaEnProcesoHasta &&
+    new Date(comprobante.consultaEnProcesoHasta).getTime() > Date.now(),
+  );
 }
 
 function claseEstado(comprobante: ComprobanteFacturacion) {
@@ -550,24 +607,6 @@ function claseEstado(comprobante: ComprobanteFacturacion) {
     return "facturacion__estado facturacion__estado--error";
   }
   return "facturacion__estado facturacion__estado--pendiente";
-}
-
-function fechaProximaConsulta(
-  comprobante: ComprobanteFacturacion,
-): Date | null {
-  if (!comprobante.consultaSunatDesde) return null;
-  const primera = new Date(comprobante.consultaSunatDesde).getTime();
-  const siguiente = comprobante.consultadoSunatEn
-    ? new Date(comprobante.consultadoSunatEn).getTime() + 24 * 60 * 60 * 1000
-    : 0;
-  if (!Number.isFinite(primera) || !Number.isFinite(siguiente)) return null;
-  return new Date(Math.max(primera, siguiente));
-}
-
-function puedeConsultarBoleta(comprobante: ComprobanteFacturacion) {
-  if (consultaBoletaEnProceso(comprobante)) return false;
-  const proxima = fechaProximaConsulta(comprobante);
-  return proxima !== null && proxima.getTime() <= Date.now();
 }
 
 function consultaBoletaEnProceso(comprobante: ComprobanteFacturacion) {

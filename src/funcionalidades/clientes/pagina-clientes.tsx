@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type FormEvent } from "react";
 import { crearClienteSupabase } from "@/compartido/supabase/cliente";
+import { DialogoModal } from "@/compartido/componentes/dialogo-modal";
+import { useNotificaciones } from "@/compartido/notificaciones/proveedor-notificaciones";
 import { documentoConsultable } from "./validaciones-documentos";
 import type { Cliente, VentaCliente } from "./consultas";
 
@@ -42,6 +44,7 @@ export function PaginaClientes({
   errorInicial,
 }: Propiedades) {
   const router = useRouter();
+  const notificaciones = useNotificaciones();
   const [busqueda, setBusqueda] = useState("");
   const [abierto, setAbierto] = useState(false);
   const [clienteEditado, setClienteEditado] = useState<Cliente | null>(null);
@@ -51,12 +54,10 @@ export function PaginaClientes({
   const [formulario, setFormulario] = useState(formularioVacio);
   const [guardando, setGuardando] = useState(false);
   const [consultandoDocumento, setConsultandoDocumento] = useState(false);
-  const [mensajeConsulta, setMensajeConsulta] = useState<string | null>(null);
   const [errorConsulta, setErrorConsulta] = useState<string | null>(null);
   const [clienteActualizando, setClienteActualizando] = useState<string | null>(
     null,
   );
-  const [mensaje, setMensaje] = useState<string | null>(null);
   const [error, setError] = useState(errorInicial);
 
   const visibles = useMemo(() => {
@@ -80,7 +81,6 @@ export function PaginaClientes({
     setClienteEditado(null);
     setFormulario(formularioVacio);
     setError(null);
-    setMensajeConsulta(null);
     setErrorConsulta(null);
     setAbierto(true);
   }
@@ -97,13 +97,11 @@ export function PaginaClientes({
       notas: cliente.notas ?? "",
     });
     setError(null);
-    setMensajeConsulta(null);
     setErrorConsulta(null);
     setAbierto(true);
   }
 
   async function consultarEnSunat() {
-    setMensajeConsulta(null);
     setErrorConsulta(null);
     const numeroDocumento = formulario.numeroDocumento.trim();
     if (!documentoConsultable(formulario.tipoDocumento, numeroDocumento)) {
@@ -148,7 +146,7 @@ export function PaginaClientes({
             : resultado.nombre || actual.nombre,
         direccion: resultado.direccion || actual.direccion,
       }));
-      setMensajeConsulta(
+      notificaciones.exito(
         "Datos consultados en SUNAT. Verifica antes de guardar.",
       );
     } catch {
@@ -163,7 +161,6 @@ export function PaginaClientes({
   async function guardarCliente(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     setError(null);
-    setMensaje(null);
     if (
       !formulario.nombre.trim() ||
       (formulario.tipoDocumento !== "sin_documento" &&
@@ -213,23 +210,27 @@ export function PaginaClientes({
         if (errorActualizacion) throw errorActualizacion;
         if (!data)
           throw new Error("El cliente no está disponible para editar.");
-        setMensaje("Los datos del cliente se actualizaron.");
+        notificaciones.exito("Los datos del cliente se actualizaron.");
       } else {
         const { error: errorInsercion } = await supabase
           .from("clientes")
           .insert({ ...datos, creado_por: usuarioId });
         if (errorInsercion) throw errorInsercion;
-        setMensaje("El cliente se agregó al directorio.");
+        notificaciones.exito("El cliente se agregó al directorio.");
       }
       setAbierto(false);
       router.refresh();
     } catch (errorGuardado) {
-      setError(
+      if (
         errorGuardado instanceof Error &&
-          errorGuardado.message.includes("23505")
-          ? "Ya existe un cliente con ese documento."
-          : "No se pudieron guardar los datos del cliente. Revisa la información e inténtalo de nuevo.",
-      );
+        errorGuardado.message.includes("23505")
+      ) {
+        setError("Ya existe un cliente con ese documento.");
+      } else {
+        notificaciones.error(
+          "No se pudieron guardar los datos del cliente. Revisa la información e inténtalo de nuevo.",
+        );
+      }
     } finally {
       setGuardando(false);
     }
@@ -237,7 +238,6 @@ export function PaginaClientes({
 
   async function cambiarEstado(cliente: Cliente) {
     setError(null);
-    setMensaje(null);
     setClienteActualizando(cliente.id);
     const { error: errorCambio } = await crearClienteSupabase().rpc(
       "cambiar_estado_cliente",
@@ -245,10 +245,10 @@ export function PaginaClientes({
     );
     setClienteActualizando(null);
     if (errorCambio) {
-      setError("No se pudo actualizar el estado del cliente.");
+      notificaciones.error("No se pudo actualizar el estado del cliente.");
       return;
     }
-    setMensaje(
+    notificaciones.exito(
       cliente.activo
         ? "El cliente se inactivó. Puedes volver a activarlo cuando quieras."
         : "El cliente se activó.",
@@ -274,14 +274,6 @@ export function PaginaClientes({
           role="alert"
         >
           {error}
-        </p>
-      ) : null}
-      {mensaje ? (
-        <p
-          aria-live="polite"
-          className="modulo-operativo__aviso modulo-operativo__aviso--bien"
-        >
-          {mensaje}
         </p>
       ) : null}
       <div className="modulo-operativo__barra">
@@ -389,220 +381,199 @@ export function PaginaClientes({
         ) : null}
       </div>
 
-      {abierto ? (
-        <div className="modulo-operativo__dialogo-fondo">
-          <section
-            aria-labelledby="formulario-cliente-titulo"
-            aria-modal="true"
-            className="modulo-operativo__dialogo"
-            role="dialog"
-          >
-            <h2 id="formulario-cliente-titulo">
-              {clienteEditado ? "Editar cliente" : "Nuevo cliente"}
-            </h2>
-            <form
-              className="modulo-operativo__formulario"
-              onSubmit={guardarCliente}
+      <DialogoModal
+        abierto={abierto}
+        onCerrar={() => setAbierto(false)}
+        titulo={clienteEditado ? "Editar cliente" : "Nuevo cliente"}
+      >
+        <form
+          className="modulo-operativo__formulario"
+          onSubmit={guardarCliente}
+        >
+          <label className="campo">
+            <span>Tipo de documento</span>
+            <select
+              onChange={(evento) => {
+                setErrorConsulta(null);
+                setFormulario((actual) => ({
+                  ...actual,
+                  tipoDocumento: evento.target.value,
+                }));
+              }}
+              value={formulario.tipoDocumento}
             >
-              <label className="campo">
-                <span>Tipo de documento</span>
-                <select
-                  onChange={(evento) => {
-                    setMensajeConsulta(null);
-                    setErrorConsulta(null);
-                    setFormulario((actual) => ({
-                      ...actual,
-                      tipoDocumento: evento.target.value,
-                    }));
-                  }}
-                  value={formulario.tipoDocumento}
-                >
-                  <option value="sin_documento">Sin documento</option>
-                  <option value="dni">DNI</option>
-                  <option value="ruc">RUC</option>
-                  <option value="ce">Carné de extranjería</option>
-                  <option value="pasaporte">Pasaporte</option>
-                </select>
-              </label>
-              <label className="campo">
-                <span>Número de documento</span>
-                <div className="modulo-operativo__documento-control">
-                  <input
-                    autoComplete="off"
-                    disabled={formulario.tipoDocumento === "sin_documento"}
-                    onChange={(evento) => {
-                      setMensajeConsulta(null);
-                      setErrorConsulta(null);
-                      setFormulario((actual) => ({
-                        ...actual,
-                        numeroDocumento:
-                          actual.tipoDocumento === "dni" ||
-                          actual.tipoDocumento === "ruc"
-                            ? evento.target.value.replace(/\D/g, "")
-                            : evento.target.value,
-                      }));
-                    }}
-                    inputMode={
-                      formulario.tipoDocumento === "dni" ||
-                      formulario.tipoDocumento === "ruc"
-                        ? "numeric"
-                        : "text"
-                    }
-                    maxLength={
-                      formulario.tipoDocumento === "dni"
-                        ? 8
-                        : formulario.tipoDocumento === "ruc"
-                          ? 11
-                          : 40
-                    }
-                    placeholder={
-                      formulario.tipoDocumento === "dni"
-                        ? "8 dígitos"
-                        : formulario.tipoDocumento === "ruc"
-                          ? "11 dígitos"
-                          : "Número de documento"
-                    }
-                    required={formulario.tipoDocumento !== "sin_documento"}
-                    value={formulario.numeroDocumento}
-                  />
-                  {formulario.tipoDocumento === "dni" ||
-                  formulario.tipoDocumento === "ruc" ? (
-                    <button
-                      className="modulo-operativo__boton-secundario"
-                      disabled={
-                        consultandoDocumento ||
-                        !documentoConsultable(
-                          formulario.tipoDocumento,
-                          formulario.numeroDocumento.trim(),
-                        )
-                      }
-                      onClick={() => void consultarEnSunat()}
-                      type="button"
-                    >
-                      {consultandoDocumento ? "Consultando…" : "Consultar"}
-                    </button>
-                  ) : null}
-                </div>
-                {formulario.tipoDocumento === "dni" ||
-                formulario.tipoDocumento === "ruc" ? (
-                  <span className="modulo-operativo__nota">
-                    Al consultar, el número se envía a SUNAT.
-                  </span>
-                ) : null}
-                {formulario.tipoDocumento === "ruc" ? (
-                  <span className="modulo-operativo__nota" aria-live="polite">
-                    {formulario.numeroDocumento.startsWith("10")
-                      ? "RUC de persona natural"
-                      : formulario.numeroDocumento.startsWith("20")
-                        ? "RUC de persona jurídica"
-                        : formulario.numeroDocumento.length >= 2
-                          ? `RUC con prefijo ${formulario.numeroDocumento.slice(0, 2)}`
-                          : "El prefijo permite identificar el tipo de RUC."}
-                  </span>
-                ) : null}
-                {errorConsulta ? (
-                  <span
-                    className="modulo-operativo__aviso modulo-operativo__aviso--error"
-                    role="alert"
-                  >
-                    {errorConsulta}
-                  </span>
-                ) : null}
-                {mensajeConsulta ? (
-                  <span
-                    className="modulo-operativo__nota"
-                    role="status"
-                    aria-live="polite"
-                  >
-                    {mensajeConsulta}
-                  </span>
-                ) : null}
-              </label>
-              <Campo
-                etiqueta="Nombre del cliente"
-                required
-                value={formulario.nombre}
-                onChange={(nombre) =>
-                  setFormulario((actual) => ({ ...actual, nombre }))
+              <option value="sin_documento">Sin documento</option>
+              <option value="dni">DNI</option>
+              <option value="ruc">RUC</option>
+              <option value="ce">Carné de extranjería</option>
+              <option value="pasaporte">Pasaporte</option>
+            </select>
+          </label>
+          <label className="campo">
+            <span>Número de documento</span>
+            <div className="modulo-operativo__documento-control">
+              <input
+                autoComplete="off"
+                disabled={formulario.tipoDocumento === "sin_documento"}
+                onChange={(evento) => {
+                  setErrorConsulta(null);
+                  setFormulario((actual) => ({
+                    ...actual,
+                    numeroDocumento:
+                      actual.tipoDocumento === "dni" ||
+                      actual.tipoDocumento === "ruc"
+                        ? evento.target.value.replace(/\D/g, "")
+                        : evento.target.value,
+                  }));
+                }}
+                inputMode={
+                  formulario.tipoDocumento === "dni" ||
+                  formulario.tipoDocumento === "ruc"
+                    ? "numeric"
+                    : "text"
                 }
-              />
-              <Campo
-                etiqueta="Teléfono"
-                value={formulario.telefono}
-                onChange={(telefono) =>
-                  setFormulario((actual) => ({ ...actual, telefono }))
+                maxLength={
+                  formulario.tipoDocumento === "dni"
+                    ? 8
+                    : formulario.tipoDocumento === "ruc"
+                      ? 11
+                      : 40
                 }
-              />
-              <Campo
-                etiqueta="Correo electrónico"
-                tipo="email"
-                value={formulario.correo}
-                onChange={(correo) =>
-                  setFormulario((actual) => ({ ...actual, correo }))
+                placeholder={
+                  formulario.tipoDocumento === "dni"
+                    ? "8 dígitos"
+                    : formulario.tipoDocumento === "ruc"
+                      ? "11 dígitos"
+                      : "Número de documento"
                 }
+                required={formulario.tipoDocumento !== "sin_documento"}
+                value={formulario.numeroDocumento}
               />
-              <Campo
-                etiqueta="Dirección"
-                value={formulario.direccion}
-                onChange={(direccion) =>
-                  setFormulario((actual) => ({ ...actual, direccion }))
-                }
-              />
-              <label className="campo modulo-operativo__ancho-completo">
-                <span>Notas</span>
-                <textarea
-                  onChange={(evento) =>
-                    setFormulario((actual) => ({
-                      ...actual,
-                      notas: evento.target.value,
-                    }))
-                  }
-                  value={formulario.notas}
-                />
-              </label>
-              {error ? (
-                <p
-                  className="modulo-operativo__aviso modulo-operativo__aviso--error modulo-operativo__ancho-completo"
-                  role="alert"
-                >
-                  {error}
-                </p>
-              ) : null}
-              <div className="modulo-operativo__acciones modulo-operativo__ancho-completo">
-                <button
-                  className="boton-principal"
-                  disabled={guardando}
-                  type="submit"
-                >
-                  {guardando
-                    ? "Guardando…"
-                    : clienteEditado
-                      ? "Guardar cambios"
-                      : "Guardar cliente"}
-                </button>
+              {formulario.tipoDocumento === "dni" ||
+              formulario.tipoDocumento === "ruc" ? (
                 <button
                   className="modulo-operativo__boton-secundario"
-                  disabled={guardando}
-                  onClick={() => setAbierto(false)}
+                  disabled={
+                    consultandoDocumento ||
+                    !documentoConsultable(
+                      formulario.tipoDocumento,
+                      formulario.numeroDocumento.trim(),
+                    )
+                  }
+                  onClick={() => void consultarEnSunat()}
                   type="button"
                 >
-                  Cancelar
+                  {consultandoDocumento ? "Consultando…" : "Consultar"}
                 </button>
-              </div>
-            </form>
-          </section>
-        </div>
-      ) : null}
+              ) : null}
+            </div>
+            {formulario.tipoDocumento === "dni" ||
+            formulario.tipoDocumento === "ruc" ? (
+              <span className="modulo-operativo__nota">
+                Al consultar, el número se envía a SUNAT.
+              </span>
+            ) : null}
+            {formulario.tipoDocumento === "ruc" ? (
+              <span className="modulo-operativo__nota" aria-live="polite">
+                {formulario.numeroDocumento.startsWith("10")
+                  ? "RUC de persona natural"
+                  : formulario.numeroDocumento.startsWith("20")
+                    ? "RUC de persona jurídica"
+                    : formulario.numeroDocumento.length >= 2
+                      ? `RUC con prefijo ${formulario.numeroDocumento.slice(0, 2)}`
+                      : "El prefijo permite identificar el tipo de RUC."}
+              </span>
+            ) : null}
+            {errorConsulta ? (
+              <span
+                className="modulo-operativo__aviso modulo-operativo__aviso--error"
+                role="alert"
+              >
+                {errorConsulta}
+              </span>
+            ) : null}
+          </label>
+          <Campo
+            etiqueta="Nombre del cliente"
+            required
+            value={formulario.nombre}
+            onChange={(nombre) =>
+              setFormulario((actual) => ({ ...actual, nombre }))
+            }
+          />
+          <Campo
+            etiqueta="Teléfono"
+            value={formulario.telefono}
+            onChange={(telefono) =>
+              setFormulario((actual) => ({ ...actual, telefono }))
+            }
+          />
+          <Campo
+            etiqueta="Correo electrónico"
+            tipo="email"
+            value={formulario.correo}
+            onChange={(correo) =>
+              setFormulario((actual) => ({ ...actual, correo }))
+            }
+          />
+          <Campo
+            etiqueta="Dirección"
+            value={formulario.direccion}
+            onChange={(direccion) =>
+              setFormulario((actual) => ({ ...actual, direccion }))
+            }
+          />
+          <label className="campo modulo-operativo__ancho-completo">
+            <span>Notas</span>
+            <textarea
+              onChange={(evento) =>
+                setFormulario((actual) => ({
+                  ...actual,
+                  notas: evento.target.value,
+                }))
+              }
+              value={formulario.notas}
+            />
+          </label>
+          {error ? (
+            <p
+              className="modulo-operativo__aviso modulo-operativo__aviso--error modulo-operativo__ancho-completo"
+              role="alert"
+            >
+              {error}
+            </p>
+          ) : null}
+          <div className="modulo-operativo__acciones modulo-operativo__acciones--dialogo modulo-operativo__ancho-completo">
+            <button
+              className="modulo-operativo__boton-secundario"
+              disabled={guardando}
+              onClick={() => setAbierto(false)}
+              type="button"
+            >
+              Cancelar
+            </button>
+            <button
+              className="boton-principal"
+              disabled={guardando}
+              type="submit"
+            >
+              {guardando
+                ? "Guardando…"
+                : clienteEditado
+                  ? "Guardar cambios"
+                  : "Guardar cliente"}
+            </button>
+          </div>
+        </form>
+      </DialogoModal>
 
-      {historialCliente ? (
-        <div className="modulo-operativo__dialogo-fondo">
-          <section
-            aria-labelledby="historial-cliente-titulo"
-            aria-modal="true"
-            className="modulo-operativo__dialogo"
-            role="dialog"
-          >
-            <h2 id="historial-cliente-titulo">Historial del cliente</h2>
+      <DialogoModal
+        abierto={Boolean(historialCliente)}
+        onCerrar={() => setHistorialCliente(null)}
+        titulo="Historial del cliente"
+      >
+        {historialCliente ? (
+          <>
             <p>{historialCliente.nombre}</p>
             {(ventasPorCliente[historialCliente.id] ?? []).length ? (
               <div className="modulo-operativo__tabla-contenedor">
@@ -642,7 +613,7 @@ export function PaginaClientes({
                 Aún no hay ventas para este cliente.
               </p>
             )}
-            <div className="modulo-operativo__acciones">
+            <div className="modulo-operativo__acciones modulo-operativo__acciones--dialogo">
               <button
                 className="modulo-operativo__boton-secundario"
                 onClick={() => setHistorialCliente(null)}
@@ -651,9 +622,9 @@ export function PaginaClientes({
                 Cerrar
               </button>
             </div>
-          </section>
-        </div>
-      ) : null}
+          </>
+        ) : null}
+      </DialogoModal>
     </section>
   );
 }

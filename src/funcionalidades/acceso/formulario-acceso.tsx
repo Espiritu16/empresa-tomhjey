@@ -43,7 +43,7 @@ export function FormularioAcceso() {
   }
 
   return (
-    <form className="formulario-acceso" onSubmit={entrar}>
+    <form className="formulario-acceso" method="post" onSubmit={entrar}>
       <div className="campo">
         <label htmlFor="correo">Correo electrónico</label>
         <div className="campo__control">

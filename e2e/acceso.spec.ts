@@ -91,6 +91,9 @@ test("redirige al acceso cuando se abre el panel sin una sesión", async ({
   await expect(
     page.getByRole("heading", { name: "Inicia sesión" }),
   ).toBeVisible();
+
+  await iniciarSesion(page, usuarios.vendedor);
+  await expect(page.getByRole("heading", { name: "Inicio" })).toBeVisible();
 });
 
 test("el administrador puede recorrer los módulos y cerrar sesión", async ({
@@ -144,9 +147,9 @@ test("el vendedor no ve ni puede abrir el módulo de usuarios", async ({
   await expect(page.getByRole("heading", { name: "Productos" })).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Nuevo producto" }),
-  ).toHaveCount(0);
+  ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: /^(Inactivar|Activar) / }),
+    page.getByRole("button", { name: "Nueva categoría" }),
   ).toHaveCount(0);
   await page.goto("/panel/inventario");
   await expect(page.getByRole("heading", { name: "Inventario" })).toBeVisible();

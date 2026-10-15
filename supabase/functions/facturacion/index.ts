@@ -36,6 +36,8 @@ type ReservaConsultaBoleta = {
   payload: PayloadNubefact;
 };
 
+type ReservaConsultaFactura = ReservaConsultaBoleta;
+
 function leerCredenciales() {
   const ruta = Deno.env.get("NUBEFACT_RUTA");
   const token = Deno.env.get("NUBEFACT_TOKEN");
@@ -164,6 +166,86 @@ async function manejar(request: Request): Promise<Response> {
 
       const { error: errorRegistro } = await clienteInterno.rpc(
         "registrar_consulta_boleta",
+        {
+          administrador_objetivo: sesion.usuarioId,
+          comprobante_objetivo: reserva.comprobante_id,
+          respuesta,
+        },
+      );
+      if (errorRegistro) {
+        throw new ErrorHttp(
+          "No se pudo guardar el resultado de consulta.",
+          500,
+          "consulta_no_guardada",
+        );
+      }
+
+      return responderJson({
+        comprobanteId: reserva.comprobante_id,
+        encontrada: respuesta !== null,
+        aceptadaPorSunat: respuesta?.aceptada_por_sunat === true,
+        respuesta,
+      });
+    }
+
+    if (cuerpo.operacion === "consultar_factura") {
+      exigirAdministrador(sesion);
+      const comprobanteId = cuerpo.comprobanteId;
+      if (
+        typeof comprobanteId !== "string" ||
+        !/^[0-9a-f-]{36}$/i.test(comprobanteId)
+      ) {
+        throw new ErrorHttp(
+          "Selecciona una factura válida.",
+          400,
+          "comprobante_invalido",
+        );
+      }
+
+      const credenciales = leerCredenciales();
+      const { data: dataReserva, error: errorReserva } =
+        await clienteInterno.rpc("reservar_consulta_factura", {
+          administrador_objetivo: sesion.usuarioId,
+          comprobante_objetivo: comprobanteId,
+        });
+      if (errorReserva) {
+        const forbidden = errorReserva.code === "42501";
+        const ocupado = errorReserva.code === "55P03";
+        throw new ErrorHttp(
+          errorReserva.message,
+          forbidden ? 403 : ocupado ? 409 : 422,
+          forbidden
+            ? "rol_requerido"
+            : ocupado
+              ? "consulta_en_proceso"
+              : "consulta_no_disponible",
+        );
+      }
+
+      const reserva = dataReserva as ReservaConsultaFactura;
+      const clienteNubefact = crearClienteNubefact(credenciales);
+      let respuesta: RespuestaNubefact | null = null;
+      try {
+        respuesta = await clienteNubefact.consultar(
+          reserva.payload.tipo_de_comprobante,
+          reserva.serie,
+          reserva.numero,
+        );
+      } catch (error) {
+        if (!(error instanceof ErrorNubefact) || error.codigo !== 24)
+          throw error;
+      }
+
+      if (respuesta && !coincideConReserva(respuesta, reserva.payload)) {
+        throw new ErrorNubefact(
+          "La respuesta consultada no coincide con la factura reservada. Requiere revisión.",
+          23,
+          409,
+        );
+      }
+
+      const { error: errorRegistro } = await clienteInterno.rpc(
+        "registrar_consulta_factura",
         {
           administrador_objetivo: sesion.usuarioId,
           comprobante_objetivo: reserva.comprobante_id,

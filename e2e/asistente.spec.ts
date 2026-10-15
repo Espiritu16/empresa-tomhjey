@@ -69,6 +69,42 @@ test("sugiere consultar el catálogo y empezar a preparar una venta", async ({
   await expect(campo).toHaveValue("Quiero armar una venta");
 });
 
+test("muestra hasta 50 productos como una lista vertical en el chat", async ({
+  page,
+}) => {
+  await iniciarSesion(page, administrador);
+  await page.goto("/panel/asistente");
+  const nombres = Array.from(
+    { length: 50 },
+    (_, indice) => `Producto ${String(indice + 1).padStart(2, "0")}`,
+  );
+  await page.route("**/functions/v1/asistente", async (ruta) => {
+    await ruta.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        conversacionId: "00000000-0000-4000-8000-000000000050",
+        mensaje: [
+          "Tenemos 50 productos activos:",
+          ...nombres.map((nombre) => `• ${nombre}`),
+        ].join("\n"),
+      }),
+    });
+  });
+
+  await page
+    .getByLabel("Mensaje para el asistente")
+    .fill("¿Cuántos productos hay?");
+  await page.getByRole("button", { name: "Enviar mensaje" }).click();
+
+  const lista = page.locator(
+    ".asistente-modulo__mensaje--asistente ul[aria-label='Resultados del asistente']",
+  );
+  await expect(lista.getByRole("listitem")).toHaveCount(50);
+  await expect(lista.getByRole("listitem").first()).toHaveText("Producto 01");
+  await expect(lista.getByRole("listitem").last()).toHaveText("Producto 50");
+});
+
 test("envía con Enter y conserva el salto de línea con Shift+Enter", async ({
   page,
 }) => {
@@ -148,9 +184,30 @@ test("muestra el borrador en el chat y permite confirmarlo manualmente", async (
       ]),
     });
   });
-  await page.route("**/rest/v1/rpc/confirmar_venta", async (ruta) => {
-    expect(ruta.request().postDataJSON()).toEqual({ venta_objetivo: ventaId });
-    await ruta.fulfill({ status: 204, body: "" });
+  await page.route(
+    "**/rest/v1/rpc/confirmar_venta_con_comprobante",
+    async (ruta) => {
+      expect(ruta.request().postDataJSON()).toEqual({
+        venta_objetivo: ventaId,
+        tipo_comprobante_solicitado: "boleta",
+      });
+      await ruta.fulfill({ status: 200, body: JSON.stringify(ventaId) });
+    },
+  );
+  await page.route("**/functions/v1/facturacion", async (ruta) => {
+    expect(ruta.request().postDataJSON()).toEqual({
+      ventaId,
+      tipo: "boleta",
+    });
+    await ruta.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        comprobanteId: "85000000-0000-4000-8000-000000000003",
+        estado: "emitido",
+        aceptadaPorSunat: null,
+      }),
+    });
   });
 
   await page.getByLabel("Mensaje para el asistente").fill("Arma una venta");
@@ -160,11 +217,13 @@ test("muestra el borrador en el chat y permite confirmarlo manualmente", async (
   await expect(tarjeta).toContainText("Cliente de prueba");
   await expect(tarjeta).toContainText("Polo M");
   await expect(tarjeta).toContainText("S/ 59.80");
-  page.once("dialog", (dialog) => dialog.accept());
-  await tarjeta
-    .getByRole("button", { name: "Aceptar y confirmar venta" })
-    .click();
+  await tarjeta.getByRole("button", { name: "Confirmar y enviar" }).click();
   await expect(tarjeta).toContainText("Confirmada");
+  await expect(
+    page.getByText(
+      "Venta confirmada y boleta enviada a NubeFacT. La aceptación de SUNAT se consultará después.",
+    ),
+  ).toBeVisible();
 });
 
 test("consulta el catálogo y guía una venta con el proveedor de IA real", async ({
@@ -176,11 +235,24 @@ test("consulta el catálogo y guía una venta con el proveedor de IA real", asyn
   );
   test.setTimeout(90_000);
   await iniciarSesion(page, administrador);
+  const sku = `E2E-IA-${randomUUID().slice(0, 8)}`;
+  const nombreProducto = `Polo de muestra ${randomUUID().slice(0, 6)}`;
+  await page.goto("/panel/productos");
+  await page.getByRole("button", { name: "Nuevo producto" }).click();
+  await page.getByLabel("SKU").fill(sku);
+  await page.getByLabel("Nombre del producto").fill(nombreProducto);
+  await page.getByLabel("Precio unitario").fill("29.90");
+  await page.getByLabel("Existencias iniciales").fill("5");
+  await page.getByRole("button", { name: "Guardar producto" }).click();
+
   await page.goto("/panel/asistente");
   const campo = page.getByLabel("Mensaje para el asistente");
   const respuestas = page.locator(
     "article.asistente-modulo__mensaje--asistente",
   );
+  await expect(
+    page.getByRole("heading", { name: "Asistente IA" }),
+  ).toBeVisible();
 
   await campo.fill("¿Cuántos productos activos tenemos?");
   await page.getByRole("button", { name: "Enviar mensaje" }).click();
@@ -190,7 +262,7 @@ test("consulta el catálogo y guía una venta con el proveedor de IA real", asyn
   await campo.fill("¿Cuál es ese producto?");
   await page.getByRole("button", { name: "Enviar mensaje" }).click();
   await expect(respuestas).toHaveCount(2, { timeout: 40_000 });
-  await expect(respuestas.last()).toContainText("Polo de muestra");
+  await expect(respuestas.last()).toContainText(nombreProducto);
 
   const nombreCliente = `Cliente asistente ${randomUUID().slice(0, 8)}`;
   await page.goto("/panel/clientes");
@@ -208,15 +280,25 @@ test("consulta el catálogo y guía una venta con el proveedor de IA real", asyn
   await campoVenta.fill("1 unidad");
   await page.getByRole("button", { name: "Enviar mensaje" }).click();
   await expect(respuestas).toHaveCount(4, { timeout: 40_000 });
-  await expect(respuestas.last()).toContainText(/cliente/i);
+  await expect(respuestas.last()).toContainText(/boleta|factura/i);
+
+  await campoVenta.fill("boleta");
+  await page.getByRole("button", { name: "Enviar mensaje" }).click();
+  await expect(respuestas).toHaveCount(5, { timeout: 40_000 });
+  await expect(respuestas.last()).toContainText(/simple|cliente|asignada/i);
+
+  await campoVenta.fill("asignada a un cliente");
+  await page.getByRole("button", { name: "Enviar mensaje" }).click();
+  await expect(respuestas).toHaveCount(6, { timeout: 40_000 });
+  await expect(respuestas.last()).toContainText(/cliente|nombre/i);
 
   await campoVenta.fill(nombreCliente);
   await page.getByRole("button", { name: "Enviar mensaje" }).click();
-  await expect(respuestas).toHaveCount(5, { timeout: 40_000 });
+  await expect(respuestas).toHaveCount(7, { timeout: 40_000 });
   await expect(respuestas.last()).toContainText(/borrador/i);
   const tarjeta = page.getByRole("region", { name: "Borrador de venta" });
   await expect(tarjeta).toContainText(nombreCliente);
-  await expect(tarjeta).toContainText("Polo de muestra");
+  await expect(tarjeta).toContainText(nombreProducto);
 });
 
 async function iniciarSesion(

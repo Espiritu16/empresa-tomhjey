@@ -65,11 +65,11 @@ class ConsultaSimulada {
   }
 }
 
-test("la limpieza E2E solo borra categorías e invitaciones de su ejecución", async () => {
+test("la limpieza E2E solo borra las cuentas y categorías de su ejecución", async () => {
   const identificador = "ejecucion-actual";
   const operaciones: Operacion[] = [];
   const usuariosEliminados: string[] = [];
-  const prefijoInvitacion = `e2e-invitado-${identificador}-`;
+  const prefijoCuenta = `e2e-vendedor-${identificador}-`;
   const prefijoCategoria = `E2E-${identificador}-`;
   const cliente = {
     auth: {
@@ -78,12 +78,12 @@ test("la limpieza E2E solo borra categorías e invitaciones de su ejecución", a
           data: {
             users: [
               {
-                id: "invitado-actual",
-                email: `${prefijoInvitacion}uno@example.com`,
+                id: "usuario-actual",
+                email: `${prefijoCuenta}uno@example.com`,
               },
               {
-                id: "invitado-ajeno",
-                email: "e2e-invitado-otra-ejecucion@example.com",
+                id: "usuario-ajeno",
+                email: "e2e-vendedor-otra-ejecucion@example.com",
               },
             ],
           },
@@ -106,20 +106,18 @@ test("la limpieza E2E solo borra categorías e invitaciones de su ejecución", a
   ) => Promise<void>;
   await limpiarConPrefijo(cliente as never, [], false, identificador);
 
-  assert.deepEqual(usuariosEliminados, ["invitado-actual"]);
+  assert.deepEqual(usuariosEliminados, ["usuario-actual"]);
   assert.deepEqual(
-    operaciones.filter(
+    operaciones.find(
       (operacion) =>
-        operacion.accion === "delete" && operacion.campo === "correo",
+        operacion.tabla === "productos" && operacion.accion === "select",
     ),
-    [
-      {
-        tabla: "invitaciones",
-        accion: "delete",
-        campo: "correo",
-        valor: `${prefijoInvitacion}%@example.com`,
-      },
-    ],
+    {
+      tabla: "productos",
+      accion: "select",
+      campo: "creado_por",
+      valor: ["usuario-actual"],
+    },
   );
   assert.deepEqual(
     operaciones.filter(
@@ -142,7 +140,7 @@ test("la limpieza E2E solo borra categorías e invitaciones de su ejecución", a
         tabla: "perfiles",
         accion: "delete",
         campo: "id",
-        valor: "invitado-actual",
+        valor: "usuario-actual",
       },
     ],
   );

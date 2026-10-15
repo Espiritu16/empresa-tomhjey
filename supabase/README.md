@@ -6,9 +6,10 @@ Studio.
 
 ## Servicios y módulos
 
-- Auth administra acceso por correo. El registro público está deshabilitado; una invitación
-  crea usuarios con rol `vendedor`.
-- `perfiles` guarda nombre, rol y estado. Los roles posibles son `administrador` y `vendedor`.
+- Auth administra acceso por correo. El registro público está deshabilitado; un administrador
+  crea cada cuenta desde Usuarios con rol `administrador` o `vendedor`. La Edge Function crea
+  la cuenta confirmada sin enviar correo y guarda el rol elegido en `perfiles`.
+- `perfiles` guarda nombre, correo, rol y estado. Los roles posibles son `administrador` y `vendedor`.
 - `empresa` guarda los datos comerciales, moneda y cálculo de IGV de una sola empresa.
 - Catálogo guarda productos, categorías, opciones, valores y combinaciones textiles.
 - Inventario usa existencias con movimientos obligatorios; el cliente no puede escribir
@@ -33,17 +34,17 @@ npm run supabase:lint
 `supabase:reset` recrea la base local y vuelve a aplicar todas las migraciones y seeds. Solo
 debe usarse contra el stack local desechable.
 
-Las funciones se sirven localmente con `npx supabase functions serve --env-file supabase/functions/.env.local`.
-Ese archivo está ignorado por Git. Usa valores de prueba y guarda ahí `NUBEFACT_RUTA`,
+Las funciones se sirven localmente con `npm run supabase:functions:serve`, que carga el
+`.env.local` de la raíz (ignorado por Git). Usa valores de prueba para `NUBEFACT_RUTA`,
 `NUBEFACT_TOKEN`, `OPENAI_API_KEY` y, si el entorno local no los inyecta, las variables
-`SUPABASE_URL`, `SUPABASE_ANON_KEY` y `SUPABASE_SERVICE_ROLE_KEY`. Para probar el envío de
-invitaciones, los correos locales se consultan en Mailpit.
+`SUPABASE_URL`, `SUPABASE_ANON_KEY` y `SUPABASE_SERVICE_ROLE_KEY`. El alta de usuarios no
+envía mensajes; Mailpit puede seguir activo para otros flujos locales de Auth.
 
 Las pruebas unitarias de las funciones son simuladas y no consumen servicios externos:
 
 ```bash
 deno test --allow-env supabase/functions/facturacion/nubefact_test.ts supabase/functions/asistente/asistente_test.ts
-deno check supabase/functions/facturacion/index.ts supabase/functions/asistente/index.ts supabase/functions/invitar-vendedor/index.ts
+deno check supabase/functions/facturacion/index.ts supabase/functions/asistente/index.ts supabase/functions/crear-usuario/index.ts
 ```
 
 ## Primer administrador
@@ -51,11 +52,12 @@ deno check supabase/functions/facturacion/index.ts supabase/functions/asistente/
 El trigger de Auth crea un perfil como vendedor y no lee el rol de `user_metadata`. Para
 preparar el primer administrador en el entorno de la empresa:
 
-1. Crear/invitar la cuenta inicial desde el panel de Auth o con la Admin API.
+1. Crear la cuenta inicial desde el panel de Auth o con la Admin API.
 2. Obtener el UUID de esa cuenta desde Auth.
 3. Invocar `public.inicializar_administrador(usuario_id)` con una sesión de `service_role`.
    Solo se permite mientras no exista ningún administrador.
-4. Iniciar sesión con esa cuenta y completar Empresa, serie de boleta/factura y usuarios.
+4. Iniciar sesión con esa cuenta y completar Empresa y series de boleta/factura. Desde Usuarios,
+   el administrador crea directamente cuentas con cualquiera de los dos roles.
 
 No pegues la clave service role en el SQL Editor ni la guardes en archivos versionados. La
 primera configuración de Empresa se guarda mediante `public.guardar_empresa`; el RUC se
@@ -71,8 +73,8 @@ valida con formato, prefijo y dígito verificador.
   primer rol administrador; `cambiar_estado_vendedor` permite activar o desactivar vendedores.
 - Las claves de NubeFacT, OpenAI y service role se limitan a Edge Functions y nunca se pasan
   al modelo.
-- NubeFacT se prueba con una cuenta sandbox. No se han desplegado funciones ni migraciones a
-  un proyecto remoto.
+- La demo académica está desplegada en Cloudflare y conectada al proyecto Supabase
+  `proyecto-universidad`. La creación de usuarios usa `crear-usuario` y no envía correos.
 
 ## Convenciones de migraciones
 

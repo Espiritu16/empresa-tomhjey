@@ -3,65 +3,80 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { crearClienteSupabase } from "@/compartido/supabase/cliente";
-import type { InvitacionEquipo, UsuarioEquipo } from "./consultas";
+import { DialogoModal } from "@/compartido/componentes/dialogo-modal";
+import { useNotificaciones } from "@/compartido/notificaciones/proveedor-notificaciones";
+import type { UsuarioEquipo } from "./consultas";
 
 export function PaginaUsuarios({
   usuarios,
-  invitaciones,
   errorInicial,
 }: {
   usuarios: UsuarioEquipo[];
-  invitaciones: InvitacionEquipo[];
   errorInicial: string | null;
 }) {
   const router = useRouter();
+  const notificaciones = useNotificaciones();
   const [abierto, setAbierto] = useState(false);
+  const [nombre, setNombre] = useState("");
   const [correo, setCorreo] = useState("");
+  const [clave, setClave] = useState("");
+  const [rol, setRol] = useState<"administrador" | "vendedor">("vendedor");
   const [guardando, setGuardando] = useState(false);
   const [usuarioActualizando, setUsuarioActualizando] = useState<string | null>(
     null,
   );
-  const [mensaje, setMensaje] = useState<string | null>(null);
   const [error, setError] = useState(errorInicial);
 
-  async function invitar(evento: FormEvent<HTMLFormElement>) {
+  async function crearUsuario(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     setError(null);
-    setMensaje(null);
+    const nombreLimpio = nombre.trim();
     const direccion = correo.trim().toLowerCase();
+    if (!nombreLimpio) {
+      setError("Escribe el nombre de la persona.");
+      return;
+    }
     if (!direccion) {
-      setError("Escribe el correo de la persona que quieres invitar.");
+      setError("Escribe el correo de la persona.");
+      return;
+    }
+    if (clave.length < 6) {
+      setError("La contraseña inicial debe tener al menos 6 caracteres.");
       return;
     }
     setGuardando(true);
-    const { data, error: errorInvitacion } =
-      await crearClienteSupabase().functions.invoke("invitar-vendedor", {
-        body: { correo: direccion },
+    const { data, error: errorCreacion } =
+      await crearClienteSupabase().functions.invoke("crear-usuario", {
+        body: { nombre: nombreLimpio, correo: direccion, clave, rol },
       });
     setGuardando(false);
-    if (errorInvitacion) {
-      setError(
-        errorInvitacion.message.includes("Failed to fetch")
-          ? "La función de invitaciones no está disponible en local. Inicia las Edge Functions y vuelve a intentar."
-          : "No se pudo enviar la invitación. Revisa el correo e inténtalo de nuevo.",
+    if (errorCreacion) {
+      notificaciones.error(
+        errorCreacion.message.includes("Failed to fetch")
+          ? "La función para crear usuarios no está disponible. Inicia las Edge Functions y vuelve a intentar."
+          : "No se pudo crear la cuenta. Revisa el correo y la contraseña e inténtalo de nuevo.",
       );
       return;
     }
-    if (!data?.invitacionId) {
-      setError(
-        "La invitación no devolvió una confirmación. Inténtalo otra vez.",
+    if (!data?.usuarioId) {
+      notificaciones.error(
+        "No se recibió confirmación de la cuenta. Inténtalo otra vez.",
       );
       return;
     }
-    setMensaje("La invitación se envió.");
+    notificaciones.exito(
+      `La cuenta ${direccion} se creó. Comparte la contraseña inicial con la persona.`,
+    );
+    setNombre("");
     setCorreo("");
+    setClave("");
+    setRol("vendedor");
     setAbierto(false);
     router.refresh();
   }
 
   async function cambiarEstado(usuario: UsuarioEquipo) {
     setError(null);
-    setMensaje(null);
     setUsuarioActualizando(usuario.id);
     const { error: errorCambio } = await crearClienteSupabase().rpc(
       "cambiar_estado_vendedor",
@@ -69,10 +84,10 @@ export function PaginaUsuarios({
     );
     setUsuarioActualizando(null);
     if (errorCambio) {
-      setError("No se pudo actualizar el acceso del vendedor.");
+      notificaciones.error("No se pudo actualizar el acceso del vendedor.");
       return;
     }
-    setMensaje(
+    notificaciones.exito(
       usuario.activo
         ? "El acceso del vendedor se desactivó."
         : "El acceso del vendedor se activó.",
@@ -87,7 +102,7 @@ export function PaginaUsuarios({
           <p className="rotulo">ACCESOS DE LA EMPRESA</p>
           <h1>Usuarios</h1>
           <p className="encabezado-seccion__texto">
-            Invita vendedores y activa o pausa sus accesos.
+            Crea cuentas de administración o ventas y gestiona sus accesos.
           </p>
         </div>
       </header>
@@ -100,25 +115,21 @@ export function PaginaUsuarios({
           {error}
         </p>
       ) : null}
-      {mensaje ? (
-        <p
-          aria-live="polite"
-          className="modulo-operativo__aviso modulo-operativo__aviso--bien"
-        >
-          {mensaje}
-        </p>
-      ) : null}
       <div className="modulo-operativo__barra">
         <p>{usuarios.length} cuentas de usuario</p>
         <button
           className="boton-principal"
           onClick={() => {
             setError(null);
+            setNombre("");
+            setCorreo("");
+            setClave("");
+            setRol("vendedor");
             setAbierto(true);
           }}
           type="button"
         >
-          Invitar vendedor
+          Nuevo usuario
         </button>
       </div>
       <div className="modulo-operativo__tabla-contenedor">
@@ -126,6 +137,7 @@ export function PaginaUsuarios({
           <thead>
             <tr>
               <th scope="col">Persona</th>
+              <th scope="col">Correo electrónico</th>
               <th scope="col">Rol</th>
               <th scope="col">Acceso</th>
               <th scope="col">Desde</th>
@@ -136,6 +148,7 @@ export function PaginaUsuarios({
             {usuarios.map((usuario) => (
               <tr key={usuario.id}>
                 <td>{usuario.nombre}</td>
+                <td>{usuario.correo ?? "Sin correo"}</td>
                 <td>
                   {usuario.rol === "administrador"
                     ? "Administrador"
@@ -172,102 +185,88 @@ export function PaginaUsuarios({
         </table>
       </div>
 
-      <section
-        aria-labelledby="invitaciones-titulo"
-        className="modulo-operativo__panel"
+      <DialogoModal
+        abierto={abierto}
+        bloqueado={guardando}
+        onCerrar={() => setAbierto(false)}
+        titulo="Nuevo usuario"
       >
-        <div className="tarjeta-panel__encabezado">
-          <div>
-            <p className="rotulo">EQUIPO</p>
-            <h2 id="invitaciones-titulo">Invitaciones recientes</h2>
-          </div>
-        </div>
-        {invitaciones.length ? (
-          <div className="modulo-operativo__tabla-contenedor">
-            <table className="modulo-operativo__tabla">
-              <thead>
-                <tr>
-                  <th scope="col">Correo</th>
-                  <th scope="col">Estado</th>
-                  <th scope="col">Vence</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invitaciones.map((invitacion) => (
-                  <tr key={invitacion.id}>
-                    <td>{invitacion.correo}</td>
-                    <td>
-                      {invitacion.estado === "pendiente"
-                        ? "Pendiente"
-                        : invitacion.estado === "aceptada"
-                          ? "Aceptada"
-                          : "Cancelada"}
-                    </td>
-                    <td>{formatearFecha(invitacion.expiraEn)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="modulo-operativo__vacio">
-            No hay invitaciones recientes.
-          </p>
-        )}
-      </section>
-
-      {abierto ? (
-        <div className="modulo-operativo__dialogo-fondo">
-          <section
-            aria-labelledby="invitacion-titulo"
-            aria-modal="true"
-            className="modulo-operativo__dialogo"
-            role="dialog"
-          >
-            <h2 id="invitacion-titulo">Invitar a un vendedor</h2>
-            <p className="modulo-operativo__nota">
-              Se enviará un correo para que la persona configure su acceso.
+        <p className="modulo-operativo__nota">
+          La cuenta queda lista para iniciar sesión. No se envía ningún correo.
+        </p>
+        <form className="modulo-operativo__formulario" onSubmit={crearUsuario}>
+          <label className="campo modulo-operativo__ancho-completo">
+            <span>Nombre completo</span>
+            <input
+              autoComplete="name"
+              maxLength={120}
+              onChange={(evento) => setNombre(evento.target.value)}
+              required
+              value={nombre}
+            />
+          </label>
+          <label className="campo modulo-operativo__ancho-completo">
+            <span>Correo electrónico</span>
+            <input
+              autoComplete="email"
+              maxLength={254}
+              onChange={(evento) => setCorreo(evento.target.value)}
+              required
+              type="email"
+              value={correo}
+            />
+          </label>
+          <label className="campo modulo-operativo__ancho-completo">
+            <span>Rol</span>
+            <select
+              onChange={(evento) =>
+                setRol(evento.target.value as "administrador" | "vendedor")
+              }
+              value={rol}
+            >
+              <option value="vendedor">Vendedor</option>
+              <option value="administrador">Administrador</option>
+            </select>
+          </label>
+          <label className="campo modulo-operativo__ancho-completo">
+            <span>Contraseña inicial</span>
+            <input
+              autoComplete="new-password"
+              minLength={6}
+              maxLength={128}
+              onChange={(evento) => setClave(evento.target.value)}
+              required
+              type="password"
+              value={clave}
+            />
+          </label>
+          {error ? (
+            <p
+              className="modulo-operativo__aviso modulo-operativo__aviso--error modulo-operativo__ancho-completo"
+              role="alert"
+            >
+              {error}
             </p>
-            <form className="modulo-operativo__formulario" onSubmit={invitar}>
-              <label className="campo modulo-operativo__ancho-completo">
-                <span>Correo electrónico</span>
-                <input
-                  autoComplete="email"
-                  onChange={(evento) => setCorreo(evento.target.value)}
-                  required
-                  type="email"
-                  value={correo}
-                />
-              </label>
-              {error ? (
-                <p
-                  className="modulo-operativo__aviso modulo-operativo__aviso--error modulo-operativo__ancho-completo"
-                  role="alert"
-                >
-                  {error}
-                </p>
-              ) : null}
-              <div className="modulo-operativo__acciones modulo-operativo__ancho-completo">
-                <button
-                  className="boton-principal"
-                  disabled={guardando}
-                  type="submit"
-                >
-                  {guardando ? "Enviando…" : "Enviar invitación"}
-                </button>
-                <button
-                  className="modulo-operativo__boton-secundario"
-                  disabled={guardando}
-                  onClick={() => setAbierto(false)}
-                  type="button"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </form>
-          </section>
-        </div>
-      ) : null}
+          ) : null}
+          <div className="modulo-operativo__acciones modulo-operativo__acciones--dialogo modulo-operativo__ancho-completo">
+            <button
+              className="modulo-operativo__boton-secundario"
+              disabled={guardando}
+              onClick={() => setAbierto(false)}
+              type="button"
+            >
+              Cancelar
+            </button>
+            <button
+              className="boton-principal"
+              disabled={guardando}
+              type="submit"
+            >
+              {guardando ? "Creando…" : "Crear usuario"}
+            </button>
+          </div>
+        </form>
+      </DialogoModal>
     </section>
   );
 }

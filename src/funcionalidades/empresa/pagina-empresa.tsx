@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { crearClienteSupabase } from "@/compartido/supabase/cliente";
+import { useNotificaciones } from "@/compartido/notificaciones/proveedor-notificaciones";
 import type { DatosEmpresa } from "./consultas";
 
 export function PaginaEmpresa({
@@ -13,6 +14,7 @@ export function PaginaEmpresa({
   errorInicial: string | null;
 }) {
   const router = useRouter();
+  const notificaciones = useNotificaciones();
   const [formulario, setFormulario] = useState<DatosEmpresa>(
     empresa ?? {
       nombre: "Tomhjey",
@@ -27,13 +29,11 @@ export function PaginaEmpresa({
     },
   );
   const [guardando, setGuardando] = useState(false);
-  const [mensaje, setMensaje] = useState<string | null>(null);
   const [error, setError] = useState(errorInicial);
 
   async function guardar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     setError(null);
-    setMensaje(null);
     const tasa = Number(formulario.igvPorcentaje);
     if (
       !formulario.nombre.trim() ||
@@ -61,14 +61,18 @@ export function PaginaEmpresa({
     );
     setGuardando(false);
     if (errorGuardar) {
-      setError(
-        errorGuardar.message.includes("RUC")
-          ? "El RUC no es válido. Revisa sus once dígitos y el dígito verificador."
-          : "No se pudo guardar la configuración. Revisa los datos e inténtalo de nuevo.",
-      );
+      if (errorGuardar.message.includes("RUC")) {
+        setError(
+          "El RUC no es válido. Revisa sus once dígitos y el dígito verificador.",
+        );
+      } else {
+        notificaciones.error(
+          "No se pudo guardar la configuración. Revisa los datos e inténtalo de nuevo.",
+        );
+      }
       return;
     }
-    setMensaje("La configuración de empresa se guardó.");
+    notificaciones.exito("La configuración de empresa se guardó.");
     router.refresh();
   }
 
@@ -97,14 +101,6 @@ export function PaginaEmpresa({
           role="alert"
         >
           {error}
-        </p>
-      ) : null}
-      {mensaje ? (
-        <p
-          aria-live="polite"
-          className="modulo-operativo__aviso modulo-operativo__aviso--bien"
-        >
-          {mensaje}
         </p>
       ) : null}
       <form

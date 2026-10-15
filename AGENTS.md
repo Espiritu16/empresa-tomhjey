@@ -27,7 +27,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `npm run supabase:reset` recrea la base local y borra sus datos de desarrollo.
 - `npm run supabase:test` ejecuta pgTAP; `npm run supabase:lint` valida el esquema local.
 - `npm run functions:test|check` ejecuta tests Deno simulados y verifica tipos de Edge Functions.
-- `npm run supabase:functions:serve` sirve las funciones con `supabase/functions/.env.local`.
+- `npm run supabase:functions:serve` sirve las funciones con el `.env.local` de la raíz.
 
 ## Arquitectura y seguridad
 
@@ -41,15 +41,16 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - El proxy de Supabase actualiza cookies; no sustituye la autorización de cada operación.
 - La empresa opera como instancia única; no agregues `tenant_id`, planes, suscripciones ni locales.
 - Los únicos roles son `administrador` y `vendedor`; `perfiles` es su fuente de verdad.
-- El registro público está deshabilitado. Auth crea perfiles vendedor; nunca derives roles de
-  `user_metadata` ni permitas que el cliente cambie roles.
+- El registro público está deshabilitado. Auth crea perfiles como vendedor y la Edge Function
+  `crear-usuario` permite al administrador crear cuentas y asignar su rol desde `perfiles`;
+  nunca derives roles de `user_metadata` ni permitas que el cliente cambie roles.
 - Los saldos de existencias solo cambian por RPC que registra movimientos. Los precios,
   impuestos, totales y correlativos se calculan o reservan en Postgres.
 - Los borradores usan `crear_borrador_venta`; confirmar usa `confirmar_venta`, que descuenta
   stock y registra movimientos atómicamente. Una confirmación repetida es idempotente.
 - El vendedor consulta sus ventas y administración consulta todas. Toda RPC que reciba un id
   valida permiso dentro del backend.
-- `facturacion`, `asistente` e `invitar-vendedor` requieren JWT. NubeFacT, OpenAI y service role
+- `facturacion`, `asistente` y `crear-usuario` requieren JWT. NubeFacT, OpenAI y service role
   solo se usan del lado servidor.
 
 ## Convenciones

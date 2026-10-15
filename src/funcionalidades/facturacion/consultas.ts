@@ -29,6 +29,30 @@ export type ComprobanteFacturacion = {
   moneda: "PEN" | "USD";
 };
 
+export type DatosComprobanteImpresion = {
+  tipo: TipoComprobante;
+  serie: string;
+  numero: number;
+  cadenaQr: string | null;
+  fecha: string;
+  clienteNombre: string;
+  clienteTipoDocumento: string | null;
+  clienteNumeroDocumento: string | null;
+  clienteDireccion: string | null;
+  moneda: "PEN" | "USD";
+  subtotal: number;
+  igv: number;
+  total: number;
+  lineas: {
+    descripcion: string;
+    sku: string;
+    unidadMedida: string;
+    cantidad: number;
+    precioUnitario: number;
+    total: number;
+  }[];
+};
+
 export type PaginaFacturacion = {
   empresa: { ruc: string | null } | null;
   series: SerieComprobante[];
@@ -132,5 +156,79 @@ export async function cargarPaginaFacturacion(): Promise<PaginaFacturacion> {
       ];
     }),
     error: null,
+  };
+}
+
+export async function cargarComprobanteImpresion(
+  comprobanteId: string,
+): Promise<DatosComprobanteImpresion | null> {
+  const supabase = await crearClienteSupabaseServidor();
+  const { data: comprobante, error: errorComprobante } = await supabase
+    .from("comprobantes")
+    .select("id, venta_id, tipo, serie, numero, estado, cadena_qr")
+    .eq("id", comprobanteId)
+    .maybeSingle();
+
+  if (
+    errorComprobante ||
+    !comprobante ||
+    (comprobante.tipo !== "factura" && comprobante.tipo !== "boleta") ||
+    comprobante.estado !== "emitido"
+  ) {
+    return null;
+  }
+
+  const [
+    { data: venta, error: errorVenta },
+    { data: lineas, error: errorLineas },
+  ] = await Promise.all([
+    supabase
+      .from("ventas")
+      .select(
+        "cliente_nombre, cliente_tipo_documento, cliente_numero_documento, cliente_direccion, moneda, subtotal, igv, total, confirmado_en, creado_en",
+      )
+      .eq("id", comprobante.venta_id)
+      .maybeSingle(),
+    supabase
+      .from("lineas_venta")
+      .select(
+        "descripcion_congelada, sku_congelado, unidad_medida, cantidad, precio_unitario, total",
+      )
+      .eq("venta_id", comprobante.venta_id)
+      .order("creado_en", { ascending: true }),
+  ]);
+
+  if (
+    errorVenta ||
+    errorLineas ||
+    !venta ||
+    (venta.moneda !== "PEN" && venta.moneda !== "USD") ||
+    !lineas?.length
+  ) {
+    return null;
+  }
+
+  return {
+    tipo: comprobante.tipo,
+    serie: comprobante.serie,
+    numero: Number(comprobante.numero),
+    cadenaQr: comprobante.cadena_qr,
+    fecha: venta.confirmado_en ?? venta.creado_en,
+    clienteNombre: venta.cliente_nombre ?? "Cliente sin identificar",
+    clienteTipoDocumento: venta.cliente_tipo_documento,
+    clienteNumeroDocumento: venta.cliente_numero_documento,
+    clienteDireccion: venta.cliente_direccion,
+    moneda: venta.moneda,
+    subtotal: Number(venta.subtotal),
+    igv: Number(venta.igv),
+    total: Number(venta.total),
+    lineas: lineas.map((linea) => ({
+      descripcion: linea.descripcion_congelada,
+      sku: linea.sku_congelado,
+      unidadMedida: linea.unidad_medida,
+      cantidad: Number(linea.cantidad),
+      precioUnitario: Number(linea.precio_unitario),
+      total: Number(linea.total),
+    })),
   };
 }

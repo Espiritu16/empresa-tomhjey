@@ -13,7 +13,7 @@ test.beforeAll(async () => {
   administrador = estado.administrador;
 });
 
-test("registra ajustes con motivo y conserva el saldo cuando el motivo está vacío", async ({
+test("muestra el stock actual y permite definir el nuevo stock con motivo", async ({
   page,
 }) => {
   await iniciarSesion(page, administrador);
@@ -33,7 +33,17 @@ test("registra ajustes con motivo y conserva el saldo cuando el motivo está vac
   await page.getByLabel("Producto o combinación").selectOption({
     label: `${sku} — Producto ${sku}`,
   });
-  await page.getByLabel("Cantidad de ajuste").fill("-2");
+  const stockActual = page.getByLabel("Stock actual");
+  const stockNuevo = page.getByLabel("Nuevo stock");
+  await expect(stockActual).toHaveValue("5");
+  await expect(stockNuevo).toHaveValue("");
+  const cajaStockActual = await stockActual.boundingBox();
+  const cajaStockNuevo = await stockNuevo.boundingBox();
+  expect(cajaStockActual).not.toBeNull();
+  expect(cajaStockNuevo).not.toBeNull();
+  expect(Math.abs(cajaStockActual!.y - cajaStockNuevo!.y)).toBeLessThan(2);
+  await stockNuevo.fill("3");
+  await page.getByLabel("Motivo del ajuste").fill("");
   await page.getByRole("button", { name: "Guardar ajuste" }).click();
   await expect(page.getByLabel("Motivo del ajuste")).toHaveJSProperty(
     "validity.valueMissing",

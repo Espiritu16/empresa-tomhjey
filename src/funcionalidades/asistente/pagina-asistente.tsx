@@ -1,8 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import Link from "next/link";
 import { crearClienteSupabase } from "@/compartido/supabase/cliente";
+import { useNotificaciones } from "@/compartido/notificaciones/proveedor-notificaciones";
 import { emitirComprobante } from "@/funcionalidades/facturacion/emision";
 import type { TipoComprobante } from "@/funcionalidades/facturacion/consultas";
 import { adjuntarBorradores, type BorradorVentaAsistente } from "./ventas-chat";
@@ -19,13 +26,13 @@ export function PaginaAsistente({
   conversacionInicial: string | null;
   errorInicial: string | null;
 }) {
+  const notificaciones = useNotificaciones();
   const [conversaciones, setConversaciones] = useState(conversacionesIniciales);
   const [mensajes, setMensajes] = useState(mensajesIniciales);
   const [conversacionId, setConversacionId] = useState(conversacionInicial);
   const [texto, setTexto] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [ventaConfirmando, setVentaConfirmando] = useState<string | null>(null);
-  const [estadoVenta, setEstadoVenta] = useState<string | null>(null);
   const [error, setError] = useState(errorInicial);
   const mensajesRef = useRef<HTMLDivElement>(null);
   const campoMensajeRef = useRef<HTMLTextAreaElement>(null);
@@ -44,7 +51,6 @@ export function PaginaAsistente({
     const mensaje = texto.trim();
     if (!mensaje || enviando) return;
     setError(null);
-    setEstadoVenta(null);
     setEnviando(true);
     setMensajes((actuales) => [
       ...actuales,
@@ -105,7 +111,7 @@ export function PaginaAsistente({
       setMensajes((actuales) =>
         actuales.filter((item) => !item.id.startsWith("temporal-")),
       );
-      setError(
+      notificaciones.error(
         errorEnvio instanceof Error
           ? errorEnvio.message
           : "No se pudo completar la consulta. Inténtalo de nuevo.",
@@ -125,7 +131,7 @@ export function PaginaAsistente({
       .eq("conversacion_id", id)
       .order("creado_en", { ascending: true });
     if (errorConsulta) {
-      setError("No se pudo abrir esa conversación.");
+      notificaciones.error("No se pudo abrir esa conversación.");
       return;
     }
     setConversacionId(id);
@@ -145,7 +151,6 @@ export function PaginaAsistente({
     tipoComprobante: TipoComprobante,
   ) {
     setError(null);
-    setEstadoVenta(null);
     setVentaConfirmando(venta.id);
     const supabase = crearClienteSupabase();
     let errorConfirmar: { message: string } | null;
@@ -157,14 +162,14 @@ export function PaginaAsistente({
       errorConfirmar = resultado.error;
     } catch {
       setVentaConfirmando(null);
-      setError(
+      notificaciones.error(
         "No se recibió respuesta al confirmar. Puedes volver a intentarlo; el sistema evita descontar el inventario dos veces.",
       );
       return;
     }
     if (errorConfirmar) {
       setVentaConfirmando(null);
-      setError(traducirErrorVenta(errorConfirmar.message));
+      notificaciones.error(traducirErrorVenta(errorConfirmar.message));
       return;
     }
     setMensajes((actuales) =>
@@ -187,7 +192,7 @@ export function PaginaAsistente({
         venta.id,
         tipoComprobante,
       );
-      setEstadoVenta(
+      notificaciones.exito(
         respuesta.estado === "emitido"
           ? tipoComprobante === "boleta"
             ? "Venta confirmada y boleta enviada a NubeFacT. La aceptación de SUNAT se consultará después."
@@ -197,7 +202,7 @@ export function PaginaAsistente({
           : "Venta confirmada. El comprobante sigue en proceso; revisa Facturación para ver el estado.",
       );
     } catch (errorEmision) {
-      setError(
+      notificaciones.error(
         `La venta quedó confirmada, pero no se pudo completar el envío: ${errorEmision instanceof Error ? errorEmision.message : "error de conexión"} Revisa Facturación para reintentar.`,
       );
     } finally {
@@ -232,15 +237,6 @@ export function PaginaAsistente({
           role="alert"
         >
           {error}
-        </p>
-      ) : null}
-      {estadoVenta ? (
-        <p
-          aria-live="polite"
-          className="modulo-operativo__aviso modulo-operativo__aviso--bien"
-          role="status"
-        >
-          {estadoVenta}
         </p>
       ) : null}
       <div className="asistente-modulo__rejilla">
@@ -295,7 +291,9 @@ export function PaginaAsistente({
                   key={mensaje.id}
                 >
                   <span>{mensaje.rol === "usuario" ? "Tú" : "Asistente"}</span>
-                  <p>{renderizarContenido(mensaje.contenido)}</p>
+                  <div className="asistente-modulo__contenido">
+                    {renderizarContenido(mensaje.contenido)}
+                  </div>
                   {mensaje.borradorVenta ? (
                     <TarjetaBorradorVenta
                       confirmando={
@@ -399,21 +397,59 @@ export function PaginaAsistente({
 }
 
 function renderizarContenido(contenido: string) {
-  return contenido.split(/\r?\n/).flatMap((linea, indiceLinea) => {
-    const segmentos = linea.split(/(\*\*.*?\*\*)/g);
-    const contenidoLinea = segmentos.map((segmento, indiceSegmento) => {
-      if (segmento.startsWith("**") && segmento.endsWith("**")) {
-        return (
-          <strong key={`${indiceLinea}-${indiceSegmento}`}>
-            {segmento.slice(2, -2)}
-          </strong>
+  const lineas = contenido.split(/\r?\n/);
+  const nodos: ReactNode[] = [];
+  let indiceLinea = 0;
+  let lineaNormalAnterior = false;
+
+  while (indiceLinea < lineas.length) {
+    const linea = lineas[indiceLinea];
+    if (linea.trimStart().startsWith("• ")) {
+      const elementos: ReactNode[] = [];
+      while (
+        indiceLinea < lineas.length &&
+        lineas[indiceLinea].trimStart().startsWith("• ")
+      ) {
+        const textoElemento = lineas[indiceLinea].trimStart().slice(2);
+        elementos.push(
+          <li key={`elemento-${indiceLinea}`}>
+            {renderizarLinea(textoElemento, indiceLinea)}
+          </li>,
         );
+        indiceLinea += 1;
       }
-      return segmento.replaceAll("**", "");
-    });
-    return indiceLinea === 0
-      ? contenidoLinea
-      : [<br key={`salto-${indiceLinea}`} />, ...contenidoLinea];
+      nodos.push(
+        <ul
+          aria-label="Resultados del asistente"
+          className="asistente-modulo__lista-respuesta"
+          key={`lista-${indiceLinea}`}
+        >
+          {elementos}
+        </ul>,
+      );
+      lineaNormalAnterior = false;
+      continue;
+    }
+
+    if (lineaNormalAnterior) nodos.push(<br key={`salto-${indiceLinea}`} />);
+    nodos.push(...renderizarLinea(linea, indiceLinea));
+    lineaNormalAnterior = true;
+    indiceLinea += 1;
+  }
+
+  return nodos;
+}
+
+function renderizarLinea(linea: string, indiceLinea: number) {
+  return linea.split(/(\*\*.*?\*\*)/g).map((segmento, indiceSegmento) => {
+    if (segmento.startsWith("**") && segmento.endsWith("**")) {
+      return (
+        <strong key={`${indiceLinea}-${indiceSegmento}`}>
+          {segmento.slice(2, -2)}
+        </strong>
+      );
+    }
+    return segmento.replaceAll("**", "");
   });
 }
 
@@ -430,7 +466,7 @@ function TarjetaBorradorVenta({
     venta.tipoComprobante ?? "boleta",
   );
   const boletaIdentificada =
-    venta.total <= 700 || Boolean(venta.clienteNumeroDocumento);
+    venta.total < 700 || Boolean(venta.clienteNumeroDocumento);
   const facturaDisponible =
     venta.clienteTipoDocumento === "ruc" &&
     Boolean(venta.clienteNumeroDocumento);
@@ -535,7 +571,7 @@ function formatearImporte(total: number, moneda: "PEN" | "USD") {
 
 function traducirErrorVenta(mensaje: string) {
   if (mensaje.includes("existencias"))
-    return "No hay existencias suficientes. Revisa la venta antes de confirmarla.";
+    return "No hay stock suficiente para completar la venta. Reduce la cantidad o ajusta las existencias antes de confirmar.";
   if (mensaje.includes("precio"))
     return "El precio del producto cambió. Revisa el borrador en Ventas antes de confirmar.";
   if (mensaje.includes("cliente"))
@@ -544,7 +580,7 @@ function traducirErrorVenta(mensaje: string) {
     mensaje.includes("RUC") ||
     mensaje.includes("serie activa") ||
     mensaje.includes("factura requiere") ||
-    mensaje.includes("boletas mayores")
+    mensaje.includes("boletas")
   )
     return mensaje;
   return "No se pudo confirmar la venta. Revisa el borrador e inténtalo de nuevo.";

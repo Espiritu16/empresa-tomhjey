@@ -3,12 +3,15 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type FormEvent } from "react";
 import { crearClienteSupabase } from "@/compartido/supabase/cliente";
+import { DialogoModal } from "@/compartido/componentes/dialogo-modal";
+import { useNotificaciones } from "@/compartido/notificaciones/proveedor-notificaciones";
 import type { Categoria, Producto } from "./consultas";
 
 type Propiedades = {
   productos: Producto[];
   categorias: Categoria[];
-  puedeEditar: boolean;
+  puedeGestionarProductos: boolean;
+  esAdministrador: boolean;
   usuarioId: string;
   errorInicial: string | null;
 };
@@ -38,11 +41,13 @@ const formularioVacio: FormularioProducto = {
 export function PaginaProductos({
   productos,
   categorias,
-  puedeEditar,
+  puedeGestionarProductos,
+  esAdministrador,
   usuarioId,
   errorInicial,
 }: Propiedades) {
   const router = useRouter();
+  const notificaciones = useNotificaciones();
   const [busqueda, setBusqueda] = useState("");
   const [abierto, setAbierto] = useState(false);
   const [productoEditado, setProductoEditado] = useState<Producto | null>(null);
@@ -58,7 +63,6 @@ export function PaginaProductos({
   const [productoActualizando, setProductoActualizando] = useState<
     string | null
   >(null);
-  const [mensaje, setMensaje] = useState<string | null>(null);
   const [error, setError] = useState(errorInicial);
 
   const visibles = useMemo(() => {
@@ -104,7 +108,6 @@ export function PaginaProductos({
   async function guardarProducto(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     setError(null);
-    setMensaje(null);
     const precio = Number(formulario.precio);
     const stockInicial = Number(formulario.existenciasIniciales);
     const stockMinimo = Number(formulario.stockMinimo);
@@ -164,7 +167,7 @@ export function PaginaProductos({
             "No se encontró el producto o no tienes permiso para editarlo.",
           );
         }
-        setMensaje("Los cambios del producto se guardaron.");
+        notificaciones.exito("Los cambios del producto se guardaron.");
       } else {
         if (usaCombinaciones) {
           const { error: errorCombinaciones } = await supabase.rpc(
@@ -180,8 +183,10 @@ export function PaginaProductos({
             },
           );
           if (errorCombinaciones) throw errorCombinaciones;
-          setMensaje(
-            "El producto y sus combinaciones se crearon. Registra las existencias desde Inventario.",
+          notificaciones.exito(
+            esAdministrador
+              ? "El producto y sus combinaciones se crearon. Registra las existencias desde Inventario."
+              : "El producto y sus combinaciones se crearon. La administración puede registrar las existencias desde Inventario.",
           );
           setAbierto(false);
           router.refresh();
@@ -195,7 +200,6 @@ export function PaginaProductos({
             categoria_id: formulario.categoriaId || null,
             descripcion: formulario.descripcion.trim() || null,
             unidad_medida: formulario.unidadMedida.trim().toUpperCase(),
-            usa_combinaciones: false,
             precio,
             stock_minimo: stockMinimo,
             creado_por: usuarioId,
@@ -215,14 +219,20 @@ export function PaginaProductos({
             },
           );
           if (errorStock) {
-            setMensaje(
+            notificaciones.error(
               "El producto quedó creado, pero no se pudo registrar el stock inicial. Regístralo desde Inventario.",
             );
           } else {
-            setMensaje("El producto se creó con sus existencias iniciales.");
+            notificaciones.exito(
+              "El producto se creó con sus existencias iniciales.",
+            );
           }
         } else {
-          setMensaje("El producto se creó.");
+          notificaciones.exito(
+            esAdministrador
+              ? "El producto se creó."
+              : "El producto se creó. La administración puede registrar sus existencias desde Inventario.",
+          );
         }
       }
 
@@ -231,11 +241,13 @@ export function PaginaProductos({
     } catch (errorGuardado) {
       const mensajeError =
         errorGuardado instanceof Error ? errorGuardado.message : "";
-      setError(
-        mensajeError.includes("duplicate key")
-          ? "Ese SKU ya está registrado. Escribe uno distinto."
-          : "No se pudo guardar el producto. Revisa los datos e inténtalo de nuevo.",
-      );
+      if (mensajeError.includes("duplicate key")) {
+        setError("Ese SKU ya está registrado. Escribe uno distinto.");
+      } else {
+        notificaciones.error(
+          "No se pudo guardar el producto. Revisa los datos e inténtalo de nuevo.",
+        );
+      }
     } finally {
       setGuardando(false);
     }
@@ -257,22 +269,22 @@ export function PaginaProductos({
       .single();
     setGuardando(false);
     if (errorInsercion || !data) {
-      setError(
-        errorInsercion?.code === "23505"
-          ? "Ya existe una categoría con ese nombre."
-          : "No se pudo guardar la categoría.",
-      );
+      if (errorInsercion?.code === "23505") {
+        setError("Ya existe una categoría con ese nombre.");
+      } else {
+        notificaciones.error("No se pudo guardar la categoría.");
+      }
       return;
     }
     setFormulario((actual) => ({ ...actual, categoriaId: data.id }));
     setCategoriaNueva("");
     setCrearCategoria(false);
+    notificaciones.exito("La categoría se agregó al catálogo.");
     router.refresh();
   }
 
   async function cambiarEstado(producto: Producto) {
     setError(null);
-    setMensaje(null);
     setProductoActualizando(producto.id);
     const { data, error: errorCambio } = await crearClienteSupabase()
       .from("productos")
@@ -282,10 +294,10 @@ export function PaginaProductos({
       .maybeSingle();
     setProductoActualizando(null);
     if (errorCambio || !data) {
-      setError("No se pudo actualizar el estado del producto.");
+      notificaciones.error("No se pudo actualizar el estado del producto.");
       return;
     }
-    setMensaje(
+    notificaciones.exito(
       producto.activo
         ? "El producto se inactivó. Puedes volver a activarlo cuando quieras."
         : "El producto se activó.",
@@ -313,14 +325,6 @@ export function PaginaProductos({
           {error}
         </p>
       ) : null}
-      {mensaje ? (
-        <p
-          aria-live="polite"
-          className="modulo-operativo__aviso modulo-operativo__aviso--bien"
-        >
-          {mensaje}
-        </p>
-      ) : null}
 
       <div className="modulo-operativo__barra">
         <label className="campo">
@@ -334,15 +338,19 @@ export function PaginaProductos({
             value={busqueda}
           />
         </label>
-        {puedeEditar ? (
+        {puedeGestionarProductos ? (
           <div className="modulo-operativo__acciones">
-            <button
-              className="modulo-operativo__boton-secundario"
-              onClick={() => setCrearCategoria((actual) => !actual)}
-              type="button"
-            >
-              Nueva categoría
-            </button>
+            {esAdministrador ? (
+              <button
+                aria-controls="formulario-nueva-categoria"
+                aria-expanded={crearCategoria}
+                className="modulo-operativo__boton-secundario"
+                onClick={() => setCrearCategoria((actual) => !actual)}
+                type="button"
+              >
+                {crearCategoria ? "Cancelar categoría" : "Nueva categoría"}
+              </button>
+            ) : null}
             <button
               className="boton-principal"
               onClick={abrirNuevo}
@@ -354,8 +362,9 @@ export function PaginaProductos({
         ) : null}
       </div>
 
-      {crearCategoria && puedeEditar ? (
+      {crearCategoria && esAdministrador ? (
         <form
+          id="formulario-nueva-categoria"
           className="modulo-operativo__panel modulo-operativo__acciones"
           onSubmit={guardarCategoria}
         >
@@ -388,7 +397,7 @@ export function PaginaProductos({
               <th scope="col">Precio</th>
               <th scope="col">Existencias</th>
               <th scope="col">Estado</th>
-              {puedeEditar ? <th scope="col">Acciones</th> : null}
+              {puedeGestionarProductos ? <th scope="col">Acciones</th> : null}
             </tr>
           </thead>
           <tbody>
@@ -417,7 +426,7 @@ export function PaginaProductos({
                     {producto.activo ? "Activo" : "Inactivo"}
                   </span>
                 </td>
-                {puedeEditar ? (
+                {puedeGestionarProductos ? (
                   <td>
                     <button
                       aria-label={`Editar ${producto.nombre}`}
@@ -456,205 +465,196 @@ export function PaginaProductos({
         ) : null}
       </div>
 
-      {abierto ? (
-        <div className="modulo-operativo__dialogo-fondo">
-          <section
-            aria-labelledby="formulario-producto-titulo"
-            aria-modal="true"
-            className="modulo-operativo__dialogo"
-            role="dialog"
-          >
-            <h2 id="formulario-producto-titulo">
-              {productoEditado ? "Editar producto" : "Nuevo producto"}
-            </h2>
-            <form
-              className="modulo-operativo__formulario"
-              onSubmit={guardarProducto}
+      <DialogoModal
+        abierto={abierto}
+        bloqueado={Boolean(guardando)}
+        onCerrar={() => setAbierto(false)}
+        titulo={productoEditado ? "Editar producto" : "Nuevo producto"}
+      >
+        <form
+          className="modulo-operativo__formulario"
+          onSubmit={guardarProducto}
+        >
+          <Campo
+            etiqueta="Nombre del producto"
+            required
+            value={formulario.nombre}
+            onChange={(nombre) =>
+              setFormulario((actual) => ({ ...actual, nombre }))
+            }
+          />
+          <Campo
+            etiqueta="SKU"
+            required
+            value={formulario.sku}
+            onChange={(sku) => setFormulario((actual) => ({ ...actual, sku }))}
+          />
+          <label className="campo">
+            <span>Categoría</span>
+            <select
+              onChange={(evento) =>
+                setFormulario((actual) => ({
+                  ...actual,
+                  categoriaId: evento.target.value,
+                }))
+              }
+              value={formulario.categoriaId}
             >
+              <option value="">Sin categoría</option>
+              {categorias.map((categoria) => (
+                <option key={categoria.id} value={categoria.id}>
+                  {categoria.nombre}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="campo">
+            <span>Unidad de medida</span>
+            <select
+              onChange={(evento) =>
+                setFormulario((actual) => ({
+                  ...actual,
+                  unidadMedida: evento.target.value,
+                }))
+              }
+              value={formulario.unidadMedida}
+            >
+              <option value="NIU">Unidad</option>
+              <option value="MTR">Metro</option>
+              <option value="KGM">Kilogramo</option>
+              <option value="DZN">Docena</option>
+            </select>
+          </label>
+          {!productoEditado ? (
+            <label className="campo modulo-operativo__check modulo-operativo__ancho-completo">
+              <input
+                checked={usaCombinaciones}
+                onChange={(evento) =>
+                  setUsaCombinaciones(evento.target.checked)
+                }
+                type="checkbox"
+              />
+              <span>
+                Este producto tiene tallas, colores u otras combinaciones
+              </span>
+            </label>
+          ) : null}
+          {!productoEditado?.usaCombinaciones ? (
+            <Campo
+              etiqueta={
+                usaCombinaciones
+                  ? "Precio base por combinación"
+                  : "Precio unitario"
+              }
+              minimo="0"
+              step="0.01"
+              tipo="number"
+              required
+              value={formulario.precio}
+              onChange={(precio) =>
+                setFormulario((actual) => ({ ...actual, precio }))
+              }
+            />
+          ) : null}
+          {usaCombinaciones && !productoEditado ? (
+            <>
               <Campo
-                etiqueta="SKU"
+                etiqueta="Nombre de la primera opción"
                 required
-                value={formulario.sku}
-                onChange={(sku) =>
-                  setFormulario((actual) => ({ ...actual, sku }))
-                }
+                value={nombreOpcion1}
+                onChange={setNombreOpcion1}
               />
               <Campo
-                etiqueta="Nombre del producto"
+                etiqueta="Valores de la primera opción"
                 required
-                value={formulario.nombre}
-                onChange={(nombre) =>
-                  setFormulario((actual) => ({ ...actual, nombre }))
-                }
+                value={valoresOpcion1}
+                onChange={setValoresOpcion1}
               />
-              <label className="campo">
-                <span>Categoría</span>
-                <select
-                  onChange={(evento) =>
-                    setFormulario((actual) => ({
-                      ...actual,
-                      categoriaId: evento.target.value,
-                    }))
-                  }
-                  value={formulario.categoriaId}
-                >
-                  <option value="">Sin categoría</option>
-                  {categorias.map((categoria) => (
-                    <option key={categoria.id} value={categoria.id}>
-                      {categoria.nombre}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="campo">
-                <span>Unidad de medida</span>
-                <select
-                  onChange={(evento) =>
-                    setFormulario((actual) => ({
-                      ...actual,
-                      unidadMedida: evento.target.value,
-                    }))
-                  }
-                  value={formulario.unidadMedida}
-                >
-                  <option value="NIU">Unidad</option>
-                  <option value="MTR">Metro</option>
-                  <option value="KGM">Kilogramo</option>
-                  <option value="DZN">Docena</option>
-                </select>
-              </label>
-              {!productoEditado ? (
-                <label className="campo modulo-operativo__check modulo-operativo__ancho-completo">
-                  <input
-                    checked={usaCombinaciones}
-                    onChange={(evento) =>
-                      setUsaCombinaciones(evento.target.checked)
-                    }
-                    type="checkbox"
-                  />
-                  <span>
-                    Este producto tiene tallas, colores u otras combinaciones
-                  </span>
-                </label>
-              ) : null}
-              {!productoEditado?.usaCombinaciones ? (
-                <Campo
-                  etiqueta={
-                    usaCombinaciones
-                      ? "Precio base por combinación"
-                      : "Precio unitario"
-                  }
-                  minimo="0"
-                  step="0.01"
-                  tipo="number"
-                  required
-                  value={formulario.precio}
-                  onChange={(precio) =>
-                    setFormulario((actual) => ({ ...actual, precio }))
-                  }
-                />
-              ) : null}
-              {usaCombinaciones && !productoEditado ? (
-                <>
-                  <Campo
-                    etiqueta="Nombre de la primera opción"
-                    required
-                    value={nombreOpcion1}
-                    onChange={setNombreOpcion1}
-                  />
-                  <Campo
-                    etiqueta="Valores de la primera opción"
-                    required
-                    value={valoresOpcion1}
-                    onChange={setValoresOpcion1}
-                  />
-                  <Campo
-                    etiqueta="Nombre de la segunda opción"
-                    value={nombreOpcion2}
-                    onChange={setNombreOpcion2}
-                  />
-                  <Campo
-                    etiqueta="Valores de la segunda opción"
-                    value={valoresOpcion2}
-                    onChange={setValoresOpcion2}
-                  />
-                  <p className="modulo-operativo__nota modulo-operativo__ancho-completo">
-                    Separa los valores con comas. Por ejemplo: Talla: S, M, L y
-                    Color: Negro, Blanco. Cada combinación inicia sin
-                    existencias; agrégalas en Inventario.
-                  </p>
-                </>
-              ) : null}
-              {!productoEditado && !usaCombinaciones ? (
-                <Campo
-                  etiqueta="Existencias iniciales"
-                  minimo="0"
-                  step="0.001"
-                  tipo="number"
-                  value={formulario.existenciasIniciales}
-                  onChange={(existenciasIniciales) =>
-                    setFormulario((actual) => ({
-                      ...actual,
-                      existenciasIniciales,
-                    }))
-                  }
-                />
-              ) : null}
               <Campo
-                etiqueta="Stock mínimo"
-                minimo="0"
-                step="0.001"
-                tipo="number"
-                value={formulario.stockMinimo}
-                onChange={(stockMinimo) =>
-                  setFormulario((actual) => ({ ...actual, stockMinimo }))
-                }
+                etiqueta="Nombre de la segunda opción"
+                value={nombreOpcion2}
+                onChange={setNombreOpcion2}
               />
-              <label className="campo modulo-operativo__ancho-completo">
-                <span>Descripción</span>
-                <textarea
-                  onChange={(evento) =>
-                    setFormulario((actual) => ({
-                      ...actual,
-                      descripcion: evento.target.value,
-                    }))
-                  }
-                  value={formulario.descripcion}
-                />
-              </label>
-              {error ? (
-                <p
-                  className="modulo-operativo__aviso modulo-operativo__aviso--error modulo-operativo__ancho-completo"
-                  role="alert"
-                >
-                  {error}
-                </p>
-              ) : null}
-              <div className="modulo-operativo__acciones modulo-operativo__ancho-completo">
-                <button
-                  className="boton-principal"
-                  disabled={guardando}
-                  type="submit"
-                >
-                  {guardando
-                    ? "Guardando…"
-                    : productoEditado
-                      ? "Guardar cambios"
-                      : "Guardar producto"}
-                </button>
-                <button
-                  className="modulo-operativo__boton-secundario"
-                  disabled={guardando}
-                  onClick={() => setAbierto(false)}
-                  type="button"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </form>
-          </section>
-        </div>
-      ) : null}
+              <Campo
+                etiqueta="Valores de la segunda opción"
+                value={valoresOpcion2}
+                onChange={setValoresOpcion2}
+              />
+              <p className="modulo-operativo__nota modulo-operativo__ancho-completo">
+                Separa los valores con comas. Por ejemplo: Talla: S, M, L y
+                Color: Negro, Blanco. Cada combinación inicia sin existencias;
+                agrégalas en Inventario.
+              </p>
+            </>
+          ) : null}
+          {!productoEditado && !usaCombinaciones && esAdministrador ? (
+            <Campo
+              etiqueta="Existencias iniciales"
+              minimo="0"
+              step="0.001"
+              tipo="number"
+              value={formulario.existenciasIniciales}
+              onChange={(existenciasIniciales) =>
+                setFormulario((actual) => ({
+                  ...actual,
+                  existenciasIniciales,
+                }))
+              }
+            />
+          ) : null}
+          <Campo
+            etiqueta="Stock mínimo"
+            minimo="0"
+            step="0.001"
+            tipo="number"
+            value={formulario.stockMinimo}
+            onChange={(stockMinimo) =>
+              setFormulario((actual) => ({ ...actual, stockMinimo }))
+            }
+          />
+          <label className="campo modulo-operativo__ancho-completo">
+            <span>Descripción</span>
+            <textarea
+              onChange={(evento) =>
+                setFormulario((actual) => ({
+                  ...actual,
+                  descripcion: evento.target.value,
+                }))
+              }
+              value={formulario.descripcion}
+            />
+          </label>
+          {error ? (
+            <p
+              className="modulo-operativo__aviso modulo-operativo__aviso--error modulo-operativo__ancho-completo"
+              role="alert"
+            >
+              {error}
+            </p>
+          ) : null}
+          <div className="modulo-operativo__acciones modulo-operativo__acciones--dialogo modulo-operativo__ancho-completo">
+            <button
+              className="modulo-operativo__boton-secundario"
+              disabled={guardando}
+              onClick={() => setAbierto(false)}
+              type="button"
+            >
+              Cancelar
+            </button>
+            <button
+              className="boton-principal"
+              disabled={guardando}
+              type="submit"
+            >
+              {guardando
+                ? "Guardando…"
+                : productoEditado
+                  ? "Guardar cambios"
+                  : "Guardar producto"}
+            </button>
+          </div>
+        </form>
+      </DialogoModal>
     </section>
   );
 }

@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type FormEvent } from "react";
 import { crearClienteSupabase } from "@/compartido/supabase/cliente";
+import { DialogoModal } from "@/compartido/componentes/dialogo-modal";
+import { useNotificaciones } from "@/compartido/notificaciones/proveedor-notificaciones";
 import type { ArticuloInventario, MovimientoInventario } from "./consultas";
 
 type Propiedades = {
@@ -19,13 +21,13 @@ export function PaginaInventario({
   errorInicial,
 }: Propiedades) {
   const router = useRouter();
+  const notificaciones = useNotificaciones();
   const [busqueda, setBusqueda] = useState("");
   const [abierto, setAbierto] = useState(false);
   const [articuloSeleccionado, setArticuloSeleccionado] = useState("");
-  const [cantidad, setCantidad] = useState("");
+  const [stockFinal, setStockFinal] = useState("");
   const [motivo, setMotivo] = useState("");
   const [guardando, setGuardando] = useState(false);
-  const [mensaje, setMensaje] = useState<string | null>(null);
   const [error, setError] = useState(errorInicial);
   const articulosVisibles = useMemo(() => {
     const texto = busqueda.trim().toLocaleLowerCase("es-PE");
@@ -41,46 +43,52 @@ export function PaginaInventario({
   async function registrarAjuste(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     setError(null);
-    setMensaje(null);
-    const cambio = Number(cantidad);
+    const nuevoStock = Number(stockFinal);
     if (
       !articuloSeleccionado ||
-      !Number.isFinite(cambio) ||
-      cambio === 0 ||
+      !Number.isFinite(nuevoStock) ||
+      nuevoStock < 0 ||
       !motivo.trim()
     ) {
       setError(
-        "Elige un producto, indica una cantidad distinta de cero y escribe el motivo.",
+        "Elige un producto, indica el nuevo stock y escribe el motivo del ajuste.",
       );
       return;
     }
     const [productoId, combinacionId] = articuloSeleccionado.split("|");
     setGuardando(true);
     const { error: errorAjuste } = await crearClienteSupabase().rpc(
-      "ajustar_existencias",
+      "establecer_stock_final",
       {
         producto_objetivo: productoId,
         combinacion_objetivo: combinacionId || null,
-        cambio,
+        existencias_nuevas: nuevoStock,
         razon: motivo.trim(),
       },
     );
     setGuardando(false);
     if (errorAjuste) {
-      setError(
-        errorAjuste.message.includes("negativo")
-          ? "El ajuste dejaría existencias negativas. Revisa la cantidad."
-          : errorAjuste.message.includes("Solo administración")
-            ? "Solo administración puede ajustar existencias."
-            : "No se pudo registrar el ajuste. Revisa los datos e inténtalo de nuevo.",
-      );
+      const detalle = errorAjuste.message.includes("coincide")
+        ? "El nuevo stock debe ser distinto al stock actual."
+        : errorAjuste.message.includes("Solo administración")
+          ? "Solo administración puede ajustar existencias."
+          : errorAjuste.message.includes("stock final")
+            ? "Ingresa un stock final válido y el motivo del ajuste."
+            : "No se pudo registrar el ajuste. Revisa los datos e inténtalo de nuevo.";
+      if (errorAjuste.message.includes("Solo administración")) {
+        notificaciones.error(detalle);
+      } else {
+        setError(detalle);
+      }
       return;
     }
     setAbierto(false);
-    setCantidad("");
+    setStockFinal("");
     setMotivo("");
     setArticuloSeleccionado("");
-    setMensaje("El ajuste se registró y el movimiento quedó guardado.");
+    notificaciones.exito(
+      "El ajuste se registró y el movimiento quedó guardado.",
+    );
     router.refresh();
   }
 
@@ -105,15 +113,6 @@ export function PaginaInventario({
           {error}
         </p>
       ) : null}
-      {mensaje ? (
-        <p
-          aria-live="polite"
-          className="modulo-operativo__aviso modulo-operativo__aviso--bien"
-        >
-          {mensaje}
-        </p>
-      ) : null}
-
       <div className="modulo-operativo__barra">
         <label className="campo">
           <span className="sr-only">Buscar en inventario</span>
@@ -256,94 +255,109 @@ export function PaginaInventario({
         )}
       </section>
 
-      {abierto ? (
-        <div className="modulo-operativo__dialogo-fondo">
-          <section
-            aria-labelledby="ajuste-titulo"
-            aria-modal="true"
-            className="modulo-operativo__dialogo"
-            role="dialog"
-          >
-            <h2 id="ajuste-titulo">Registrar ajuste</h2>
-            <form
-              className="modulo-operativo__formulario"
-              onSubmit={registrarAjuste}
+      <DialogoModal
+        abierto={abierto}
+        bloqueado={guardando}
+        onCerrar={() => setAbierto(false)}
+        titulo="Registrar ajuste"
+      >
+        <form
+          className="modulo-operativo__formulario"
+          onSubmit={registrarAjuste}
+        >
+          <label className="campo modulo-operativo__ancho-completo">
+            <span>Producto o combinación</span>
+            <select
+              onChange={(evento) => {
+                const seleccionado = evento.target.value;
+                setArticuloSeleccionado(seleccionado);
+                setStockFinal("");
+                setError(null);
+              }}
+              required
+              value={articuloSeleccionado}
             >
-              <label className="campo modulo-operativo__ancho-completo">
-                <span>Producto o combinación</span>
-                <select
-                  onChange={(evento) =>
-                    setArticuloSeleccionado(evento.target.value)
-                  }
-                  required
-                  value={articuloSeleccionado}
-                >
-                  <option value="">Selecciona un producto</option>
-                  {articulos
-                    .filter((articulo) => articulo.activo)
-                    .map((articulo) => (
-                      <option
-                        key={articulo.id}
-                        value={`${articulo.productoId}|${articulo.combinacionId ?? ""}`}
-                      >
-                        {articulo.sku} — {articulo.producto}
-                      </option>
-                    ))}
-                </select>
-              </label>
-              <label className="campo modulo-operativo__ancho-completo">
-                <span>Cantidad de ajuste</span>
-                <input
-                  aria-label="Cantidad de ajuste"
-                  inputMode="decimal"
-                  onChange={(evento) => setCantidad(evento.target.value)}
-                  required
-                  step="0.001"
-                  type="number"
-                  value={cantidad}
-                />
-                <small>
-                  Usa un número positivo para sumar o negativo para restar.
-                </small>
-              </label>
-              <label className="campo modulo-operativo__ancho-completo">
-                <span>Motivo del ajuste</span>
-                <textarea
-                  aria-label="Motivo del ajuste"
-                  onChange={(evento) => setMotivo(evento.target.value)}
-                  required
-                  value={motivo}
-                />
-              </label>
-              {error ? (
-                <p
-                  className="modulo-operativo__aviso modulo-operativo__aviso--error modulo-operativo__ancho-completo"
-                  role="alert"
-                >
-                  {error}
-                </p>
-              ) : null}
-              <div className="modulo-operativo__acciones modulo-operativo__ancho-completo">
-                <button
-                  className="boton-principal"
-                  disabled={guardando}
-                  type="submit"
-                >
-                  {guardando ? "Guardando…" : "Guardar ajuste"}
-                </button>
-                <button
-                  className="modulo-operativo__boton-secundario"
-                  disabled={guardando}
-                  onClick={() => setAbierto(false)}
-                  type="button"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </form>
-          </section>
-        </div>
-      ) : null}
+              <option value="">Selecciona un producto</option>
+              {articulos
+                .filter((articulo) => articulo.activo)
+                .map((articulo) => (
+                  <option
+                    key={articulo.id}
+                    value={`${articulo.productoId}|${articulo.combinacionId ?? ""}`}
+                  >
+                    {articulo.sku} — {articulo.producto}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <label className="campo">
+            <span>Stock actual</span>
+            <input
+              aria-label="Stock actual"
+              readOnly
+              type="number"
+              value={
+                articulos.find(
+                  (item) =>
+                    `${item.productoId}|${item.combinacionId ?? ""}` ===
+                    articuloSeleccionado,
+                )?.existencias ?? ""
+              }
+            />
+          </label>
+          <label className="campo">
+            <span>Nuevo stock</span>
+            <input
+              aria-label="Nuevo stock"
+              inputMode="decimal"
+              min="0"
+              onChange={(evento) => setStockFinal(evento.target.value)}
+              required
+              step="0.001"
+              type="number"
+              value={stockFinal}
+            />
+            <small>
+              Indica el saldo final. El sistema registrará la diferencia como
+              ajuste.
+            </small>
+          </label>
+          <label className="campo modulo-operativo__ancho-completo">
+            <span>Motivo del ajuste</span>
+            <textarea
+              aria-label="Motivo del ajuste"
+              onChange={(evento) => setMotivo(evento.target.value)}
+              required
+              value={motivo}
+            />
+          </label>
+          {error ? (
+            <p
+              className="modulo-operativo__aviso modulo-operativo__aviso--error modulo-operativo__ancho-completo"
+              role="alert"
+            >
+              {error}
+            </p>
+          ) : null}
+          <div className="modulo-operativo__acciones modulo-operativo__acciones--dialogo modulo-operativo__ancho-completo">
+            <button
+              className="modulo-operativo__boton-secundario"
+              disabled={guardando}
+              onClick={() => setAbierto(false)}
+              type="button"
+            >
+              Cancelar
+            </button>
+            <button
+              className="boton-principal"
+              disabled={guardando}
+              type="submit"
+            >
+              {guardando ? "Guardando…" : "Guardar ajuste"}
+            </button>
+          </div>
+        </form>
+      </DialogoModal>
     </section>
   );
 }

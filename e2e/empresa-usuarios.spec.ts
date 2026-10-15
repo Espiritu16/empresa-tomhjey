@@ -36,14 +36,14 @@ test("guarda la configuración comercial y el servidor rechaza un RUC inválido"
   ).toBeVisible();
 });
 
-test("administra roles e invita a un vendedor con validación de correo", async ({
+test("el administrador crea usuarios localmente con cualquiera de los dos roles, sin correo", async ({
   page,
   browser,
 }) => {
   await iniciarSesion(page, administrador);
   await page.goto("/panel/usuarios");
-  const invitar = page.getByRole("button", { name: "Invitar vendedor" });
-  await expect(invitar).toBeVisible({ timeout: 1000 });
+  const crear = page.getByRole("button", { name: "Nuevo usuario" });
+  await expect(crear).toBeVisible({ timeout: 1000 });
   const vendedor = page.getByRole("row", { name: /Vendedor E2E/ });
   await expect(vendedor).toContainText("Activo");
   await vendedor
@@ -52,109 +52,191 @@ test("administra roles e invita a un vendedor con validación de correo", async 
   await expect(vendedor).toContainText("Inactivo");
   await vendedor.getByRole("button", { name: "Activar Vendedor E2E" }).click();
   await expect(vendedor).toContainText("Activo");
-  await invitar.click();
-  await page.getByRole("button", { name: "Enviar invitación" }).click();
-  await expect(page.getByLabel("Correo electrónico")).toHaveJSProperty(
+
+  const correoVendedor = `e2e-vendedor-${identificadorE2E}-${randomUUID()}@example.com`;
+  const claveVendedor = `Vendedor-E2E-${randomUUID().slice(0, 8)}`;
+  await crear.click();
+  const dialogo = page.getByRole("dialog");
+  await dialogo.getByRole("button", { name: "Crear usuario" }).click();
+  await expect(dialogo.getByLabel("Nombre completo")).toHaveJSProperty(
     "validity.valueMissing",
     true,
   );
-
-  const correo = `e2e-invitado-${identificadorE2E}-${randomUUID()}@example.com`;
-  await page.getByLabel("Correo electrónico").fill(correo);
-  await page.getByRole("button", { name: "Enviar invitación" }).click();
-  await expect(page.getByText("La invitación se envió.")).toBeVisible();
+  await dialogo.getByLabel("Nombre completo").fill("Vendedor directo E2E");
+  await dialogo.getByLabel("Correo electrónico").fill(correoVendedor);
+  await dialogo.getByLabel("Contraseña inicial").fill(claveVendedor);
+  await dialogo.getByLabel("Rol").selectOption("vendedor");
+  await dialogo.getByRole("button", { name: "Crear usuario" }).click();
   await expect(
-    page.getByRole("row", { name: new RegExp(correo) }),
-  ).toContainText("Pendiente");
-
-  const invitacion = await obtenerEnlaceInvitacion(page, correo);
-  const contextoInvitado = await browser.newContext();
-  const paginaInvitado = await contextoInvitado.newPage();
-  await paginaInvitado.goto(invitacion);
-  await expect(
-    paginaInvitado.getByRole("heading", { name: "Activa tu cuenta" }),
+    page.getByText(
+      `La cuenta ${correoVendedor} se creó. Comparte la contraseña inicial con la persona.`,
+    ),
   ).toBeVisible();
-  const clave = `Invitado-E2E-${randomUUID().slice(0, 8)}`;
-  await paginaInvitado.getByLabel("Nueva contraseña").fill(clave);
-  await paginaInvitado.getByLabel("Repite la contraseña").fill(clave);
-  await paginaInvitado.getByRole("button", { name: "Activar cuenta" }).click();
-  await expect(paginaInvitado).toHaveURL(/\/panel$/);
   await expect(
-    paginaInvitado.getByRole("link", { name: "Usuarios", exact: true }),
+    page.getByRole("row", { name: new RegExp(correoVendedor) }),
+  ).toContainText("Vendedor");
+  await expect(
+    page.getByRole("row", { name: new RegExp(correoVendedor) }),
+  ).toContainText("Activo");
+  await expectNoSeEnvioCorreo(page, correoVendedor);
+
+  const contextoVendedor = await browser.newContext();
+  const paginaVendedor = await contextoVendedor.newPage();
+  await iniciarSesion(paginaVendedor, {
+    id: "",
+    correo: correoVendedor,
+    clave: claveVendedor,
+  });
+  await expect(
+    paginaVendedor.getByRole("link", { name: "Usuarios", exact: true }),
   ).toHaveCount(0);
+  await expect(
+    paginaVendedor.getByRole("link", { name: "Empresa", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    paginaVendedor.getByRole("link", { name: "Ventas", exact: true }),
+  ).toBeVisible();
+  await expect(
+    paginaVendedor.getByRole("link", { name: "Productos", exact: true }),
+  ).toBeVisible();
+  await expect(
+    paginaVendedor.getByRole("link", { name: "Asistente IA", exact: true }),
+  ).toBeVisible();
+
+  await paginaVendedor.goto("/panel/empresa");
+  await expect(paginaVendedor).toHaveURL(/\/panel$/);
+  await paginaVendedor.goto("/panel/usuarios");
+  await expect(paginaVendedor).toHaveURL(/\/panel$/);
+
+  await paginaVendedor.goto("/panel/productos");
+  await expect(
+    paginaVendedor.getByRole("button", { name: "Nuevo producto" }),
+  ).toBeVisible();
+  await expect(
+    paginaVendedor.getByRole("button", { name: "Nueva categoría" }),
+  ).toHaveCount(0);
+  await paginaVendedor.getByRole("button", { name: "Nuevo producto" }).click();
+  const formularioProducto = paginaVendedor.getByRole("dialog");
+  await expect(
+    formularioProducto.getByLabel("Existencias iniciales"),
+  ).toHaveCount(0);
+  const skuProducto = `E2E-${identificadorE2E.slice(0, 8)}-${randomUUID().slice(0, 8)}`;
+  await formularioProducto.getByLabel("SKU").fill(skuProducto);
+  await formularioProducto
+    .getByLabel("Nombre del producto")
+    .fill("Producto de vendedor E2E");
+  await formularioProducto.getByLabel("Precio unitario").fill("18.50");
+  await formularioProducto.getByLabel("Stock mínimo").fill("2");
+  await formularioProducto
+    .getByRole("button", { name: "Guardar producto" })
+    .click();
+  let filaProducto = paginaVendedor.getByRole("row", { name: skuProducto });
+  await expect(filaProducto).toContainText("Producto de vendedor E2E");
+
+  await filaProducto
+    .getByRole("button", { name: "Editar Producto de vendedor E2E" })
+    .click();
+  const formularioEdicion = paginaVendedor.getByRole("dialog");
+  await formularioEdicion
+    .getByLabel("Nombre del producto")
+    .fill("Producto actualizado E2E");
+  await formularioEdicion
+    .getByRole("button", { name: "Guardar cambios" })
+    .click();
+  filaProducto = paginaVendedor.getByRole("row", { name: skuProducto });
+  await expect(filaProducto).toContainText("Producto actualizado E2E");
+  await filaProducto
+    .getByRole("button", { name: "Inactivar Producto actualizado E2E" })
+    .click();
+  await expect(filaProducto).toContainText("Inactivo");
+  await contextoVendedor.close();
+
+  const correoAdmin = `e2e-admin-${identificadorE2E}-${randomUUID()}@example.com`;
+  const claveAdmin = `Admin-E2E-${randomUUID().slice(0, 8)}`;
+  await crear.click();
+  await dialogo.getByLabel("Nombre completo").fill("Administrador directo E2E");
+  await dialogo.getByLabel("Correo electrónico").fill(correoAdmin);
+  await dialogo.getByLabel("Contraseña inicial").fill(claveAdmin);
+  await dialogo.getByLabel("Rol").selectOption("administrador");
+  await dialogo.getByRole("button", { name: "Crear usuario" }).click();
+  await expect(
+    page.getByText(
+      `La cuenta ${correoAdmin} se creó. Comparte la contraseña inicial con la persona.`,
+    ),
+  ).toBeVisible();
+  await expectNoSeEnvioCorreo(page, correoAdmin);
 
   const supabaseLocal = crearClienteAdministradorLocal();
   const { data: cuentas, error: errorCuentas } =
     await supabaseLocal.auth.admin.listUsers();
   expect(errorCuentas).toBeNull();
-  const cuentaInvitada = cuentas.users.find(
-    (usuario) => usuario.email?.toLowerCase() === correo.toLowerCase(),
+  const cuentaVendedor = cuentas.users.find(
+    (usuario) => usuario.email?.toLowerCase() === correoVendedor.toLowerCase(),
   );
-  expect(cuentaInvitada).toBeTruthy();
-  const [{ data: perfil }, { data: invitacionGuardada }] = await Promise.all([
+  const cuentaAdmin = cuentas.users.find(
+    (usuario) => usuario.email?.toLowerCase() === correoAdmin.toLowerCase(),
+  );
+  expect(cuentaVendedor).toBeTruthy();
+  expect(cuentaAdmin).toBeTruthy();
+  const [{ data: perfilVendedor }, { data: perfilAdmin }] = await Promise.all([
     supabaseLocal
       .from("perfiles")
-      .select("id, rol, activo")
-      .eq("id", cuentaInvitada!.id)
-      .maybeSingle(),
+      .select("id, correo, rol, activo")
+      .eq("id", cuentaVendedor!.id)
+      .single(),
     supabaseLocal
-      .from("invitaciones")
-      .select("estado, perfil_id")
-      .eq("correo", correo.toLowerCase())
-      .maybeSingle(),
+      .from("perfiles")
+      .select("id, correo, rol, activo")
+      .eq("id", cuentaAdmin!.id)
+      .single(),
   ]);
-  expect(perfil).toMatchObject({ rol: "vendedor", activo: true });
-  expect(invitacionGuardada).toMatchObject({
-    estado: "aceptada",
-    perfil_id: cuentaInvitada!.id,
+  expect(perfilVendedor).toMatchObject({
+    rol: "vendedor",
+    activo: true,
+    correo: correoVendedor,
   });
-  await paginaInvitado.getByRole("button", { name: "Salir" }).click();
-  await iniciarSesion(paginaInvitado, { ...administrador, correo, clave });
+  expect(perfilAdmin).toMatchObject({
+    rol: "administrador",
+    activo: true,
+    correo: correoAdmin,
+  });
+
+  const contextoAdmin = await browser.newContext();
+  const paginaAdmin = await contextoAdmin.newPage();
+  await iniciarSesion(paginaAdmin, {
+    id: "",
+    correo: correoAdmin,
+    clave: claveAdmin,
+  });
   await expect(
-    paginaInvitado.getByRole("heading", { name: "Inicio" }),
+    paginaAdmin.getByRole("link", { name: "Usuarios", exact: true }),
   ).toBeVisible();
+  await paginaAdmin.goto("/panel/productos");
   await expect(
-    paginaInvitado.getByRole("link", { name: "Usuarios", exact: true }),
-  ).toHaveCount(0);
-  await contextoInvitado.close();
+    paginaAdmin.getByRole("button", { name: "Nuevo producto" }),
+  ).toBeVisible();
+  await contextoAdmin.close();
 });
 
-async function obtenerEnlaceInvitacion(
+async function expectNoSeEnvioCorreo(
   page: Page,
   correo: string,
-): Promise<string> {
-  let idMensaje: string | null = null;
-  await expect
-    .poll(
-      async () => {
-        const respuesta = await page.request.get(
-          "http://127.0.0.1:54324/api/v1/messages?limit=100",
-        );
-        if (!respuesta.ok()) return null;
-        const lista = (await respuesta.json()) as {
-          messages: { ID: string; To: { Address: string }[] }[];
-        };
-        idMensaje =
-          lista.messages.find((mensaje) =>
-            mensaje.To.some(
-              (destinatario) =>
-                destinatario.Address.toLowerCase() === correo.toLowerCase(),
-            ),
-          )?.ID ?? null;
-        return idMensaje;
-      },
-      { message: "Supabase local debe entregar el correo de invitación" },
-    )
-    .toBeTruthy();
-
-  const detalle = await page.request.get(
-    `http://127.0.0.1:54324/api/v1/message/${idMensaje}`,
+): Promise<void> {
+  const respuesta = await page.request.get(
+    "http://127.0.0.1:54324/api/v1/messages?limit=100",
   );
-  expect(detalle.ok()).toBeTruthy();
-  const mensaje = (await detalle.json()) as { HTML: string };
-  const href = mensaje.HTML.match(/href="([^"]+)"/i)?.[1];
-  expect(href).toBeTruthy();
-  return href!.replaceAll("&amp;", "&");
+  expect(respuesta.ok()).toBeTruthy();
+  const lista = (await respuesta.json()) as {
+    messages: { To: { Address: string }[] }[];
+  };
+  expect(
+    lista.messages.some((mensaje) =>
+      mensaje.To.some(
+        (destinatario) =>
+          destinatario.Address.toLowerCase() === correo.toLowerCase(),
+      ),
+    ),
+  ).toBe(false);
 }
 
 async function iniciarSesion(

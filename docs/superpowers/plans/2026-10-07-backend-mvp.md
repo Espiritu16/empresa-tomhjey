@@ -82,7 +82,7 @@
 - `private.usuario_activo()` devuelve boolean para `auth.uid()` activo.
 - `private.tiene_rol(text[])` comprueba el rol persistido en `perfiles` y estado activo.
 - `public.inicializar_administrador(uuid)` solo se ejecuta en aprovisionamiento con service role y falla si ya hay administrador.
-- `public.crear_vendedor(text)` crea invitación solo para administrador; la aceptación/creación de Auth se hace desde Edge Function con Admin API.
+- La Edge Function `crear-usuario` permite al administrador crear cuentas con rol controlado en `perfiles`; Auth nunca toma el rol de `user_metadata`.
 - RLS concede al vendedor catálogo/clientes que usa y sus ventas; el administrador puede gestionar empresa, catálogo, clientes, equipo e inventario.
 
 - [x] **Step 1: Escribir pruebas pgTAP** para usuario sin perfil, inactivo, vendedor y administrador en cada tabla expuesta; probar denegación a `anon`.

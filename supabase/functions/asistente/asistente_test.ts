@@ -7,7 +7,11 @@ import {
   herramientas,
   nombresHerramientas,
 } from "./herramientas.ts";
-import { crearRespuesta, extraerTexto } from "./proveedor.ts";
+import {
+  crearRespuesta,
+  extraerTexto,
+  instruccionesAsistente,
+} from "./proveedor.ts";
 
 Deno.test(
   "la allowlist no ofrece herramientas para confirmar ni emitir",
@@ -48,7 +52,11 @@ Deno.test(
           nombreRpc = nombre;
           return {
             data: {
-              productos_activos: 12,
+              productos_activos: 50,
+              lista_productos_activos: Array.from(
+                { length: 50 },
+                (_, indice) => `Producto ${indice + 1}`,
+              ),
               productos_con_stock_bajo: 2,
               productos_agotados: 1,
               combinaciones_activas: 24,
@@ -78,12 +86,34 @@ Deno.test(
     if (
       !resultado ||
       typeof resultado !== "object" ||
-      (resultado as { productos_activos: number }).productos_activos !== 12 ||
+      (resultado as { productos_activos: number }).productos_activos !== 50 ||
+      !Array.isArray(
+        (resultado as { lista_productos_activos: unknown[] })
+          .lista_productos_activos,
+      ) ||
+      (resultado as { lista_productos_activos: unknown[] })
+        .lista_productos_activos.length !== 50 ||
       !Array.isArray(
         (resultado as { detalle_reposicion: unknown }).detalle_reposicion,
       )
     ) {
       throw new Error("Debe devolver el conteo real de productos activos.");
+    }
+  },
+);
+
+Deno.test(
+  "el asistente pide listar hasta 50 productos en líneas separadas",
+  () => {
+    const instrucciones = instruccionesAsistente().toLowerCase();
+    if (
+      !instrucciones.includes("hasta 50, enumera todos sus nombres") ||
+      !instrucciones.includes("cada una en su propia línea") ||
+      !instrucciones.includes("viñeta")
+    ) {
+      throw new Error(
+        "Las consultas de catálogo deben mostrar cada producto como elemento de lista.",
+      );
     }
   },
 );
@@ -116,13 +146,76 @@ Deno.test(
     if (!instrucciones.includes("pregunta solo por el dato que falta")) {
       throw new Error("Debe guiar la preparación de una venta.");
     }
-    if (!instrucciones.includes("No uses Markdown")) {
+    if (!instrucciones.includes("viñeta • por producto")) {
       throw new Error(
-        "Debe evitar marcas de formato que el chat no interprete.",
+        "Debe mostrar los productos con viñetas que interpreta el chat.",
       );
     }
     if (!instrucciones.includes("tecnología interna")) {
       throw new Error("Debe limitarse a la operación del negocio.");
+    }
+  },
+);
+
+Deno.test(
+  "el asistente permite preparar una boleta simple sin cliente y conserva el límite fiscal",
+  () => {
+    const instrucciones = instruccionesAsistente().toLowerCase();
+    if (!instrucciones.includes("boleta simple")) {
+      throw new Error("Debe reconocer la solicitud de boleta simple.");
+    }
+    if (!instrucciones.includes("sin cliente")) {
+      throw new Error("Debe permitir boleta simple sin cliente.");
+    }
+    if (!instrucciones.includes("s/ 700")) {
+      throw new Error("Debe conservar el límite de S/700.");
+    }
+
+    const herramienta = herramientas.find(
+      (item) => item.name === "armar_borrador_venta",
+    );
+    const propiedades = herramienta?.parameters.properties as
+      Record<string, { type?: string | string[] }> | undefined;
+    if (
+      !Array.isArray(propiedades?.cliente_id?.type) ||
+      !propiedades.cliente_id.type.includes("null")
+    ) {
+      throw new Error("El esquema debe aceptar cliente_id nulo.");
+    }
+  },
+);
+
+Deno.test(
+  "el asistente guarda un borrador sin cliente solo para boleta simple",
+  async () => {
+    let argumentosRpc: Record<string, unknown> | undefined;
+    const resultado = await despacharHerramienta(
+      {
+        async rpc(_nombre, argumentos) {
+          argumentosRpc = argumentos;
+          return { data: "venta-boleta-simple", error: null };
+        },
+      },
+      "armar_borrador_venta",
+      JSON.stringify({
+        venta_id: null,
+        cliente_id: null,
+        tipo_comprobante: "boleta",
+        lineas: [
+          {
+            producto_id: "producto-1",
+            combinacion_id: null,
+            cantidad: 1,
+          },
+        ],
+      }),
+    );
+
+    if (argumentosRpc?.cliente_objetivo !== null) {
+      throw new Error("Debe guardar el borrador sin cliente.");
+    }
+    if ((resultado as { ventaId?: string }).ventaId !== "venta-boleta-simple") {
+      throw new Error("Debe devolver el borrador preparado.");
     }
   },
 );
@@ -266,7 +359,7 @@ Deno.test(
 );
 
 Deno.test(
-  "rechaza preparar una venta sin cliente y no llama a la base de datos",
+  "rechaza preparar una factura sin cliente y no llama a la base de datos",
   async () => {
     let rpcInvocado = false;
     try {
@@ -281,16 +374,17 @@ Deno.test(
         JSON.stringify({
           venta_id: null,
           cliente_id: null,
+          tipo_comprobante: "factura",
           lineas: [
             { producto_id: "producto-id", combinacion_id: null, cantidad: 1 },
           ],
         }),
       );
-      throw new Error("Se aceptó una venta sin cliente.");
+      throw new Error("Se aceptó una factura sin cliente.");
     } catch (error) {
       if (!(error instanceof ErrorHttp) || error.estado !== 400) throw error;
     }
-    if (rpcInvocado) throw new Error("No debe crear el borrador sin cliente.");
+    if (rpcInvocado) throw new Error("No debe crear la factura sin cliente.");
   },
 );
 

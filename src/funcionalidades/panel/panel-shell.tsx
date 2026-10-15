@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { crearClienteSupabase } from "@/compartido/supabase/cliente";
 import type { PerfilActual } from "@/compartido/supabase/perfil-actual";
+import { ProveedorNotificaciones } from "@/compartido/notificaciones/proveedor-notificaciones";
 
 const secciones = [
   { href: "/panel", nombre: "Inicio", icono: "inicio" },
@@ -74,7 +75,7 @@ export function PanelShell({
   }
 
   return (
-    <>
+    <ProveedorNotificaciones>
       <header className="cabecera-panel">
         <div className="cabecera-panel__contenido">
           <Link aria-label="Tomhjey, inicio" className="marca" href="/panel">
@@ -154,7 +155,7 @@ export function PanelShell({
           <main className="contenido-panel">{children}</main>
         </div>
       </div>
-    </>
+    </ProveedorNotificaciones>
   );
 }
 

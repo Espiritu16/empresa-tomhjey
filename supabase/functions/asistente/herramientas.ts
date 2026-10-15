@@ -53,7 +53,7 @@ export const herramientas: DefinicionHerramienta[] = [
     type: "function",
     name: "resumen_catalogo",
     description:
-      "Devuelve conteos de productos y el detalle de productos que requieren reposición. La herramienta consultar_modulo ofrece los nombres y combinaciones del catálogo para preguntas generales o de seguimiento.",
+      "Devuelve conteos del catálogo, los nombres de hasta 50 productos activos y el detalle de productos que requieren reposición. Úsala para responder cuántos productos hay y enumerarlos.",
     strict: true,
     parameters: objetoEstricto({}, []),
   },
@@ -131,12 +131,12 @@ export const herramientas: DefinicionHerramienta[] = [
     type: "function",
     name: "armar_borrador_venta",
     description:
-      "Crea o actualiza un borrador solo cuando ya se identificaron un cliente activo, los productos, sus combinaciones, cantidades y el tipo de comprobante factura o boleta. El cliente y el tipo son obligatorios. No recibe precios. Nunca confirma la venta ni descuenta existencias.",
+      "Crea o actualiza un borrador de factura con cliente activo o una boleta simple sin cliente si el usuario lo pidió y su total queda por debajo de S/700. Requiere productos, combinaciones, cantidades y tipo de comprobante. El servidor calcula el total y aplica el límite. No recibe precios. Nunca confirma la venta ni descuenta existencias.",
     strict: true,
     parameters: objetoEstricto(
       {
         venta_id: { type: ["string", "null"] },
-        cliente_id: { type: "string", minLength: 1 },
+        cliente_id: { type: ["string", "null"] },
         tipo_comprobante: { type: "string", enum: ["factura", "boleta"] },
         lineas: {
           type: "array",
@@ -237,7 +237,7 @@ const ayuda: Record<string, string> = {
   clientes:
     "Clientes conserva los datos necesarios para registrar ventas y emitir comprobantes, permite consultar su historial y mantener sus registros activos.",
   ventas:
-    "Ventas permite crear, editar y descartar borradores asociados a un cliente. Al confirmar, el servidor valida precios y existencias y registra el movimiento de stock. La asistencia puede preparar el borrador; la persona lo revisa y lo confirma desde su tarjeta en el chat o en Ventas.",
+    "Ventas permite crear, editar y descartar borradores. Una boleta simple puede ir sin cliente por debajo de S/ 700; una factura requiere un cliente con RUC y una boleta desde S/ 700 requiere identificación. Al confirmar, el servidor valida precios y existencias y registra el movimiento de stock. La asistencia puede preparar el borrador; la persona lo revisa y lo confirma desde su tarjeta en el chat o en Ventas.",
   facturacion:
     "Facturación emite facturas o boletas de ventas confirmadas y muestra el estado devuelto por NubeFacT. La emisión requiere los datos fiscales de la empresa y una serie activa.",
   reportes:
@@ -247,7 +247,7 @@ const ayuda: Record<string, string> = {
   usuarios:
     "Usuarios permite a la administración invitar vendedores y activar o pausar sus accesos. El MVP tiene dos roles: administrador y vendedor.",
   asistente:
-    "El asistente consulta información de los módulos según tu rol: productos, existencias, clientes, ventas, facturación, reportes, empresa y equipo. Puede preparar un borrador de venta con cliente obligatorio; la persona revisa la tarjeta y confirma manualmente. No cambia la configuración ni confirma operaciones por su cuenta.",
+    "El asistente consulta información de los módulos según tu rol: productos, existencias, clientes, ventas, facturación, reportes, empresa y equipo. Puede preparar una boleta simple sin cliente por debajo de S/ 700 o una venta asignada a cliente; la persona revisa la tarjeta y confirma manualmente. No cambia la configuración ni confirma operaciones por su cuenta.",
 };
 
 export async function despacharHerramienta(
@@ -453,12 +453,13 @@ export async function despacharHerramienta(
       const tipoComprobante = argumentos.tipo_comprobante;
       if (
         !(typeof ventaId === "string" || ventaId === null) ||
-        typeof clienteId !== "string" ||
-        !clienteId.trim() ||
+        !(typeof clienteId === "string" || clienteId === null) ||
+        (typeof clienteId === "string" && !clienteId.trim()) ||
+        (tipoComprobante === "factura" && clienteId === null) ||
         (tipoComprobante !== "factura" && tipoComprobante !== "boleta")
       ) {
         throw new ErrorHttp(
-          "Se requiere un cliente activo y elegir factura o boleta antes de preparar la venta.",
+          "Una factura requiere un cliente activo con RUC válido que empiece por 10 o 20. Una boleta asignada requiere un cliente con DNI; solo la boleta simple puede omitirse y el servidor valida el límite de S/ 700.",
           400,
           "argumentos_invalidos",
         );

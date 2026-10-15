@@ -76,9 +76,11 @@ servidor o en Postgres. Las guardas de Next.js solo mejoran la navegación y no
 son una barrera de seguridad.
 
 El primer administrador se aprovisiona para el entorno de la empresa. A partir
-de ahí, el administrador invita a vendedores desde el módulo de usuarios. No
-hay registro público ni selección de plan. Desactivar una cuenta revoca su
-acceso y conserva las ventas y movimientos que registró.
+de ahí, el administrador crea usuarios con rol Administrador o Vendedor desde
+el módulo de Usuarios, definiendo su contraseña inicial. Auth confirma la cuenta
+sin enviar correo y el servidor asigna el rol en `perfiles`; no hay registro
+público ni invitaciones por correo. Desactivar una cuenta revoca su acceso y
+conserva las ventas y movimientos que registró.
 
 ### 2.4 Supabase y acceso a datos
 
@@ -110,8 +112,7 @@ El esquema se organiza alrededor de las funciones de negocio del MVP:
 1. **Empresa y configuración:** un único registro compartido con nombre, datos
    fiscales, moneda, parámetros tributarios validados, series y preferencias
    mínimas.
-2. **Usuarios y roles:** perfil de usuario, rol, estado, invitaciones y fechas
-   de alta o baja.
+2. **Usuarios y roles:** perfil de usuario, rol, estado y fechas de alta o baja.
 3. **Productos y catálogo:** categorías simples, productos, códigos y unidad de
    medida. Cada producto puede tener hasta dos ejes de opciones, por ejemplo
    talla y color; los productos sin combinaciones también son válidos.
@@ -150,8 +151,11 @@ se venden por unidad, metro, kilo, docena u otra unidad configurada.
 - La política inicial permite que el vendedor consulte sus propias ventas y el
   administrador consulte todas. Esta visibilidad queda como supuesto para
   confirmar con Tomhjey durante la revisión funcional.
-- Los ajustes de stock requieren administrador y siempre registran motivo y
-  usuario.
+- El vendedor puede crear, editar e inactivar productos del catálogo. Solo
+  administración crea categorías y registra existencias iniciales o ajustes de
+  stock; cada movimiento conserva motivo y usuario. La creación de productos
+  con combinaciones pasa por la RPC transaccional y no permite marcar una fila
+  aislada como producto con combinaciones.
 - Un borrador puede descartarse y conserva su historial. La primera versión no
   anula ventas ya confirmadas; esa acción requiere definir el flujo de
   devolución y el documento fiscal que la respalda.
@@ -169,8 +173,8 @@ proveedor ni un modo de facturación manual alternativo.
   el sistema la envía inmediatamente a NubeFacT; no hay un paso posterior para
   facturar. La emisión exige el RUC válido de la empresa
   antes de reservar un número. La factura exige además el RUC válido del
-  cliente; la boleta admite un cliente sin documento hasta el límite fiscal
-  configurado en la reserva, y exige identificarlo cuando lo supera.
+  cliente. Una boleta simple admite no asignar cliente para un total menor de
+  S/ 700; desde S/ 700 exactos exige identificarlo.
 - La función de emisión reserva y persiste el correlativo antes de llamar al
   proveedor. Un reintento reutiliza ese mismo número para evitar comprobantes
   fiscales duplicados.
@@ -183,12 +187,14 @@ proveedor ni un modo de facturación manual alternativo.
   pendiente y se consulta manualmente a NubeFacT después de siete días. Si
   continúa pendiente, se permite una consulta por día hasta conocer el estado.
   La respuesta de esa consulta es la que habilita «Aceptada por SUNAT» para una
-  boleta.
+  boleta. Una factura emitida que no informe aceptación puede consultarse
+  manualmente por administración desde Facturación; la consulta no vuelve a
+  emitir ni reserva un correlativo y se limita a una solicitud por minuto.
 - La emisión forma parte de la confirmación de la venta, tanto en Ventas como en
   la tarjeta del asistente. El vendedor solo puede emitir y reintentar
   comprobantes de ventas propias; administración puede gestionar todas las
-  ventas, configurar series y consultar aceptación de boletas. Facturación es
-  una vista de seguimiento, reintento y descarga, no una cola de ventas por
+  ventas, configurar series y consultar aceptación de boletas y estado de
+  facturas. Facturación es una vista de seguimiento, reintento y descarga, no una cola de ventas por
   emitir. La respuesta persistida incluye el enlace al PDF cuando NubeFacT lo
   devuelve. Los errores recuperables permiten reintentar de forma autorizada
   con el mismo correlativo.
@@ -225,11 +231,13 @@ El asistente puede:
   facturación y productos vendidos dentro del periodo indicado.
 - Separar los importes de ventas por moneda; nunca sumar PEN y USD como si fueran equivalentes.
 - Explicar los módulos del panel y sus flujos con contenido de ayuda curado.
-- Guiar la preparación de un borrador de venta asociado a un cliente activo:
-  aprovecha los datos ya dados, busca productos y clientes, y pide solo lo que
-  falte. Presenta en el chat una tarjeta con cliente, líneas e importe calculado
-  por el servidor. La persona confirma desde esa tarjeta o desde Ventas; la IA
-  nunca confirma por su cuenta y no se descuenta inventario antes de aceptar.
+- Guiar la preparación de un borrador de venta: factura con cliente activo y
+  RUC, o boleta simple sin cliente si la persona la pidió y el total es menor de
+  S/ 700. Aprovecha los datos ya dados, busca productos y clientes, y pide solo
+  lo que falte. Presenta en el chat una tarjeta con cliente o venta de
+  mostrador, líneas e importe calculado por el servidor. La persona confirma
+  desde esa tarjeta o desde Ventas; la IA nunca confirma por su cuenta y no se
+  descuenta inventario antes de aceptar.
 - No responder sobre tecnología interna, código, infraestructura, credenciales
   ni configuración de los proveedores. Solo enviar el nombre de un cliente
   cuando su consulta lo requiera; excluir siempre sus documentos, teléfonos,
@@ -361,9 +369,10 @@ inferior y las restantes se agrupan en una hoja de navegación.
 
 El frontend puede ocultar rutas y acciones que el rol no usa para evitar
 errores de navegación. Esa presentación no sustituye RLS ni la comprobación del
-servidor. El vendedor no ve administración de usuarios, ajustes de inventario
-ni configuración fiscal. Los importes e informes que el vendedor vea respetan
-el alcance de las ventas que puede consultar.
+servidor. El vendedor puede gestionar productos, registrar sus ventas y usar
+el asistente; no ve administración de usuarios, categorías, ajustes de
+inventario ni configuración fiscal. Los importes e informes que el vendedor
+vea respetan el alcance de las ventas que puede consultar.
 
 ## 5. Criterios de aceptación del diseño
 

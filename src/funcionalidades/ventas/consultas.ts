@@ -36,6 +36,7 @@ export type Venta = {
   confirmadoEn: string | null;
   creadoPor: string;
   tipoComprobante: "factura" | "boleta" | null;
+  comprobanteId: string | null;
   estadoComprobante: string | null;
   enlacePdf: string | null;
   lineas: LineaVenta[];
@@ -116,7 +117,7 @@ export async function cargarVentas() {
   const comprobantes = idsVentas.length
     ? await supabase
         .from("comprobantes")
-        .select("venta_id, estado, enlace_pdf")
+        .select("id, venta_id, estado, enlace_pdf")
         .in("venta_id", idsVentas)
     : { data: [], error: null };
   if (comprobantes.error) {
@@ -132,7 +133,11 @@ export async function cargarVentas() {
   const comprobantePorVenta = new Map(
     (comprobantes.data ?? []).map((comprobante) => [
       comprobante.venta_id,
-      { estado: comprobante.estado, enlacePdf: comprobante.enlace_pdf },
+      {
+        id: comprobante.id,
+        estado: comprobante.estado,
+        enlacePdf: comprobante.enlace_pdf,
+      },
     ]),
   );
   for (const linea of lineas.data ?? []) {
@@ -212,6 +217,7 @@ export async function cargarVentas() {
           venta.tipo_comprobante === "boleta"
             ? venta.tipo_comprobante
             : null,
+        comprobanteId: comprobante?.id ?? null,
         estadoComprobante: comprobante?.estado ?? null,
         enlacePdf: comprobante?.enlacePdf ?? null,
         lineas: lineasPorVenta[venta.id] ?? [],

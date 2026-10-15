@@ -1,5 +1,5 @@
 begin;
-select plan(13);
+select plan(20);
 
 insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_user_meta_data, created_at, updated_at)
 values ('12000000-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'admin-fiscal@test.local', '', now(), '{"nombre":"Admin fiscal"}', now(), now());
@@ -35,9 +35,10 @@ where tipo = 'boleta' and activa;
 insert into public.series_comprobante (tipo, serie, siguiente_numero)
 values ('boleta', current_setting('test.serie_boleta'), 1);
 insert into public.ventas (
-  id, cliente_id, cliente_nombre, tipo_comprobante, estado, subtotal, igv, total, creado_por, confirmado_por, confirmado_en
+  id, cliente_id, cliente_nombre, cliente_tipo_documento, cliente_numero_documento,
+  tipo_comprobante, estado, subtotal, igv, total, creado_por, confirmado_por, confirmado_en
 ) values (
-  '42000000-0000-4000-8000-000000000001', '32000000-0000-4000-8000-000000000001', 'Cliente fiscal', 'boleta', 'confirmada', 100, 18, 118,
+  '42000000-0000-4000-8000-000000000001', '32000000-0000-4000-8000-000000000001', 'Cliente fiscal', 'sin_documento', null, 'boleta', 'confirmada', 100, 18, 118,
   '12000000-0000-4000-8000-000000000001', '12000000-0000-4000-8000-000000000001', now()
 );
 insert into public.lineas_venta (
@@ -49,9 +50,10 @@ insert into public.lineas_venta (
   'Vestido congelado talla M', 'VEST-01', 'NIU', 1, 118, 100, 18, 118
 );
 insert into public.ventas (
-  id, cliente_id, cliente_nombre, tipo_comprobante, estado, subtotal, igv, total, creado_por, confirmado_por, confirmado_en
+  id, cliente_id, cliente_nombre, cliente_tipo_documento, cliente_numero_documento,
+  tipo_comprobante, estado, subtotal, igv, total, creado_por, confirmado_por, confirmado_en
 ) values (
-  '42000000-0000-4000-8000-000000000002', '32000000-0000-4000-8000-000000000001', 'Cliente fiscal', 'boleta', 'confirmada', 700, 126, 826,
+  '42000000-0000-4000-8000-000000000002', '32000000-0000-4000-8000-000000000001', 'Cliente fiscal', 'sin_documento', null, 'boleta', 'confirmada', 700, 0, 700,
   '12000000-0000-4000-8000-000000000001', '12000000-0000-4000-8000-000000000001', now()
 );
 insert into public.lineas_venta (
@@ -60,7 +62,7 @@ insert into public.lineas_venta (
 ) values (
   '42000000-0000-4000-8000-000000000002',
   '30000000-0000-4000-8000-000000000001',
-  'Venta alta sin documento', 'VEST-01', 'NIU', 7, 118, 700, 126, 826
+  'Venta desde S/ 700 sin documento', 'VEST-01', 'NIU', 7, 100, 700, 0, 700
 );
 
 set local role authenticated;
@@ -79,6 +81,10 @@ select throws_ok(
   $$select public.registrar_resultado_comprobante('12000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000001', 'emitido', '{}'::jsonb, null)$$,
   '42501', null, 'el navegador no puede falsificar el resultado de emisión'
 );
+select throws_ok(
+  $$select public.confirmar_venta_con_comprobante('42000000-0000-4000-8000-000000000002', 'boleta')$$,
+  '22023', null, 'bloquea la confirmación de una boleta de S/ 700 sin identificar al cliente'
+);
 reset role;
 set local role service_role;
 select set_config('request.jwt.claim.role', 'service_role', true);
@@ -86,6 +92,8 @@ select set_config('test.reserva', public.reservar_comprobante('12000000-0000-400
 select is(current_setting('test.reserva')::jsonb ->> 'serie', current_setting('test.serie_boleta'), 'reserva la serie activa');
 select is(current_setting('test.reserva')::jsonb ->> 'numero', '1', 'reserva el correlativo antes de llamar al proveedor');
 select is(current_setting('test.reserva')::jsonb -> 'payload' -> 'items' -> 0 ->> 'descripcion', 'Vestido congelado talla M', 'congela la descripción para el comprobante');
+select is(current_setting('test.reserva')::jsonb -> 'payload' ->> 'cliente_tipo_de_documento', '-', 'usa el tipo Varios de NubeFacT para una boleta sin documento');
+select is(current_setting('test.reserva')::jsonb -> 'payload' ->> 'cliente_numero_de_documento', '00000000', 'mantiene el campo obligatorio de NubeFacT sin solicitar un DNI al cliente');
 select is(current_setting('test.reserva')::jsonb ->> 'puede_emitir', 'true', 'permite el primer intento de emisión');
 select is((public.reservar_comprobante('12000000-0000-4000-8000-000000000001', '42000000-0000-4000-8000-000000000001', 'boleta') ->> 'puede_emitir'), 'false', 'un intento concurrente no reemite mientras existe un lease');
 select lives_ok(
@@ -97,9 +105,30 @@ select lives_ok(
   'guarda el resultado del proveedor'
 );
 select is((select estado from public.comprobantes where venta_id = '42000000-0000-4000-8000-000000000001'), 'emitido', 'el comprobante queda emitido');
+select ok((select consulta_sunat_desde <= now() from public.comprobantes where venta_id = '42000000-0000-4000-8000-000000000001'), 'permite consultar la boleta desde que NubeFacT la emite');
+select set_config('test.reserva_consulta_boleta', public.reservar_consulta_boleta(
+  '12000000-0000-4000-8000-000000000001',
+  (current_setting('test.reserva')::jsonb ->> 'comprobante_id')::uuid
+)::text, true);
+select is(current_setting('test.reserva_consulta_boleta')::jsonb ->> 'serie', current_setting('test.serie_boleta'), 'se puede reservar inmediatamente la consulta de la boleta');
+select lives_ok(
+  $$select public.registrar_consulta_boleta(
+    '12000000-0000-4000-8000-000000000001',
+    (current_setting('test.reserva')::jsonb ->> 'comprobante_id')::uuid,
+    '{"aceptada_por_sunat":false}'::jsonb
+  )$$,
+  'guarda una consulta inmediata aunque SUNAT aún no acepte la boleta'
+);
+select lives_ok(
+  $$select public.reservar_consulta_boleta(
+    '12000000-0000-4000-8000-000000000001',
+    (current_setting('test.reserva')::jsonb ->> 'comprobante_id')::uuid
+  )$$,
+  'permite volver a consultar una boleta pendiente inmediatamente'
+);
 select throws_ok(
   $$select public.reservar_comprobante('12000000-0000-4000-8000-000000000001', '42000000-0000-4000-8000-000000000002', 'boleta')$$,
-  '22023', null, 'bloquea boleta mayor de S/ 700 sin identificar al cliente'
+  '22023', null, 'bloquea boleta desde S/ 700 exactos sin identificar al cliente'
 );
 select is((select siguiente_numero from public.series_comprobante where tipo = 'boleta' and serie = current_setting('test.serie_boleta')), 2::bigint, 'una validación fallida no consume correlativo');
 

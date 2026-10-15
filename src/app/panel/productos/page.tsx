@@ -19,7 +19,10 @@ export default async function ProductosPage() {
       errorInicial={datos.error}
       productos={datos.productos}
       usuarioId={perfil?.id ?? ""}
-      puedeEditar={perfil?.rol === "administrador"}
+      puedeGestionarProductos={
+        perfil?.rol === "administrador" || perfil?.rol === "vendedor"
+      }
+      esAdministrador={perfil?.rol === "administrador"}
     />
   );
 }

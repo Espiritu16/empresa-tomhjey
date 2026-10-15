@@ -67,7 +67,7 @@ valida con formato, prefijo y dígito verificador.
 
 - Toda tabla en `public` tiene RLS activado. La identidad se toma de Auth; las políticas
   consultan `perfiles` y verifican que la cuenta siga activa.
-- Los vendedores ven su propio historial de ventas; administración ve el historial general.
+- Vendedores y administración ven el historial compartido de ventas, comprobantes y movimientos.
 - Los precios, impuestos, importes, existencias, roles y correlativos se validan en Postgres.
 - Los roles no se actualizan desde el navegador. `inicializar_administrador` solo asigna el
   primer rol administrador; `cambiar_estado_vendedor` permite activar o desactivar vendedores.

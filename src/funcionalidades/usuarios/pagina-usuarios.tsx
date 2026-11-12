@@ -147,22 +147,28 @@ export function PaginaUsuarios({
           <tbody>
             {usuarios.map((usuario) => (
               <tr key={usuario.id}>
-                <td>{usuario.nombre}</td>
-                <td>{usuario.correo ?? "Sin correo"}</td>
-                <td>
+                <td data-etiqueta="Persona" data-principal>
+                  {usuario.nombre}
+                </td>
+                <td data-etiqueta="Correo electrónico">
+                  {usuario.correo ?? "Sin correo"}
+                </td>
+                <td data-etiqueta="Rol">
                   {usuario.rol === "administrador"
                     ? "Administrador"
                     : "Vendedor"}
                 </td>
-                <td>
+                <td data-etiqueta="Acceso">
                   <span
                     className={`modulo-operativo__estado${usuario.activo ? " modulo-operativo__estado--activo" : ""}`}
                   >
                     {usuario.activo ? "Activo" : "Inactivo"}
                   </span>
                 </td>
-                <td>{formatearFecha(usuario.creadoEn)}</td>
-                <td>
+                <td data-etiqueta="Desde">
+                  {formatearFecha(usuario.creadoEn)}
+                </td>
+                <td data-etiqueta="Acciones" data-acciones>
                   {usuario.rol === "vendedor" ? (
                     <button
                       aria-label={`${usuario.activo ? "Desactivar" : "Activar"} ${usuario.nombre}`}

@@ -669,20 +669,24 @@ export function PaginaVentas({
                 venta.estado === "borrador" && (esAdministrador || propia);
               return (
                 <tr key={venta.id}>
-                  <td>
+                  <td data-etiqueta="Fecha">
                     {formatearFecha(venta.confirmadoEn ?? venta.creadoEn)}
                   </td>
-                  <td>{venta.clienteNombre ?? "Venta de mostrador"}</td>
-                  <td>
+                  <td data-etiqueta="Cliente" data-principal>
+                    {venta.clienteNombre ?? "Venta de mostrador"}
+                  </td>
+                  <td data-etiqueta="Estado">
                     <span
                       className={`modulo-operativo__estado modulo-operativo__estado--${venta.estado}`}
                     >
                       {etiquetaEstado(venta.estado)}
                     </span>
                   </td>
-                  <td>{formatearImporte(venta.total, venta.moneda)}</td>
-                  <td>{venta.lineas.length}</td>
-                  <td>
+                  <td data-etiqueta="Total">
+                    {formatearImporte(venta.total, venta.moneda)}
+                  </td>
+                  <td data-etiqueta="Productos">{venta.lineas.length}</td>
+                  <td data-etiqueta="Acciones" data-acciones>
                     {editable ? (
                       <>
                         <button
@@ -1166,8 +1170,10 @@ export function PaginaVentas({
                 <tbody>
                   {lineas.map((linea, indice) => (
                     <tr key={`${linea.producto.productoId}-${indice}`}>
-                      <td>{linea.producto.descripcion}</td>
-                      <td>
+                      <td data-etiqueta="Producto" data-principal>
+                        {linea.producto.descripcion}
+                      </td>
+                      <td data-etiqueta="Cantidad">
                         <label className="campo">
                           <span className="sr-only">
                             Cantidad de producto {indice + 1}
@@ -1194,8 +1200,10 @@ export function PaginaVentas({
                           />
                         </label>
                       </td>
-                      <td>{formatearImporte(linea.producto.precio, "PEN")}</td>
-                      <td>
+                      <td data-etiqueta="Precio de referencia">
+                        {formatearImporte(linea.producto.precio, "PEN")}
+                      </td>
+                      <td data-etiqueta="Acción" data-acciones>
                         <button
                           aria-label={`Quitar producto ${indice + 1}`}
                           className="modulo-operativo__boton-texto"

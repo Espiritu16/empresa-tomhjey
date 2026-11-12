@@ -160,21 +160,23 @@ export function PaginaInventario({
           <tbody>
             {articulosVisibles.map((articulo) => (
               <tr key={articulo.id}>
-                <td>{articulo.sku}</td>
-                <td>{articulo.producto}</td>
-                <td>
+                <td data-etiqueta="SKU">{articulo.sku}</td>
+                <td data-etiqueta="Producto o combinación" data-principal>
+                  {articulo.producto}
+                </td>
+                <td data-etiqueta="Existencias">
                   {formatearCantidad(
                     articulo.existencias,
                     articulo.unidadMedida,
                   )}
                 </td>
-                <td>
+                <td data-etiqueta="Stock mínimo">
                   {formatearCantidad(
                     articulo.stockMinimo,
                     articulo.unidadMedida,
                   )}
                 </td>
-                <td>
+                <td data-etiqueta="Estado">
                   <span
                     className={`modulo-operativo__estado${articulo.activo ? " modulo-operativo__estado--activo" : ""}`}
                   >
@@ -231,24 +233,28 @@ export function PaginaInventario({
                   );
                   return (
                     <tr key={movimiento.id}>
-                      <td>{formatearFecha(movimiento.creadoEn)}</td>
-                      <td>{articulo?.producto ?? "Producto"}</td>
-                      <td>
+                      <td data-etiqueta="Fecha">
+                        {formatearFecha(movimiento.creadoEn)}
+                      </td>
+                      <td data-etiqueta="Producto" data-principal>
+                        {articulo?.producto ?? "Producto"}
+                      </td>
+                      <td data-etiqueta="Tipo">
                         {movimiento.tipo === "venta" ? "Venta" : "Ajuste"}
                       </td>
-                      <td>
+                      <td data-etiqueta="Cambio">
                         {formatearCantidad(
                           movimiento.cantidad,
                           articulo?.unidadMedida ?? "",
                         )}
                       </td>
-                      <td>
+                      <td data-etiqueta="Saldo">
                         {formatearCantidad(
                           movimiento.existenciasResultantes,
                           articulo?.unidadMedida ?? "",
                         )}
                       </td>
-                      <td>{movimiento.motivo}</td>
+                      <td data-etiqueta="Motivo">{movimiento.motivo}</td>
                     </tr>
                   );
                 })}

@@ -194,16 +194,16 @@ export function PaginaReportes({
             <tbody>
               {filas.map((fila) => (
                 <tr key={`${fila.moneda}-${fila.descripcion}`}>
-                  <td>
+                  <td data-etiqueta="Producto" data-principal>
                     <strong>{fila.descripcion}</strong>
                   </td>
-                  <td>{fila.ventas}</td>
-                  <td>
+                  <td data-etiqueta="Ventas">{fila.ventas}</td>
+                  <td data-etiqueta="Unidades">
                     {new Intl.NumberFormat("es-PE", {
                       maximumFractionDigits: 3,
                     }).format(fila.unidades)}
                   </td>
-                  <td>
+                  <td data-etiqueta="Total">
                     {formatearTotalesPorMoneda({ [fila.moneda]: fila.total })}
                   </td>
                 </tr>

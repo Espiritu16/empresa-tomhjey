@@ -105,12 +105,12 @@
 }
 
 .peligro {
-  background: var(--error);
-  color: var(--sobre-acento);
+  background: var(--peligro);
+  color: var(--sobre-peligro);
 }
 
 .peligro:hover:not(:disabled) {
-  background: #8e211b;
+  background: var(--peligro-viva);
 }
 
 .secundario:active:not(:disabled),

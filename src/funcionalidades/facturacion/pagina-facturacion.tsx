@@ -411,7 +411,7 @@ export function PaginaFacturacion({ datos, esAdministrador }: Propiedades) {
               <tbody>
                 {datos.comprobantes.map((comprobante) => (
                   <tr id={`comprobante-${comprobante.id}`} key={comprobante.id}>
-                    <td>
+                    <td data-etiqueta="Comprobante" data-principal>
                       <span className="facturacion__tipo-documento">
                         {comprobante.tipo === "factura" ? "Factura" : "Boleta"}
                       </span>
@@ -420,11 +420,11 @@ export function PaginaFacturacion({ datos, esAdministrador }: Propiedades) {
                         {String(comprobante.numero).padStart(8, "0")}
                       </span>
                     </td>
-                    <td>{comprobante.clienteNombre}</td>
-                    <td className="facturacion__mono">
+                    <td data-etiqueta="Cliente">{comprobante.clienteNombre}</td>
+                    <td data-etiqueta="Total" className="facturacion__mono">
                       {formatearImporte(comprobante.total, comprobante.moneda)}
                     </td>
-                    <td>
+                    <td data-etiqueta="Estado">
                       <span className={claseEstado(comprobante)}>
                         {etiquetaEstado(comprobante)}
                       </span>
@@ -434,8 +434,14 @@ export function PaginaFacturacion({ datos, esAdministrador }: Propiedades) {
                         </span>
                       ) : null}
                     </td>
-                    <td>{formatearFecha(comprobante.actualizadoEn)}</td>
-                    <td className="facturacion__accion">
+                    <td data-etiqueta="Actualizado">
+                      {formatearFecha(comprobante.actualizadoEn)}
+                    </td>
+                    <td
+                      data-etiqueta="Documento"
+                      data-acciones
+                      className="facturacion__accion"
+                    >
                       {comprobante.estado === "emitido" ? (
                         <a
                           className="facturacion__enlace-pdf"

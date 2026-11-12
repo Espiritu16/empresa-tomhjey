@@ -58,6 +58,31 @@ function guardarMenuCompacto(compacto: boolean) {
   oyentesMenu.forEach((oyente) => oyente());
 }
 
+const CLAVE_TEMA = "tomhjey:tema";
+const oyentesTema = new Set<() => void>();
+
+function suscribirTema(oyente: () => void) {
+  oyentesTema.add(oyente);
+  return () => {
+    oyentesTema.delete(oyente);
+  };
+}
+
+function leerTemaOscuro() {
+  return document.documentElement.dataset.tema === "oscuro";
+}
+
+function guardarTema(oscuro: boolean) {
+  const tema = oscuro ? "oscuro" : "claro";
+  document.documentElement.dataset.tema = tema;
+  try {
+    window.localStorage.setItem(CLAVE_TEMA, tema);
+  } catch {
+    // Sin almacenamiento, el tema elegido dura hasta recargar la página.
+  }
+  oyentesTema.forEach((oyente) => oyente());
+}
+
 type Propiedades = {
   children: React.ReactNode;
   perfil: Pick<PerfilActual, "nombre" | "rol">;
@@ -78,6 +103,12 @@ export function PanelShell({
     leerMenuCompacto,
     () => false,
   );
+  const temaOscuro = useSyncExternalStore(
+    suscribirTema,
+    leerTemaOscuro,
+    () => false,
+  );
+  const textoTema = temaOscuro ? "Modo claro" : "Modo oscuro";
   const rutaActual = vistaPrevia ? "/panel" : pathname;
   const iniciales = perfil.nombre
     .trim()
@@ -207,6 +238,18 @@ export function PanelShell({
               </div>
             </div>
             <button
+              aria-pressed={temaOscuro}
+              className="boton-salir"
+              onClick={() => guardarTema(!temaOscuro)}
+              title={compacto ? textoTema : undefined}
+              type="button"
+            >
+              <span aria-hidden="true" className="nav-panel__icono">
+                <Icono nombre={temaOscuro ? "sol" : "luna"} />
+              </span>
+              <span className="nav-panel__texto">{textoTema}</span>
+            </button>
+            <button
               className="boton-salir"
               disabled={saliendo}
               onClick={cerrarSesion}
@@ -333,6 +376,13 @@ function Icono({ nombre }: { nombre: string }) {
       </>
     ),
     menu: <path d="M4 7h16M4 12h16M4 17h16" />,
+    luna: <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" />,
+    sol: (
+      <>
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+      </>
+    ),
     cerrar: <path d="m6 6 12 12M18 6 6 18" />,
     salir: (
       <>

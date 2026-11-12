@@ -388,7 +388,7 @@ export function PaginaProductos({
           <tbody>
             {visibles.map((producto) => (
               <tr key={producto.id}>
-                <td>
+                <td data-etiqueta="SKU">
                   {producto.sku}
                   {producto.codigoBarras ? (
                     <small className="modulo-operativo__detalle">
@@ -396,22 +396,24 @@ export function PaginaProductos({
                     </small>
                   ) : null}
                 </td>
-                <td>
+                <td data-etiqueta="Producto" data-principal>
                   <strong>{producto.nombre}</strong>
                 </td>
-                <td>{producto.categoriaNombre ?? "Sin categoría"}</td>
-                <td>
+                <td data-etiqueta="Categoría">
+                  {producto.categoriaNombre ?? "Sin categoría"}
+                </td>
+                <td data-etiqueta="Precio">
                   {producto.precio === null
                     ? "Por combinación"
                     : formatearImporte(producto.precio)}
                 </td>
-                <td>
+                <td data-etiqueta="Existencias">
                   {formatearCantidad(
                     producto.existencias,
                     producto.unidadMedida,
                   )}
                 </td>
-                <td>
+                <td data-etiqueta="Estado">
                   <span
                     className={`modulo-operativo__estado${producto.activo ? " modulo-operativo__estado--activo" : ""}`}
                   >
@@ -419,7 +421,7 @@ export function PaginaProductos({
                   </span>
                 </td>
                 {puedeGestionarProductos ? (
-                  <td>
+                  <td data-etiqueta="Acciones" data-acciones>
                     <button
                       aria-label={`Editar ${producto.nombre}`}
                       className="modulo-operativo__boton-texto"
@@ -482,7 +484,9 @@ export function PaginaProductos({
             onChange={(sku) => setFormulario((actual) => ({ ...actual, sku }))}
           />
           <div className="campo">
-            <label htmlFor="codigo-barras-producto">Código de barras</label>
+            <label className="campo__etiqueta" htmlFor="codigo-barras-producto">
+              Código de barras
+            </label>
             <div className="campo-con-lector">
               <input
                 autoComplete="off"

@@ -310,32 +310,32 @@ export function PaginaClientes({
               const ventas = ventasPorCliente[cliente.id] ?? [];
               return (
                 <tr key={cliente.id}>
-                  <td>
+                  <td data-etiqueta="Cliente" data-principal>
                     <strong>{cliente.nombre}</strong>
                   </td>
-                  <td>
+                  <td data-etiqueta="Documento">
                     {etiquetaDocumento(
                       cliente.tipoDocumento,
                       cliente.numeroDocumento,
                     )}
                   </td>
-                  <td>
+                  <td data-etiqueta="Contacto">
                     {cliente.telefono ?? cliente.correo ?? "Sin contacto"}
                   </td>
-                  <td>
+                  <td data-etiqueta="Ventas">
                     {
                       ventas.filter((venta) => venta.estado === "confirmada")
                         .length
                     }
                   </td>
-                  <td>
+                  <td data-etiqueta="Estado">
                     <span
                       className={`modulo-operativo__estado${cliente.activo ? " modulo-operativo__estado--activo" : ""}`}
                     >
                       {cliente.activo ? "Activo" : "Inactivo"}
                     </span>
                   </td>
-                  <td>
+                  <td data-etiqueta="Acciones" data-acciones>
                     <button
                       aria-label={`Ver ventas de ${cliente.nombre}`}
                       className="modulo-operativo__boton-texto"
@@ -589,19 +589,21 @@ export function PaginaClientes({
                     {(ventasPorCliente[historialCliente.id] ?? []).map(
                       (venta) => (
                         <tr key={venta.id}>
-                          <td>
+                          <td data-etiqueta="Fecha" data-principal>
                             {formatearFecha(
                               venta.confirmadoEn ?? venta.creadoEn,
                             )}
                           </td>
-                          <td>
+                          <td data-etiqueta="Estado">
                             {venta.estado === "confirmada"
                               ? "Confirmada"
                               : venta.estado === "borrador"
                                 ? "Borrador"
                                 : "Descartada"}
                           </td>
-                          <td>{formatearImporte(venta.total, venta.moneda)}</td>
+                          <td data-etiqueta="Total">
+                            {formatearImporte(venta.total, venta.moneda)}
+                          </td>
                         </tr>
                       ),
                     )}

@@ -336,10 +336,6 @@
   .facturacion__formulario-serie .boton-principal {
     grid-column: 1 / -1;
   }
-
-  .facturacion__tabla {
-    min-width: 760px;
-  }
 }
 
 @media (max-width: 460px) {

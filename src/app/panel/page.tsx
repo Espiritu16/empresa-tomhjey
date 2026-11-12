@@ -331,7 +331,7 @@ function GraficoSemana({
                 ) : null}
                 <span
                   className="grafico__barra"
-                  style={{ height: `${altura}%` }}
+                  style={{ "--proporcion": altura } as React.CSSProperties}
                 />
               </span>
               <span className="grafico__dia">

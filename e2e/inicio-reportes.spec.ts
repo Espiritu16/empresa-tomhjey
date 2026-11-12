@@ -12,7 +12,7 @@ test.beforeAll(async () => {
   administrador = estado.administrador;
 });
 
-test("Inicio muestra sus indicadores y enlaza con el asistente", async ({
+test("Inicio muestra el tablero de indicadores sin el asistente", async ({
   page,
 }) => {
   await iniciarSesion(page, administrador);
@@ -20,13 +20,29 @@ test("Inicio muestra sus indicadores y enlaza con el asistente", async ({
   await expect(
     page.getByRole("heading", { name: "Inicio", exact: true }),
   ).toBeVisible();
-  await expect(page.getByText("VENTAS DE HOY", { exact: true })).toBeVisible();
-  await expect(page.getByText("TOTAL DE HOY", { exact: true })).toBeVisible();
-  await expect(page.getByText("PRODUCTOS", { exact: true })).toBeVisible();
-  await expect(page.getByText("POR REPONER", { exact: true })).toBeVisible();
-  await expect(
-    page.getByRole("link", { name: "Ver el asistente" }),
-  ).toHaveAttribute("href", "/panel/asistente");
+  const indicadores = page.getByRole("region", {
+    name: "Indicadores de la empresa",
+  });
+  for (const rotulo of [
+    "Vendido hoy",
+    "Ventas confirmadas hoy",
+    "Ticket promedio",
+    "Vendido este mes",
+  ]) {
+    await expect(indicadores.getByText(rotulo, { exact: true })).toBeVisible();
+  }
+  for (const seccion of [
+    "Ventas de los últimos 7 días",
+    "Más vendidos del mes",
+    "Por reponer",
+    "Comprobantes pendientes",
+    "Últimas ventas",
+  ]) {
+    await expect(
+      page.getByRole("heading", { name: new RegExp(`^${seccion}`) }),
+    ).toBeVisible();
+  }
+  await expect(page.getByRole("link", { name: "Asistente IA" })).toHaveCount(0);
 });
 
 test("Reportes valida el rango y carga el periodo solicitado", async ({

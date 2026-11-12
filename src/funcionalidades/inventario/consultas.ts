@@ -5,6 +5,7 @@ export type ArticuloInventario = {
   productoId: string;
   combinacionId: string | null;
   sku: string;
+  codigoBarras: string | null;
   producto: string;
   existencias: number;
   stockMinimo: number;
@@ -31,7 +32,7 @@ export async function cargarInventario() {
       supabase
         .from("productos")
         .select(
-          "id, sku, nombre, usa_combinaciones, existencias, stock_minimo, activo, unidad_medida",
+          "id, sku, codigo_barras, nombre, usa_combinaciones, existencias, stock_minimo, activo, unidad_medida",
         )
         .order("nombre"),
       supabase
@@ -81,6 +82,7 @@ export async function cargarInventario() {
         productoId: producto.id,
         combinacionId: null,
         sku: producto.sku,
+        codigoBarras: producto.codigo_barras,
         producto: producto.nombre,
         existencias: Number(producto.existencias),
         stockMinimo: Number(producto.stock_minimo),
@@ -108,6 +110,7 @@ export async function cargarInventario() {
         productoId: producto.id,
         combinacionId: combinacion.id,
         sku: combinacion.sku,
+        codigoBarras: producto.codigo_barras,
         producto: `${producto.nombre} ${valoresCombinacion.join(" ")}`.trim(),
         existencias: Number(combinacion.existencias),
         stockMinimo: Number(combinacion.stock_minimo),

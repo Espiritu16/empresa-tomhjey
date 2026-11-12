@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, type FormEvent } from "react";
 import { crearClienteSupabase } from "@/compartido/supabase/cliente";
 import { DialogoModal } from "@/compartido/componentes/dialogo-modal";
+import { BotonLectorCodigo } from "@/compartido/componentes/lector-codigo";
 import { useNotificaciones } from "@/compartido/notificaciones/proveedor-notificaciones";
 import type { ArticuloInventario, MovimientoInventario } from "./consultas";
 
@@ -33,7 +34,7 @@ export function PaginaInventario({
     const texto = busqueda.trim().toLocaleLowerCase("es-PE");
     return texto
       ? articulos.filter((articulo) =>
-          `${articulo.sku} ${articulo.producto}`
+          `${articulo.sku} ${articulo.codigoBarras ?? ""} ${articulo.producto}`
             .toLocaleLowerCase("es-PE")
             .includes(texto),
         )
@@ -114,17 +115,23 @@ export function PaginaInventario({
         </p>
       ) : null}
       <div className="modulo-operativo__barra">
-        <label className="campo">
-          <span className="sr-only">Buscar en inventario</span>
-          <input
-            aria-label="Buscar en inventario"
-            className="modulo-operativo__busqueda"
-            onChange={(evento) => setBusqueda(evento.target.value)}
-            placeholder="Buscar por producto o SKU"
-            type="search"
-            value={busqueda}
+        <div className="campo-con-lector">
+          <label className="campo">
+            <span className="sr-only">Buscar en inventario</span>
+            <input
+              aria-label="Buscar en inventario"
+              className="modulo-operativo__busqueda"
+              onChange={(evento) => setBusqueda(evento.target.value)}
+              placeholder="Buscar por producto, SKU o código de barras"
+              type="search"
+              value={busqueda}
+            />
+          </label>
+          <BotonLectorCodigo
+            etiqueta="Buscar por código de barras"
+            onLeido={setBusqueda}
           />
-        </label>
+        </div>
         {puedeAjustar ? (
           <button
             className="boton-principal"

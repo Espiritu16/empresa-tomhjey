@@ -4,6 +4,7 @@ export type ProductoVenta = {
   productoId: string;
   combinacionId: string | null;
   sku: string;
+  codigoBarras: string | null;
   descripcion: string;
   precio: number;
   unidadMedida: string;
@@ -80,7 +81,7 @@ export async function cargarVentas() {
     supabase
       .from("productos")
       .select(
-        "id, sku, nombre, unidad_medida, usa_combinaciones, precio, activo",
+        "id, sku, codigo_barras, nombre, unidad_medida, usa_combinaciones, precio, activo",
       )
       .eq("activo", true)
       .order("nombre"),
@@ -166,6 +167,7 @@ export async function cargarVentas() {
         productoId: producto.id,
         combinacionId: null,
         sku: producto.sku,
+        codigoBarras: producto.codigo_barras,
         descripcion: producto.nombre,
         precio: Number(producto.precio),
         unidadMedida: producto.unidad_medida,
@@ -188,6 +190,7 @@ export async function cargarVentas() {
         productoId: producto.id,
         combinacionId: combinacion.id,
         sku: combinacion.sku,
+        codigoBarras: producto.codigo_barras,
         descripcion: `${producto.nombre} ${detalle.join(" ")}`.trim(),
         precio: Number(combinacion.precio),
         unidadMedida: producto.unidad_medida,

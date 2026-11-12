@@ -109,7 +109,6 @@ test("el administrador puede recorrer los módulos y cerrar sesión", async ({
     ["Clientes", "clientes", "Clientes"],
     ["Reportes", "reportes", "Reportes"],
     ["Facturación", "facturacion", "Facturación"],
-    ["Asistente IA", "asistente", "Asistente IA"],
     ["Empresa", "empresa", "Empresa y configuración"],
     ["Usuarios", "usuarios", "Usuarios"],
   ] as const;

@@ -16,6 +16,7 @@ import { emitirComprobante } from "@/funcionalidades/facturacion/emision";
 import { enlacePdfSeguro } from "@/funcionalidades/facturacion/enlace-pdf";
 import { DialogoConfirmacion } from "@/compartido/componentes/dialogo-confirmacion";
 import { DialogoModal } from "@/compartido/componentes/dialogo-modal";
+import { BotonLectorCodigo } from "@/compartido/componentes/lector-codigo";
 import { documentoConsultable } from "@/funcionalidades/clientes/validaciones-documentos";
 
 type Propiedades = {
@@ -137,7 +138,7 @@ export function PaginaVentas({
     return productos.filter(
       (producto) =>
         !consulta ||
-        `${producto.sku} ${producto.descripcion}`
+        `${producto.sku} ${producto.codigoBarras ?? ""} ${producto.descripcion}`
           .toLocaleLowerCase("es")
           .includes(consulta),
     );
@@ -254,6 +255,51 @@ export function PaginaVentas({
     setListaProductosAbierta(false);
     setIndiceProductoActivo(0);
     setCantidadProducto("1");
+  }
+
+  /**
+   * Agrega una unidad del producto con ese código de barras (cámara o pistola).
+   * Si ya está en la venta, aumenta su cantidad.
+   */
+  function agregarPorCodigo(codigoLeido: string) {
+    const codigo = codigoLeido.trim();
+    const coincidencias = productos.filter(
+      (producto) => producto.codigoBarras === codigo,
+    );
+    setError(null);
+    if (coincidencias.length === 0) {
+      setBusquedaProducto("");
+      setListaProductosAbierta(false);
+      setError(`No hay ningún producto con el código ${codigo}.`);
+      return;
+    }
+    if (coincidencias.length > 1) {
+      // Producto con tallas o colores: se muestra la lista para elegir la variante.
+      setProductoSeleccionado("");
+      setBusquedaProducto(codigo);
+      setListaProductosAbierta(true);
+      setIndiceProductoActivo(0);
+      return;
+    }
+    const producto = coincidencias[0];
+    setLineas((actuales) => {
+      const indice = actuales.findIndex(
+        (linea) =>
+          linea.producto.productoId === producto.productoId &&
+          linea.producto.combinacionId === producto.combinacionId,
+      );
+      if (indice === -1) return [...actuales, { producto, cantidad: "1" }];
+      return actuales.map((linea, posicion) =>
+        posicion === indice
+          ? { ...linea, cantidad: String(Number(linea.cantidad) + 1) }
+          : linea,
+      );
+    });
+    setProductoSeleccionado("");
+    setBusquedaProducto("");
+    setListaProductosAbierta(false);
+    setIndiceProductoActivo(0);
+    notificaciones.exito(`Se agregó ${producto.descripcion}.`);
   }
 
   function seleccionarCliente(id: string) {
@@ -973,58 +1019,79 @@ export function PaginaVentas({
                 </button>
               </span>
             ) : null}
-            <input
-              aria-activedescendant={
-                listaProductosAbierta &&
-                productosFiltrados[indiceProductoActivo]
-                  ? `producto-venta-opcion-${indiceProductoActivo}`
-                  : undefined
-              }
-              aria-autocomplete="list"
-              aria-controls="producto-venta-opciones"
-              aria-expanded={listaProductosAbierta}
-              autoComplete="off"
-              id="busqueda-producto-venta"
-              onChange={(evento) => {
-                setProductoSeleccionado("");
-                setBusquedaProducto(evento.target.value);
-                setListaProductosAbierta(true);
-                setIndiceProductoActivo(0);
-              }}
-              onFocus={() => setListaProductosAbierta(true)}
-              onBlur={() => setListaProductosAbierta(false)}
-              onKeyDown={(evento) => {
-                if (evento.key === "Escape") {
-                  setListaProductosAbierta(false);
-                } else if (
+            <div className="campo-con-lector">
+              <input
+                aria-activedescendant={
                   listaProductosAbierta &&
-                  evento.key === "ArrowDown" &&
-                  productosFiltrados.length > 0
-                ) {
-                  evento.preventDefault();
-                  setIndiceProductoActivo((indice) =>
-                    Math.min(indice + 1, productosFiltrados.length - 1),
-                  );
-                } else if (
-                  listaProductosAbierta &&
-                  evento.key === "ArrowUp" &&
-                  productosFiltrados.length > 0
-                ) {
-                  evento.preventDefault();
-                  setIndiceProductoActivo((indice) => Math.max(indice - 1, 0));
-                } else if (listaProductosAbierta && evento.key === "Enter") {
-                  const producto = productosFiltrados[indiceProductoActivo];
-                  if (producto) {
-                    evento.preventDefault();
-                    seleccionarProducto(producto);
-                  }
+                  productosFiltrados[indiceProductoActivo]
+                    ? `producto-venta-opcion-${indiceProductoActivo}`
+                    : undefined
                 }
-              }}
-              placeholder="Buscar producto por SKU o nombre"
-              role="combobox"
-              type="search"
-              value={busquedaProducto}
-            />
+                aria-autocomplete="list"
+                aria-controls="producto-venta-opciones"
+                aria-expanded={listaProductosAbierta}
+                autoComplete="off"
+                id="busqueda-producto-venta"
+                onChange={(evento) => {
+                  setProductoSeleccionado("");
+                  setBusquedaProducto(evento.target.value);
+                  setListaProductosAbierta(true);
+                  setIndiceProductoActivo(0);
+                }}
+                onFocus={() => setListaProductosAbierta(true)}
+                onBlur={() => setListaProductosAbierta(false)}
+                onKeyDown={(evento) => {
+                  if (evento.key === "Escape") {
+                    setListaProductosAbierta(false);
+                  } else if (
+                    listaProductosAbierta &&
+                    evento.key === "ArrowDown" &&
+                    productosFiltrados.length > 0
+                  ) {
+                    evento.preventDefault();
+                    setIndiceProductoActivo((indice) =>
+                      Math.min(indice + 1, productosFiltrados.length - 1),
+                    );
+                  } else if (
+                    listaProductosAbierta &&
+                    evento.key === "ArrowUp" &&
+                    productosFiltrados.length > 0
+                  ) {
+                    evento.preventDefault();
+                    setIndiceProductoActivo((indice) =>
+                      Math.max(indice - 1, 0),
+                    );
+                  } else if (evento.key === "Enter") {
+                    const texto = busquedaProducto.trim();
+                    const esCodigo =
+                      productos.some(
+                        (producto) => producto.codigoBarras === texto,
+                      ) || /^\d{6,}$/.test(texto);
+                    if (texto && esCodigo) {
+                      // Código escrito o enviado por una pistola lectora.
+                      evento.preventDefault();
+                      agregarPorCodigo(texto);
+                      return;
+                    }
+                    const producto = listaProductosAbierta
+                      ? productosFiltrados[indiceProductoActivo]
+                      : undefined;
+                    if (producto) {
+                      evento.preventDefault();
+                      seleccionarProducto(producto);
+                    }
+                  }
+                }}
+                placeholder="Buscar por nombre, SKU o código de barras"
+                role="combobox"
+                type="search"
+                value={busquedaProducto}
+              />
+              <BotonLectorCodigo
+                etiqueta="Escanear código de barras"
+                onLeido={agregarPorCodigo}
+              />
+            </div>
             {listaProductosAbierta ? (
               <div
                 aria-label="Productos disponibles"
@@ -1370,6 +1437,7 @@ function desdeLinea(linea: LineaVenta): ProductoVenta {
     productoId: linea.productoId,
     combinacionId: linea.combinacionId,
     sku: linea.sku,
+    codigoBarras: null,
     descripcion: linea.descripcion,
     precio: linea.precioUnitario,
     unidadMedida: linea.unidadMedida,

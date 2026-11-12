@@ -140,7 +140,7 @@
 }
 
 .facturacion__tabla th {
-  background: #faf8f4;
+  background: var(--niebla);
   color: var(--tinta-suave);
   font-family: var(--familia-mono);
   font-size: 0.64rem;
@@ -182,9 +182,9 @@
 .facturacion__enlace-accion {
   min-height: 38px;
   padding: 0.45rem 0.7rem;
-  border: 1px solid #c9cfe2;
+  border: 1px solid color-mix(in srgb, var(--acento) 22%, transparent);
   border-radius: var(--radio-campo);
-  background: #f5f6fa;
+  background: var(--acento-tenue);
   color: var(--acento);
   cursor: pointer;
   font-size: 0.8rem;
@@ -193,7 +193,7 @@
 
 .facturacion__boton-secundario:hover:not(:disabled),
 .facturacion__enlace-accion:hover:not(:disabled) {
-  background: #e9ecf5;
+  background: color-mix(in srgb, var(--acento) 12%, var(--papel));
 }
 
 .facturacion__boton-secundario:disabled,
@@ -238,7 +238,7 @@
 }
 
 .facturacion__estado--error {
-  background: #f9ecea;
+  background: var(--error-fondo);
   color: var(--error);
 }
 
@@ -260,19 +260,19 @@
 }
 
 .facturacion__aviso--error {
-  border-color: #e9c4bf;
-  background: #f9ecea;
+  border-color: color-mix(in srgb, var(--error) 28%, transparent);
+  background: var(--error-fondo);
   color: var(--error);
 }
 
 .facturacion__aviso--bien {
-  border-color: #c5ddce;
+  border-color: color-mix(in srgb, var(--bien) 28%, transparent);
   background: var(--bien-fondo);
   color: var(--bien);
 }
 
 .facturacion__bloqueo {
-  border-color: #ead4b5;
+  border-color: color-mix(in srgb, var(--duda) 28%, transparent);
   background: var(--duda-fondo);
   color: var(--duda);
 }
@@ -296,7 +296,7 @@
   padding: 1rem;
   border: 1px dashed var(--borde);
   border-radius: var(--radio-caja);
-  background: #fcfbf8;
+  background: var(--niebla);
 }
 
 .facturacion__vacio strong {

@@ -522,7 +522,7 @@
 }
 
 .modulo-operativo__dialogo::backdrop {
-  background: rgb(27 32 56 / 38%);
+  background: rgb(34 27 37 / 40%);
   backdrop-filter: blur(2px);
 }
 
@@ -574,13 +574,13 @@
 }
 
 .modulo-operativo__aviso--error {
-  border-color: rgb(168 51 43 / 28%);
-  background: #fbefee;
+  border-color: color-mix(in srgb, var(--error) 28%, transparent);
+  background: var(--error-fondo);
   color: var(--error);
 }
 
 .modulo-operativo__aviso--bien {
-  border-color: rgb(44 110 82 / 25%);
+  border-color: color-mix(in srgb, var(--bien) 25%, transparent);
   background: var(--bien-fondo);
   color: var(--bien);
 }
@@ -683,27 +683,7 @@
   }
 }
 
-.modulo-operativo__estado {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.2rem 0.55rem;
-  border-radius: 999px;
-  background: var(--niebla);
-  color: var(--tinta-suave);
-  font-size: 0.78rem;
-}
-
-.modulo-operativo__estado--activo,
-.modulo-operativo__estado--confirmada {
-  background: var(--bien-fondo);
-  color: var(--bien);
-}
-
-.modulo-operativo__estado--borrador,
-.modulo-operativo__estado--pendiente {
-  background: var(--duda-fondo);
-  color: var(--duda);
-}
+/* Las etiquetas .modulo-operativo__estado se definen junto a .estado en globals.css. */
 
 @media (max-width: 680px) {
   .asistente-modulo__rejilla {
@@ -759,4 +739,96 @@
   .modulo-operativo__tabla {
     min-width: 620px;
   }
+}
+
+/* Lector de código de barras */
+.campo-con-lector {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.campo-con-lector > input,
+.campo-con-lector > .campo__control {
+  min-width: 0;
+  flex: 1;
+}
+
+.boton-lector {
+  display: inline-grid;
+  width: var(--toque);
+  min-width: var(--toque);
+  min-height: var(--toque);
+  place-items: center;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-campo);
+  background: var(--papel);
+  color: var(--acento);
+  cursor: pointer;
+}
+
+.boton-lector:hover:not(:disabled) {
+  border-color: var(--acento);
+  background: var(--acento-tenue);
+}
+
+.lector-codigo {
+  display: grid;
+  width: min(100%, 460px);
+  gap: 0.9rem;
+}
+
+.lector-codigo__visor {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radio-tarjeta);
+  background: var(--tinta);
+}
+
+.lector-codigo__visor video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lector-codigo__guia {
+  position: absolute;
+  inset: 32% 10%;
+  border: 2px solid var(--calido);
+  border-radius: 8px;
+  box-shadow: 0 0 0 999px rgb(0 0 0 / 35%);
+}
+
+.lector-codigo__estado {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--sobre-acento);
+  font-size: 0.9rem;
+}
+
+.lector-codigo__ayuda {
+  color: var(--tinta-suave);
+  font-size: 0.86rem;
+}
+
+.lector-codigo__manual {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.lector-codigo__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.modulo-operativo__detalle {
+  display: block;
+  color: var(--tinta-suave);
+  font-family: var(--familia-mono);
+  font-size: 0.72rem;
 }

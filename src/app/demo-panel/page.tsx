@@ -37,54 +37,20 @@ export default function VistaPreviaPanel() {
         />
       </section>
 
-      <div className="reja-inicio">
-        <section aria-labelledby="actividad-titulo" className="tarjeta-panel">
-          <div className="tarjeta-panel__encabezado">
-            <div>
-              <p className="rotulo">MOVIMIENTO RECIENTE</p>
-              <h2 id="actividad-titulo">Actividad</h2>
-            </div>
-            <span className="rotulo">HOY</span>
+      <section aria-labelledby="actividad-titulo" className="tarjeta-panel">
+        <div className="tarjeta-panel__encabezado">
+          <div>
+            <p className="rotulo">MOVIMIENTO RECIENTE</p>
+            <h2 id="actividad-titulo">Actividad</h2>
           </div>
-          <div aria-label="Últimas ventas" className="actividad-lista">
-            <VentaReciente
-              numero="1048"
-              hora="Hace 10 min"
-              importe="S/ 245.00"
-            />
-            <VentaReciente
-              numero="1047"
-              hora="Hace 34 min"
-              importe="S/ 180.00"
-            />
-            <VentaReciente numero="1046" hora="Hace 1 h" importe="S/ 96.00" />
-          </div>
-        </section>
-
-        <section aria-labelledby="asistente-titulo" className="asistente-panel">
-          <span aria-hidden="true" className="asistente-panel__icono">
-            ✳
-          </span>
-          <p className="rotulo" style={{ marginTop: "1rem" }}>
-            ASISTENCIA INTELIGENTE
-          </p>
-          <h2 id="asistente-titulo">Asistente para tu empresa</h2>
-          <p>
-            Estamos preparando la asistencia en lenguaje natural para tus ventas
-            e inventario.
-          </p>
-          <div
-            aria-label="Ejemplos de consultas"
-            className="asistente-panel__sugerencias"
-          >
-            <span>¿Qué productos debo reponer?</span>
-            <span>Resume las ventas de hoy</span>
-          </div>
-          <span className="boton-principal" style={{ marginTop: "1.1rem" }}>
-            Ver el asistente
-          </span>
-        </section>
-      </div>
+          <span className="rotulo">HOY</span>
+        </div>
+        <div aria-label="Últimas ventas" className="actividad-lista">
+          <VentaReciente numero="1048" hora="Hace 10 min" importe="S/ 245.00" />
+          <VentaReciente numero="1047" hora="Hace 34 min" importe="S/ 180.00" />
+          <VentaReciente numero="1046" hora="Hace 1 h" importe="S/ 96.00" />
+        </div>
+      </section>
     </PanelShell>
   );
 }

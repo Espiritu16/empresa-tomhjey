@@ -19,7 +19,9 @@ export default async function ActivarCuenta() {
       <div className="acceso__contenido">
         <header className="acceso__cabecera">
           <Link aria-label="Tomhjey, inicio" className="marca" href="/">
-            <span aria-hidden="true" className="marca__punto" />
+            <span aria-hidden="true" className="marca__simbolo">
+              T
+            </span>
             <span>Tomhjey</span>
           </Link>
           <p className="acceso__cabecera-nota">Acceso al panel de tu empresa</p>

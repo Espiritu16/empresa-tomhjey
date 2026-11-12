@@ -79,7 +79,9 @@ async function AccesoConSesion() {
 function Marca() {
   return (
     <Link aria-label="Tomhjey, inicio" className="marca" href="/">
-      <span aria-hidden="true" className="marca__punto" />
+      <span aria-hidden="true" className="marca__simbolo">
+        T
+      </span>
       <span>Tomhjey</span>
     </Link>
   );

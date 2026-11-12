@@ -3,6 +3,7 @@ import { crearClienteSupabaseServidor } from "@/compartido/supabase/servidor";
 export type Producto = {
   id: string;
   sku: string;
+  codigoBarras: string | null;
   nombre: string;
   descripcion: string | null;
   categoriaId: string | null;
@@ -23,7 +24,7 @@ export async function cargarProductos() {
     supabase
       .from("productos")
       .select(
-        "id, sku, nombre, descripcion, categoria_id, unidad_medida, usa_combinaciones, precio, existencias, stock_minimo, activo, categorias(nombre), combinaciones(id, precio, existencias, activa)",
+        "id, sku, codigo_barras, nombre, descripcion, categoria_id, unidad_medida, usa_combinaciones, precio, existencias, stock_minimo, activo, categorias(nombre), combinaciones(id, precio, existencias, activa)",
       )
       .order("nombre"),
     supabase
@@ -52,6 +53,7 @@ export async function cargarProductos() {
       return {
         id: producto.id,
         sku: producto.sku,
+        codigoBarras: producto.codigo_barras,
         nombre: producto.nombre,
         descripcion: producto.descripcion,
         categoriaId: producto.categoria_id,

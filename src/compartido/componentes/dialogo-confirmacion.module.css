@@ -13,7 +13,7 @@
 }
 
 .dialogo::backdrop {
-  background: rgb(20 24 39 / 48%);
+  background: rgb(34 27 37 / 45%);
   backdrop-filter: blur(3px);
 }
 
@@ -29,9 +29,9 @@
   height: 2.75rem;
   flex: 0 0 auto;
   place-items: center;
-  border: 1px solid rgb(168 51 43 / 16%);
+  border: 1px solid color-mix(in srgb, var(--error) 18%, transparent);
   border-radius: 50%;
-  background: #fbefed;
+  background: var(--error-fondo);
   color: var(--error);
   font-family: var(--familia-titulo);
   font-size: 1.25rem;
@@ -56,9 +56,9 @@
 .error {
   margin-top: 1rem;
   padding: 0.7rem 0.85rem;
-  border: 1px solid rgb(168 51 43 / 20%);
+  border: 1px solid color-mix(in srgb, var(--error) 22%, transparent);
   border-radius: var(--radio-caja);
-  background: #fbefed;
+  background: var(--error-fondo);
   color: var(--error);
   font-size: 0.9rem;
 }
@@ -110,7 +110,7 @@
 }
 
 .peligro:hover:not(:disabled) {
-  background: #8d2923;
+  background: #8e211b;
 }
 
 .secundario:active:not(:disabled),

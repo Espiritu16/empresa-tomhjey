@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, type FormEvent } from "react";
 import { crearClienteSupabase } from "@/compartido/supabase/cliente";
 import { DialogoModal } from "@/compartido/componentes/dialogo-modal";
+import { BotonLectorCodigo } from "@/compartido/componentes/lector-codigo";
 import { useNotificaciones } from "@/compartido/notificaciones/proveedor-notificaciones";
 import type { Categoria, Producto } from "./consultas";
 
@@ -18,6 +19,7 @@ type Propiedades = {
 
 type FormularioProducto = {
   sku: string;
+  codigoBarras: string;
   nombre: string;
   categoriaId: string;
   descripcion: string;
@@ -27,8 +29,11 @@ type FormularioProducto = {
   stockMinimo: string;
 };
 
+const FORMATO_CODIGO_BARRAS = /^[0-9A-Za-z.-]{4,64}$/;
+
 const formularioVacio: FormularioProducto = {
   sku: "",
+  codigoBarras: "",
   nombre: "",
   categoriaId: "",
   descripcion: "",
@@ -64,7 +69,12 @@ export function PaginaProductos({
     const texto = busqueda.trim().toLocaleLowerCase("es-PE");
     if (!texto) return productos;
     return productos.filter((producto) =>
-      [producto.sku, producto.nombre, producto.categoriaNombre ?? ""]
+      [
+        producto.sku,
+        producto.codigoBarras ?? "",
+        producto.nombre,
+        producto.categoriaNombre ?? "",
+      ]
         .join(" ")
         .toLocaleLowerCase("es-PE")
         .includes(texto),
@@ -82,6 +92,7 @@ export function PaginaProductos({
     setProductoEditado(producto);
     setFormulario({
       sku: producto.sku,
+      codigoBarras: producto.codigoBarras ?? "",
       nombre: producto.nombre,
       categoriaId: producto.categoriaId ?? "",
       descripcion: producto.descripcion ?? "",
@@ -114,12 +125,20 @@ export function PaginaProductos({
       setError("Revisa el SKU, nombre, precio y existencias del producto.");
       return;
     }
+    const codigoBarras = formulario.codigoBarras.trim();
+    if (codigoBarras && !FORMATO_CODIGO_BARRAS.test(codigoBarras)) {
+      setError(
+        "El código de barras debe tener entre 4 y 64 letras o números, sin espacios.",
+      );
+      return;
+    }
     setGuardando(true);
     const supabase = crearClienteSupabase();
     try {
       if (productoEditado) {
         const cambios = {
           sku: formulario.sku.trim(),
+          codigo_barras: codigoBarras || null,
           nombre: formulario.nombre.trim(),
           categoria_id: formulario.categoriaId || null,
           descripcion: formulario.descripcion.trim() || null,
@@ -147,6 +166,7 @@ export function PaginaProductos({
           .from("productos")
           .insert({
             sku: formulario.sku.trim(),
+            codigo_barras: codigoBarras || null,
             nombre: formulario.nombre.trim(),
             categoria_id: formulario.categoriaId || null,
             descripcion: formulario.descripcion.trim() || null,
@@ -192,7 +212,15 @@ export function PaginaProductos({
     } catch (errorGuardado) {
       const mensajeError =
         errorGuardado instanceof Error ? errorGuardado.message : "";
-      if (mensajeError.includes("duplicate key")) {
+      if (mensajeError.includes("productos_codigo_barras_unico")) {
+        setError(
+          "Ese código de barras ya pertenece a otro producto. Revisa el código escaneado.",
+        );
+      } else if (mensajeError.includes("productos_codigo_barras_formato")) {
+        setError(
+          "El código de barras debe tener entre 4 y 64 letras o números, sin espacios.",
+        );
+      } else if (mensajeError.includes("duplicate key")) {
         setError("Ese SKU ya está registrado. Escribe uno distinto.");
       } else {
         notificaciones.error(
@@ -278,17 +306,23 @@ export function PaginaProductos({
       ) : null}
 
       <div className="modulo-operativo__barra">
-        <label className="campo">
-          <span className="sr-only">Buscar productos</span>
-          <input
-            aria-label="Buscar productos"
-            className="modulo-operativo__busqueda"
-            onChange={(evento) => setBusqueda(evento.target.value)}
-            placeholder="Buscar por nombre, SKU o categoría"
-            type="search"
-            value={busqueda}
+        <div className="campo-con-lector">
+          <label className="campo">
+            <span className="sr-only">Buscar productos</span>
+            <input
+              aria-label="Buscar productos"
+              className="modulo-operativo__busqueda"
+              onChange={(evento) => setBusqueda(evento.target.value)}
+              placeholder="Buscar por nombre, SKU o código de barras"
+              type="search"
+              value={busqueda}
+            />
+          </label>
+          <BotonLectorCodigo
+            etiqueta="Buscar por código de barras"
+            onLeido={setBusqueda}
           />
-        </label>
+        </div>
         {puedeGestionarProductos ? (
           <div className="modulo-operativo__acciones">
             {esAdministrador ? (
@@ -354,7 +388,14 @@ export function PaginaProductos({
           <tbody>
             {visibles.map((producto) => (
               <tr key={producto.id}>
-                <td>{producto.sku}</td>
+                <td>
+                  {producto.sku}
+                  {producto.codigoBarras ? (
+                    <small className="modulo-operativo__detalle">
+                      {producto.codigoBarras}
+                    </small>
+                  ) : null}
+                </td>
                 <td>
                   <strong>{producto.nombre}</strong>
                 </td>
@@ -409,7 +450,7 @@ export function PaginaProductos({
             </strong>
             <span>
               {busqueda
-                ? "Prueba con otro nombre, SKU o categoría."
+                ? "Prueba con otro nombre, SKU o código de barras."
                 : "Crea el primer producto para empezar a registrar ventas."}
             </span>
           </div>
@@ -440,6 +481,34 @@ export function PaginaProductos({
             value={formulario.sku}
             onChange={(sku) => setFormulario((actual) => ({ ...actual, sku }))}
           />
+          <div className="campo">
+            <label htmlFor="codigo-barras-producto">Código de barras</label>
+            <div className="campo-con-lector">
+              <input
+                autoComplete="off"
+                id="codigo-barras-producto"
+                inputMode="numeric"
+                onChange={(evento) =>
+                  setFormulario((actual) => ({
+                    ...actual,
+                    codigoBarras: evento.target.value,
+                  }))
+                }
+                onKeyDown={(evento) => {
+                  // La pistola lectora termina con Enter: no debe enviar el formulario.
+                  if (evento.key === "Enter") evento.preventDefault();
+                }}
+                placeholder="Opcional"
+                value={formulario.codigoBarras}
+              />
+              <BotonLectorCodigo
+                etiqueta="Escanear código del producto"
+                onLeido={(codigoBarras) =>
+                  setFormulario((actual) => ({ ...actual, codigoBarras }))
+                }
+              />
+            </div>
+          </div>
           <label className="campo">
             <span>Categoría</span>
             <select

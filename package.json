@@ -32,7 +32,8 @@
   "dependencies": {
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.117.2",
-    "next": "16.4.0",
+    "barcode-detector": "3.2.3",
+    "next": "16.4.6",
     "pdf-lib": "1.17.1",
     "qrcode": "1.5.4",
     "react": "19.3.0",
@@ -51,7 +52,7 @@
     "@vitejs/plugin-rsc": "^0.5.36",
     "cf": "^1.0.0-beta.14",
     "eslint": "^9",
-    "eslint-config-next": "16.4.0",
+    "eslint-config-next": "16.4.6",
     "postcss": "^8.5.29",
     "prettier": "3.9.9",
     "supabase": "2.120.0",

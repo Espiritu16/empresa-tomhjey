@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { crearClienteSupabase } from "@/compartido/supabase/cliente";
 import type { PerfilActual } from "@/compartido/supabase/perfil-actual";
 import { ProveedorNotificaciones } from "@/compartido/notificaciones/proveedor-notificaciones";
@@ -15,7 +15,6 @@ const secciones = [
   { href: "/panel/clientes", nombre: "Clientes", icono: "clientes" },
   { href: "/panel/reportes", nombre: "Reportes", icono: "reportes" },
   { href: "/panel/facturacion", nombre: "Facturación", icono: "facturacion" },
-  { href: "/panel/asistente", nombre: "Asistente IA", icono: "asistente" },
   {
     href: "/panel/empresa",
     nombre: "Empresa",
@@ -29,6 +28,35 @@ const secciones = [
     soloAdmin: true,
   },
 ] as const;
+
+const CLAVE_MENU_COMPACTO = "tomhjey:menu-compacto";
+const oyentesMenu = new Set<() => void>();
+
+function suscribirMenu(oyente: () => void) {
+  oyentesMenu.add(oyente);
+  window.addEventListener("storage", oyente);
+  return () => {
+    oyentesMenu.delete(oyente);
+    window.removeEventListener("storage", oyente);
+  };
+}
+
+function leerMenuCompacto() {
+  try {
+    return window.localStorage.getItem(CLAVE_MENU_COMPACTO) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function guardarMenuCompacto(compacto: boolean) {
+  try {
+    window.localStorage.setItem(CLAVE_MENU_COMPACTO, compacto ? "1" : "0");
+  } catch {
+    // Sin almacenamiento disponible, el menú vuelve a su ancho normal al recargar.
+  }
+  oyentesMenu.forEach((oyente) => oyente());
+}
 
 type Propiedades = {
   children: React.ReactNode;
@@ -44,6 +72,12 @@ export function PanelShell({
   const pathname = usePathname();
   const router = useRouter();
   const [saliendo, setSaliendo] = useState(false);
+  const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
+  const compacto = useSyncExternalStore(
+    suscribirMenu,
+    leerMenuCompacto,
+    () => false,
+  );
   const rutaActual = vistaPrevia ? "/panel" : pathname;
   const iniciales = perfil.nombre
     .trim()
@@ -52,6 +86,7 @@ export function PanelShell({
     .map((parte) => parte[0])
     .join("")
     .toLocaleUpperCase("es-PE");
+  const rol = perfil.rol === "administrador" ? "Administración" : "Ventas";
   const visibles = secciones.filter(
     (seccion) =>
       !(
@@ -60,6 +95,17 @@ export function PanelShell({
         perfil.rol !== "administrador"
       ),
   );
+
+  useEffect(() => {
+    if (!menuMovilAbierto) return;
+
+    function cerrarConEscape(evento: KeyboardEvent) {
+      if (evento.key === "Escape") setMenuMovilAbierto(false);
+    }
+
+    window.addEventListener("keydown", cerrarConEscape);
+    return () => window.removeEventListener("keydown", cerrarConEscape);
+  }, [menuMovilAbierto]);
 
   async function cerrarSesion() {
     if (vistaPrevia) {
@@ -76,81 +122,135 @@ export function PanelShell({
 
   return (
     <ProveedorNotificaciones>
-      <header className="cabecera-panel">
-        <div className="cabecera-panel__contenido">
-          <Link aria-label="Tomhjey, inicio" className="marca" href="/panel">
-            <span aria-hidden="true" className="marca__punto" />
-            <span>Tomhjey</span>
-          </Link>
+      <div
+        className="panel"
+        data-menu={compacto ? "compacto" : "amplio"}
+        data-menu-movil={menuMovilAbierto ? "abierto" : "cerrado"}
+      >
+        <aside
+          aria-label="Navegación de la empresa"
+          className="menu-lateral"
+          id="menu-lateral"
+        >
+          <div className="menu-lateral__cabecera">
+            <Link
+              aria-label="Tomhjey, inicio"
+              className="marca"
+              href="/panel"
+              onClick={() => setMenuMovilAbierto(false)}
+            >
+              <span aria-hidden="true" className="marca__simbolo">
+                T
+              </span>
+              <span className="marca__nombre">Tomhjey</span>
+            </Link>
+            <button
+              aria-controls="menu-lateral"
+              aria-expanded={!compacto}
+              aria-label={compacto ? "Mostrar menú" : "Esconder menú"}
+              className="menu-lateral__alternar"
+              onClick={() => guardarMenuCompacto(!compacto)}
+              title={compacto ? "Mostrar menú" : "Esconder menú"}
+              type="button"
+            >
+              <Icono nombre="alternar" />
+            </button>
+            <button
+              aria-label="Cerrar menú"
+              className="menu-lateral__cerrar"
+              onClick={() => setMenuMovilAbierto(false)}
+              type="button"
+            >
+              <Icono nombre="cerrar" />
+            </button>
+          </div>
 
-          <div className="cabecera-panel__derecha">
+          <nav className="nav-panel">
+            {visibles.map((seccion) => {
+              const activa =
+                seccion.href === "/panel"
+                  ? rutaActual === seccion.href
+                  : rutaActual === seccion.href ||
+                    rutaActual.startsWith(`${seccion.href}/`);
+
+              return (
+                <Link
+                  aria-current={activa ? "page" : undefined}
+                  href={seccion.href}
+                  key={seccion.href}
+                  onClick={() => setMenuMovilAbierto(false)}
+                  title={compacto ? seccion.nombre : undefined}
+                >
+                  <span aria-hidden="true" className="nav-panel__icono">
+                    <Icono nombre={seccion.icono} />
+                  </span>
+                  <span className="nav-panel__texto">{seccion.nombre}</span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="menu-lateral__pie">
             {vistaPrevia ? (
               <span className="etiqueta-vista-previa">Vista previa</span>
-            ) : (
-              <span className="indicador-local">
-                <span aria-hidden="true" className="indicador-local__punto" />
-                Panel de empresa
-              </span>
-            )}
-            <div className="usuario-panel">
+            ) : null}
+            <div
+              className="usuario-panel"
+              title={compacto ? `${perfil.nombre} · ${rol}` : undefined}
+            >
               <span aria-hidden="true" className="usuario-panel__avatar">
                 {iniciales || "T"}
               </span>
               <div className="usuario-panel__datos">
                 <strong>{perfil.nombre}</strong>
-                <span>
-                  {perfil.rol === "administrador" ? "Administración" : "Ventas"}
-                </span>
+                <span>{rol}</span>
               </div>
             </div>
             <button
               className="boton-salir"
               disabled={saliendo}
               onClick={cerrarSesion}
+              title={compacto ? "Salir" : undefined}
               type="button"
             >
-              {saliendo ? "Saliendo…" : "Salir"}
+              <span aria-hidden="true" className="nav-panel__icono">
+                <Icono nombre="salir" />
+              </span>
+              <span className="nav-panel__texto">
+                {saliendo ? "Saliendo…" : "Salir"}
+              </span>
             </button>
           </div>
-        </div>
-      </header>
+        </aside>
 
-      <div className="contenedor-panel">
-        <div className="cuerpo-panel">
-          <aside aria-label="Navegación de la empresa" className="carril-panel">
-            <div className="carril-panel__empresa">
-              <p className="rotulo">EMPRESA</p>
-              <strong>Tomhjey</strong>
-            </div>
+        <div
+          aria-hidden="true"
+          className="panel__velo"
+          onClick={() => setMenuMovilAbierto(false)}
+        />
 
-            <nav className="nav-panel">
-              {visibles.map((seccion) => {
-                const activa =
-                  seccion.href === "/panel"
-                    ? rutaActual === seccion.href
-                    : rutaActual === seccion.href ||
-                      rutaActual.startsWith(`${seccion.href}/`);
-
-                return (
-                  <Link
-                    aria-current={activa ? "page" : undefined}
-                    href={seccion.href}
-                    key={seccion.href}
-                  >
-                    <span aria-hidden="true" className="nav-panel__icono">
-                      <Icono nombre={seccion.icono} />
-                    </span>
-                    {seccion.nombre}
-                  </Link>
-                );
-              })}
-            </nav>
-
-            <p className="carril-panel__ayuda">
-              La información de tu empresa está protegida por tu cuenta de
-              usuario.
-            </p>
-          </aside>
+        <div className="panel__principal">
+          <header className="barra-movil">
+            <button
+              aria-controls="menu-lateral"
+              aria-expanded={menuMovilAbierto}
+              aria-label="Abrir menú"
+              className="barra-movil__boton"
+              onClick={() => setMenuMovilAbierto(true)}
+              type="button"
+            >
+              <Icono nombre="menu" />
+            </button>
+            <Link className="marca" href="/panel" tabIndex={-1}>
+              <span aria-hidden="true" className="marca__simbolo">
+                T
+              </span>
+              <span className="marca__nombre">Tomhjey</span>
+            </Link>
+            <span aria-hidden="true" className="usuario-panel__avatar">
+              {iniciales || "T"}
+            </span>
+          </header>
 
           <main className="contenido-panel">{children}</main>
         </div>
@@ -220,16 +320,24 @@ function Icono({ nombre }: { nombre: string }) {
         <path d="M8 8v1m0 3v1m0 3v1m8-4v1m0 3v1" />
       </>
     ),
-    asistente: (
-      <>
-        <path d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.4-6.4-1.4 1.4M7 17l-1.4 1.4m12.8 0L17 17M7 7 5.6 5.6" />
-        <circle cx="12" cy="12" r="4" />
-      </>
-    ),
     usuarios: (
       <>
         <circle cx="9" cy="8" r="3" />
         <path d="M3 20v-1.5A5.5 5.5 0 0 1 8.5 13h1A5.5 5.5 0 0 1 15 18.5V20M16 5.2a3 3 0 0 1 0 5.6M18 14a5.5 5.5 0 0 1 3 4.5V20" />
+      </>
+    ),
+    alternar: (
+      <>
+        <rect height="16" rx="2.5" width="18" x="3" y="4" />
+        <path d="M9 4v16" />
+      </>
+    ),
+    menu: <path d="M4 7h16M4 12h16M4 17h16" />,
+    cerrar: <path d="m6 6 12 12M18 6 6 18" />,
+    salir: (
+      <>
+        <path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4" />
+        <path d="M10 16l-4-4 4-4M6 12h10" />
       </>
     ),
   };

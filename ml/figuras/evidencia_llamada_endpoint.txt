@@ -1,0 +1,6 @@
+# Evidencia de llamada real al modelo exportado (2026-11-12 15:35)
+$ python predecir.py --servir 8765
+$ curl -X POST http://127.0.0.1:8765/predecir -d @ejemplo_entrada.json
+{"sku": "S02-30", "semana": "2026-11-02", "evento": "Ninguno", "unidades_estimadas": 3.07, "unidades_estimadas_redondeadas": 3, "cobertura_semanas": 3, "reposicion_sugerida": 12, "accion": "reponer", "modelo": "Ridge", "mae_prueba": 1.4}
+$ curl (talla inexistente)
+{"error": "La talla 99 no existe para S02"}

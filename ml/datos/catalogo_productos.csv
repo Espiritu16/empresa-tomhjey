@@ -1,0 +1,19 @@
+﻿producto_id,nombre_producto,prenda,tela,modelo,segmento,tallas,precio_lista_2026,fuente_producto,fecha_lanzamiento,tiempo_entrega_semanas,venta_real_semanal_sep_oct_2026,demanda_base_semanal_usada
+P01,Pantalón papertash,Pantalón,Pepertash,Semipitillo,Adulto,"28, 30, 32, 34",38,Ventas + catálogo,2024-01-01,1,25.8,31.1
+P02,Pantalón stretch,Pantalón,Jean stretch,Skinny,Adulto,"28, 30, 32, 34",40,Ventas + catálogo,2024-01-01,2,4.3,5.2
+P03,Pantalón jean clásico,Pantalón,Jean,Clásico recto,Adulto,"28, 30, 32, 34",45,Solo catálogo,2024-01-01,2,0.0,4.0
+P04,Pantalón jean niño,Pantalón,Jean,Clásico recto,Niño,"2, 4, 6, 8, 10, 12, 14, 16",40,Ventas + catálogo,2024-01-01,2,1.0,1.8
+P05,Pantalón jean oversize,Pantalón,Jean,Oversize,Adulto,"28, 30, 32, 34",50,Solo catálogo,2024-09-02,2,0.0,5.0
+P06,Pantalón jean oversize niño,Pantalón,Jean,Oversize,Niño,"2, 4, 6, 8, 10, 12, 14, 16",42,Solo catálogo,2024-09-02,2,0.0,2.5
+P07,Pantalón jean baggy,Pantalón,Jean,Baggy,Adulto,"28, 30, 32, 34",52,Solo catálogo,2025-03-03,2,0.0,6.0
+P08,Pantalón jean baggy niño,Pantalón,Jean,Baggy,Niño,"2, 4, 6, 8, 10, 12, 14, 16",44,Solo catálogo,2025-03-03,2,0.0,2.5
+P09,Pantalón estampado,Pantalón,Estampado,Estampado,Adulto,"28, 30, 32, 34",45,Solo ventas,2024-01-01,1,0.7,1.8
+P10,Pantalón extra,Pantalón,Pepertash,Extra (tallas grandes),Adulto,"36, 38, 40",42,Solo ventas,2024-01-01,1,0.3,1.8
+S01,Short papertash,Short,Pepertash,Papertash,Adulto,"28, 30, 32, 34",30,Solo ventas,2024-01-01,1,66.1,84.0
+S02,Short jean,Short,Jean,Oversize,Adulto,"28, 30, 32, 34",33,Ventas + catálogo,2024-01-01,2,12.8,16.2
+S03,Short jean niño,Short,Jean,Oversize,Niño,"2, 4, 6, 8, 10, 12, 14, 16",25,Ventas + catálogo,2024-01-01,2,0.9,1.9
+S04,Short tafeta,Short,Tafeta,Skinny,Adulto,"28, 30, 32, 34",30,Ventas + catálogo,2026-10-05,1,0.2,4.0
+S05,Short jogger,Short,Algodón,Jogger,Adulto,"28, 30, 32, 34",30,Solo ventas,2024-01-01,1,14.9,19.0
+S06,Short estampado,Short,Estampado,Estampado,Adulto,"28, 30, 32, 34",35,Solo ventas,2024-01-01,1,5.8,7.4
+S07,Short extra,Short,Pepertash,Extra (tallas grandes),Adulto,"36, 38, 40",35,Solo ventas,2024-01-01,1,4.7,5.9
+S08,Short performance extra,Short,Deportivo,Performance extra,Adulto,"36, 38, 40",35,Solo ventas,2024-01-01,1,1.0,1.9

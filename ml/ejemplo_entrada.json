@@ -1,0 +1,17 @@
+{
+  "producto_id": "S02",
+  "talla": "30",
+  "semana": "2026-11-02",
+  "precio_lista": 33,
+  "descuento": 0.0,
+  "ventas_ultimas_4_semanas": [
+    0,
+    4,
+    1,
+    6
+  ],
+  "hubo_quiebre_semana_anterior": false,
+  "stock_actual": 0,
+  "tiempo_entrega_semanas": 2,
+  "stock_seguridad": 2
+}

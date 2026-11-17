@@ -232,6 +232,8 @@
   "intercepto": 2.114558998560847,
   "catalogo": {
     "P01": {
+      "nombre": "Pantalón papertash",
+      "precio_lista": 38.0,
       "prenda": "Pantalón",
       "modelo": "Semipitillo",
       "segmento": "Adulto",
@@ -245,6 +247,8 @@
       "tiempo_entrega_semanas": 1
     },
     "P02": {
+      "nombre": "Pantalón stretch",
+      "precio_lista": 40.0,
       "prenda": "Pantalón",
       "modelo": "Skinny",
       "segmento": "Adulto",
@@ -258,6 +262,8 @@
       "tiempo_entrega_semanas": 2
     },
     "P03": {
+      "nombre": "Pantalón jean clásico",
+      "precio_lista": 45.0,
       "prenda": "Pantalón",
       "modelo": "Clásico recto",
       "segmento": "Adulto",
@@ -271,6 +277,8 @@
       "tiempo_entrega_semanas": 2
     },
     "P04": {
+      "nombre": "Pantalón jean niño",
+      "precio_lista": 40.0,
       "prenda": "Pantalón",
       "modelo": "Clásico recto",
       "segmento": "Niño",
@@ -288,6 +296,8 @@
       "tiempo_entrega_semanas": 2
     },
     "P05": {
+      "nombre": "Pantalón jean oversize",
+      "precio_lista": 50.0,
       "prenda": "Pantalón",
       "modelo": "Oversize",
       "segmento": "Adulto",
@@ -301,6 +311,8 @@
       "tiempo_entrega_semanas": 2
     },
     "P06": {
+      "nombre": "Pantalón jean oversize niño",
+      "precio_lista": 42.0,
       "prenda": "Pantalón",
       "modelo": "Oversize",
       "segmento": "Niño",
@@ -318,6 +330,8 @@
       "tiempo_entrega_semanas": 2
     },
     "P07": {
+      "nombre": "Pantalón jean baggy",
+      "precio_lista": 52.0,
       "prenda": "Pantalón",
       "modelo": "Baggy",
       "segmento": "Adulto",
@@ -331,6 +345,8 @@
       "tiempo_entrega_semanas": 2
     },
     "P08": {
+      "nombre": "Pantalón jean baggy niño",
+      "precio_lista": 44.0,
       "prenda": "Pantalón",
       "modelo": "Baggy",
       "segmento": "Niño",
@@ -348,6 +364,8 @@
       "tiempo_entrega_semanas": 2
     },
     "P09": {
+      "nombre": "Pantalón estampado",
+      "precio_lista": 45.0,
       "prenda": "Pantalón",
       "modelo": "Estampado",
       "segmento": "Adulto",
@@ -361,6 +379,8 @@
       "tiempo_entrega_semanas": 1
     },
     "P10": {
+      "nombre": "Pantalón extra",
+      "precio_lista": 42.0,
       "prenda": "Pantalón",
       "modelo": "Extra (tallas grandes)",
       "segmento": "Adulto",
@@ -373,6 +393,8 @@
       "tiempo_entrega_semanas": 1
     },
     "S01": {
+      "nombre": "Short papertash",
+      "precio_lista": 30.0,
       "prenda": "Short",
       "modelo": "Papertash",
       "segmento": "Adulto",
@@ -386,6 +408,8 @@
       "tiempo_entrega_semanas": 1
     },
     "S02": {
+      "nombre": "Short jean",
+      "precio_lista": 33.0,
       "prenda": "Short",
       "modelo": "Oversize",
       "segmento": "Adulto",
@@ -399,6 +423,8 @@
       "tiempo_entrega_semanas": 2
     },
     "S03": {
+      "nombre": "Short jean niño",
+      "precio_lista": 25.0,
       "prenda": "Short",
       "modelo": "Oversize",
       "segmento": "Niño",
@@ -416,6 +442,8 @@
       "tiempo_entrega_semanas": 2
     },
     "S04": {
+      "nombre": "Short tafeta",
+      "precio_lista": 30.0,
       "prenda": "Short",
       "modelo": "Skinny",
       "segmento": "Adulto",
@@ -429,6 +457,8 @@
       "tiempo_entrega_semanas": 1
     },
     "S05": {
+      "nombre": "Short jogger",
+      "precio_lista": 30.0,
       "prenda": "Short",
       "modelo": "Jogger",
       "segmento": "Adulto",
@@ -442,6 +472,8 @@
       "tiempo_entrega_semanas": 1
     },
     "S06": {
+      "nombre": "Short estampado",
+      "precio_lista": 35.0,
       "prenda": "Short",
       "modelo": "Estampado",
       "segmento": "Adulto",
@@ -455,6 +487,8 @@
       "tiempo_entrega_semanas": 1
     },
     "S07": {
+      "nombre": "Short extra",
+      "precio_lista": 35.0,
       "prenda": "Short",
       "modelo": "Extra (tallas grandes)",
       "segmento": "Adulto",
@@ -467,6 +501,8 @@
       "tiempo_entrega_semanas": 1
     },
     "S08": {
+      "nombre": "Short performance extra",
+      "precio_lista": 35.0,
       "prenda": "Short",
       "modelo": "Performance extra",
       "segmento": "Adulto",

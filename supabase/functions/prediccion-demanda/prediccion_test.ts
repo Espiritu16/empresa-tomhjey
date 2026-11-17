@@ -3,6 +3,7 @@
 import parametros from "./modelo.json" with { type: "json" };
 import casos from "./paridad_prueba.json" with { type: "json" };
 import {
+  catalogoModelo,
   ErrorValidacion,
   eventoSemana,
   type ParametrosModelo,
@@ -151,3 +152,23 @@ Deno.test("calendario: semana ISO y fechas comerciales", () => {
   if (eventoSemana(fecha("2026-06-15"), "Short", "Adulto") !== "Ninguno")
     throw new Error("Día del Padre solo pantalón adulto");
 });
+
+Deno.test(
+  "el catálogo expone los 18 productos con nombre, tallas y precio",
+  () => {
+    const catalogo = catalogoModelo(modelo);
+    if (catalogo.productos.length !== 18)
+      throw new Error("Deben ser 18 productos.");
+    const short = catalogo.productos.find((p) => p.producto_id === "S02");
+    if (
+      !short ||
+      short.nombre !== "Short jean" ||
+      !short.tallas.includes("30") ||
+      short.precio_lista !== 33
+    ) {
+      throw new Error("El catálogo no trae los datos del Short jean.");
+    }
+    if (catalogo.modelo !== modelo.nombre_modelo)
+      throw new Error("Debe informar el modelo.");
+  },
+);

@@ -8,6 +8,8 @@
  */
 
 export type Producto = {
+  nombre: string;
+  precio_lista: number;
   prenda: string;
   modelo: string;
   segmento: string;
@@ -290,6 +292,24 @@ export function estimarUnidades(
   for (let i = 0; i < vector.length; i++)
     total += vector[i] * parametros.pesos[i];
   return Math.max(0, total);
+}
+
+/** Catálogo que conoce el modelo, para que el MVP ofrezca solo productos y tallas válidos. */
+export function catalogoModelo(parametros: ParametrosModelo) {
+  return {
+    modelo: parametros.nombre_modelo,
+    entrenado_hasta: parametros.entrenado_hasta,
+    mae_prueba: parametros.metricas_prueba.MAE,
+    productos: Object.entries(parametros.catalogo).map(
+      ([productoId, producto]) => ({
+        producto_id: productoId,
+        nombre: producto.nombre,
+        tallas: producto.tallas,
+        precio_lista: producto.precio_lista,
+        tiempo_entrega_semanas: producto.tiempo_entrega_semanas,
+      }),
+    ),
+  };
 }
 
 export function predecirDemanda(

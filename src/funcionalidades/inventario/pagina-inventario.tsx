@@ -7,6 +7,7 @@ import { DialogoModal } from "@/compartido/componentes/dialogo-modal";
 import { BotonLectorCodigo } from "@/compartido/componentes/lector-codigo";
 import { useNotificaciones } from "@/compartido/notificaciones/proveedor-notificaciones";
 import type { ArticuloInventario, MovimientoInventario } from "./consultas";
+import { SugerenciaReposicion } from "./sugerencia-reposicion";
 
 type Propiedades = {
   articulos: ArticuloInventario[];
@@ -132,18 +133,21 @@ export function PaginaInventario({
             onLeido={setBusqueda}
           />
         </div>
-        {puedeAjustar ? (
-          <button
-            className="boton-principal"
-            onClick={() => {
-              setError(null);
-              setAbierto(true);
-            }}
-            type="button"
-          >
-            Registrar ajuste
-          </button>
-        ) : null}
+        <div className="modulo-operativo__acciones">
+          <SugerenciaReposicion />
+          {puedeAjustar ? (
+            <button
+              className="boton-principal"
+              onClick={() => {
+                setError(null);
+                setAbierto(true);
+              }}
+              type="button"
+            >
+              Registrar ajuste
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div className="modulo-operativo__tabla-contenedor">

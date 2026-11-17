@@ -10,6 +10,7 @@ import {
 } from "../_shared/http.ts";
 import parametros from "./modelo.json" with { type: "json" };
 import {
+  catalogoModelo,
   ErrorValidacion,
   type ParametrosModelo,
   predecirDemanda,
@@ -24,6 +25,9 @@ async function atender(request: Request): Promise<Response> {
     // Administrador y vendedor pueden consultar la sugerencia de reposición.
     await autenticar(request);
     const cuerpo = exigirObjetoJson(await request.json().catch(() => null));
+    if (cuerpo.consulta === "catalogo") {
+      return responderJson(catalogoModelo(modelo));
+    }
     try {
       return responderJson(predecirDemanda(cuerpo, modelo));
     } catch (error) {

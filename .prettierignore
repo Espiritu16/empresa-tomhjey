@@ -13,3 +13,5 @@ package-lock.json
 
 # Proyecto de Machine Learning en Python (archivos generados por el notebook)
 ml/
+supabase/functions/prediccion-demanda/modelo.json
+supabase/functions/prediccion-demanda/paridad_prueba.json

@@ -1,0 +1,489 @@
+{
+  "nombre_modelo": "SVM lineal",
+  "categoricas": [
+    {
+      "variable": "producto_id",
+      "categorias": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "P07",
+        "P08",
+        "P09",
+        "P10",
+        "S01",
+        "S02",
+        "S03",
+        "S05",
+        "S06",
+        "S07",
+        "S08"
+      ]
+    },
+    {
+      "variable": "talla",
+      "categorias": [
+        "10",
+        "12",
+        "14",
+        "16",
+        "2",
+        "28",
+        "30",
+        "32",
+        "34",
+        "36",
+        "38",
+        "4",
+        "40",
+        "6",
+        "8"
+      ]
+    },
+    {
+      "variable": "prenda",
+      "categorias": [
+        "Pantalón",
+        "Short"
+      ]
+    },
+    {
+      "variable": "modelo",
+      "categorias": [
+        "Baggy",
+        "Clásico recto",
+        "Estampado",
+        "Extra (tallas grandes)",
+        "Jogger",
+        "Oversize",
+        "Papertash",
+        "Performance extra",
+        "Semipitillo",
+        "Skinny"
+      ]
+    },
+    {
+      "variable": "segmento",
+      "categorias": [
+        "Adulto",
+        "Niño"
+      ]
+    },
+    {
+      "variable": "temporada",
+      "categorias": [
+        "Invierno",
+        "Otoño",
+        "Verano"
+      ]
+    },
+    {
+      "variable": "evento",
+      "categorias": [
+        "Año Nuevo",
+        "Campaña escolar",
+        "Día del Padre",
+        "Fiestas Patrias / gratificación",
+        "Navidad",
+        "Ninguno"
+      ]
+    }
+  ],
+  "numericas": [
+    {
+      "variable": "venta_lag1",
+      "media": 2.6410719662752182,
+      "escala": 6.82830598735666
+    },
+    {
+      "variable": "venta_lag2",
+      "media": 2.643781993375489,
+      "escala": 6.832129007896216
+    },
+    {
+      "variable": "venta_lag4",
+      "media": 2.6955736224028906,
+      "escala": 6.899529000683344
+    },
+    {
+      "variable": "media_4",
+      "media": 2.6629027401385126,
+      "escala": 6.059435857242426
+    },
+    {
+      "variable": "quiebre_lag1",
+      "media": 0.11382113821138211,
+      "escala": 0.31759390218901806
+    },
+    {
+      "variable": "precio_unitario",
+      "media": 37.90605239385727,
+      "escala": 7.70782095461344
+    },
+    {
+      "variable": "descuento",
+      "media": 0.02253839205058717,
+      "escala": 0.05856484284559229
+    },
+    {
+      "variable": "en_promocion",
+      "media": 0.13369467028003612,
+      "escala": 0.34032397126671604
+    },
+    {
+      "variable": "es_evento",
+      "media": 0.20264980427582055,
+      "escala": 0.40197370697943935
+    },
+    {
+      "variable": "semanas_desde_lanzamiento",
+      "media": 105.77777777777777,
+      "escala": 25.893418773936926
+    },
+    {
+      "variable": "semana_sen",
+      "media": 0.22059114695222598,
+      "escala": 0.6289169198884339
+    },
+    {
+      "variable": "semana_cos",
+      "media": -0.11577516507472636,
+      "escala": 0.7364775386366283
+    },
+    {
+      "variable": "tiempo_de_entrega",
+      "media": 1.6419753086419753,
+      "escala": 0.47941945281352094
+    }
+  ],
+  "pesos": [
+    0.3172826525031823,
+    -0.15676750088545244,
+    -0.20336102945329104,
+    0.1796226586138598,
+    0.269216770570166,
+    0.19227996966416572,
+    -0.010674550781193282,
+    0.05656635439982227,
+    -0.4372629692424972,
+    -0.28543530905274017,
+    2.107029332957814,
+    0.16730767620615664,
+    -0.7161079438436487,
+    -0.19627160133019222,
+    -0.47487224655654314,
+    -0.16364735571485,
+    -0.6449049080547591,
+    -0.044215131293959264,
+    -0.02800983375026639,
+    -0.025140063877506447,
+    -0.030338339506874784,
+    -0.03167831127514792,
+    0.2825459332944926,
+    0.5725198128724144,
+    0.45119344370636816,
+    0.07536734411487567,
+    -0.07789870253440018,
+    -0.45974069734526835,
+    -0.030113631642142258,
+    -0.5563481729426807,
+    -0.05805606052855519,
+    -0.04008758929134815,
+    -0.07853295366397717,
+    0.07853295366397806,
+    0.045891803618629434,
+    -0.023738370839430756,
+    -0.9121352157990408,
+    -0.4490826647675903,
+    -0.19627160133019222,
+    -0.08730352740315972,
+    2.107029332957814,
+    -0.6449049080547591,
+    0.3172826525031823,
+    -0.15676750088545244,
+    0.2876389611657997,
+    -0.28763896116580234,
+    0.008157821303563795,
+    -0.0032743077692755085,
+    -0.004883513534291506,
+    -0.19499138265267302,
+    -0.1276103189639708,
+    0.19999999999999998,
+    -0.18222928241686942,
+    0.33033994492647867,
+    -0.025508960892968835,
+    0.5520458808725861,
+    0.8484119717706105,
+    0.39491261576275494,
+    1.6945337147395971,
+    -0.0944276442433627,
+    -0.41502284950053014,
+    0.038057955293409385,
+    -0.10003006617290311,
+    0.06345927718667776,
+    -0.11719818831141948,
+    -0.01851787542805705,
+    -0.0443709842605724,
+    -0.462888174868727
+  ],
+  "intercepto": 2.114558998560847,
+  "catalogo": {
+    "P01": {
+      "prenda": "Pantalón",
+      "modelo": "Semipitillo",
+      "segmento": "Adulto",
+      "tallas": [
+        "28",
+        "30",
+        "32",
+        "34"
+      ],
+      "fecha_lanzamiento": "2024-01-01",
+      "tiempo_entrega_semanas": 1
+    },
+    "P02": {
+      "prenda": "Pantalón",
+      "modelo": "Skinny",
+      "segmento": "Adulto",
+      "tallas": [
+        "28",
+        "30",
+        "32",
+        "34"
+      ],
+      "fecha_lanzamiento": "2024-01-01",
+      "tiempo_entrega_semanas": 2
+    },
+    "P03": {
+      "prenda": "Pantalón",
+      "modelo": "Clásico recto",
+      "segmento": "Adulto",
+      "tallas": [
+        "28",
+        "30",
+        "32",
+        "34"
+      ],
+      "fecha_lanzamiento": "2024-01-01",
+      "tiempo_entrega_semanas": 2
+    },
+    "P04": {
+      "prenda": "Pantalón",
+      "modelo": "Clásico recto",
+      "segmento": "Niño",
+      "tallas": [
+        "2",
+        "4",
+        "6",
+        "8",
+        "10",
+        "12",
+        "14",
+        "16"
+      ],
+      "fecha_lanzamiento": "2024-01-01",
+      "tiempo_entrega_semanas": 2
+    },
+    "P05": {
+      "prenda": "Pantalón",
+      "modelo": "Oversize",
+      "segmento": "Adulto",
+      "tallas": [
+        "28",
+        "30",
+        "32",
+        "34"
+      ],
+      "fecha_lanzamiento": "2024-09-02",
+      "tiempo_entrega_semanas": 2
+    },
+    "P06": {
+      "prenda": "Pantalón",
+      "modelo": "Oversize",
+      "segmento": "Niño",
+      "tallas": [
+        "2",
+        "4",
+        "6",
+        "8",
+        "10",
+        "12",
+        "14",
+        "16"
+      ],
+      "fecha_lanzamiento": "2024-09-02",
+      "tiempo_entrega_semanas": 2
+    },
+    "P07": {
+      "prenda": "Pantalón",
+      "modelo": "Baggy",
+      "segmento": "Adulto",
+      "tallas": [
+        "28",
+        "30",
+        "32",
+        "34"
+      ],
+      "fecha_lanzamiento": "2025-03-03",
+      "tiempo_entrega_semanas": 2
+    },
+    "P08": {
+      "prenda": "Pantalón",
+      "modelo": "Baggy",
+      "segmento": "Niño",
+      "tallas": [
+        "2",
+        "4",
+        "6",
+        "8",
+        "10",
+        "12",
+        "14",
+        "16"
+      ],
+      "fecha_lanzamiento": "2025-03-03",
+      "tiempo_entrega_semanas": 2
+    },
+    "P09": {
+      "prenda": "Pantalón",
+      "modelo": "Estampado",
+      "segmento": "Adulto",
+      "tallas": [
+        "28",
+        "30",
+        "32",
+        "34"
+      ],
+      "fecha_lanzamiento": "2024-01-01",
+      "tiempo_entrega_semanas": 1
+    },
+    "P10": {
+      "prenda": "Pantalón",
+      "modelo": "Extra (tallas grandes)",
+      "segmento": "Adulto",
+      "tallas": [
+        "36",
+        "38",
+        "40"
+      ],
+      "fecha_lanzamiento": "2024-01-01",
+      "tiempo_entrega_semanas": 1
+    },
+    "S01": {
+      "prenda": "Short",
+      "modelo": "Papertash",
+      "segmento": "Adulto",
+      "tallas": [
+        "28",
+        "30",
+        "32",
+        "34"
+      ],
+      "fecha_lanzamiento": "2024-01-01",
+      "tiempo_entrega_semanas": 1
+    },
+    "S02": {
+      "prenda": "Short",
+      "modelo": "Oversize",
+      "segmento": "Adulto",
+      "tallas": [
+        "28",
+        "30",
+        "32",
+        "34"
+      ],
+      "fecha_lanzamiento": "2024-01-01",
+      "tiempo_entrega_semanas": 2
+    },
+    "S03": {
+      "prenda": "Short",
+      "modelo": "Oversize",
+      "segmento": "Niño",
+      "tallas": [
+        "2",
+        "4",
+        "6",
+        "8",
+        "10",
+        "12",
+        "14",
+        "16"
+      ],
+      "fecha_lanzamiento": "2024-01-01",
+      "tiempo_entrega_semanas": 2
+    },
+    "S04": {
+      "prenda": "Short",
+      "modelo": "Skinny",
+      "segmento": "Adulto",
+      "tallas": [
+        "28",
+        "30",
+        "32",
+        "34"
+      ],
+      "fecha_lanzamiento": "2026-10-05",
+      "tiempo_entrega_semanas": 1
+    },
+    "S05": {
+      "prenda": "Short",
+      "modelo": "Jogger",
+      "segmento": "Adulto",
+      "tallas": [
+        "28",
+        "30",
+        "32",
+        "34"
+      ],
+      "fecha_lanzamiento": "2024-01-01",
+      "tiempo_entrega_semanas": 1
+    },
+    "S06": {
+      "prenda": "Short",
+      "modelo": "Estampado",
+      "segmento": "Adulto",
+      "tallas": [
+        "28",
+        "30",
+        "32",
+        "34"
+      ],
+      "fecha_lanzamiento": "2024-01-01",
+      "tiempo_entrega_semanas": 1
+    },
+    "S07": {
+      "prenda": "Short",
+      "modelo": "Extra (tallas grandes)",
+      "segmento": "Adulto",
+      "tallas": [
+        "36",
+        "38",
+        "40"
+      ],
+      "fecha_lanzamiento": "2024-01-01",
+      "tiempo_entrega_semanas": 1
+    },
+    "S08": {
+      "prenda": "Short",
+      "modelo": "Performance extra",
+      "segmento": "Adulto",
+      "tallas": [
+        "36",
+        "38",
+        "40"
+      ],
+      "fecha_lanzamiento": "2024-01-01",
+      "tiempo_entrega_semanas": 1
+    }
+  },
+  "metricas_prueba": {
+    "MAE": 1.41,
+    "RMSE": 3.2,
+    "R2": 0.64,
+    "WAPE_%": 64.53
+  },
+  "entrenado_hasta": "2026-09-13"
+}

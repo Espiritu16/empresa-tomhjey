@@ -3,11 +3,12 @@
 Las funciones del MVP son privadas y verifican JWT. El código valida también la sesión,
 consulta el perfil activo y vuelve a comprobar el rol antes de ejecutar operaciones.
 
-| Función         | Quién puede usarla       | Responsabilidad                                                               |
-| --------------- | ------------------------ | ----------------------------------------------------------------------------- |
-| `facturacion`   | Administrador            | Reserva correlativo, emite/reconcilia con NubeFacT y registra el resultado.   |
-| `crear-usuario` | Administrador            | Crea directamente una cuenta confirmada con el rol elegido; no envía correos. |
-| `asistente`     | Administrador y vendedor | Consulta datos permitidos y prepara borradores; nunca confirma ni factura.    |
+| Función              | Quién puede usarla       | Responsabilidad                                                                                           |
+| -------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------- |
+| `facturacion`        | Administrador            | Reserva correlativo, emite/reconcilia con NubeFacT y registra el resultado.                               |
+| `crear-usuario`      | Administrador            | Crea directamente una cuenta confirmada con el rol elegido; no envía correos.                             |
+| `asistente`          | Administrador y vendedor | Consulta datos permitidos y prepara borradores; nunca confirma ni factura.                                |
+| `prediccion-demanda` | Administrador y vendedor | Estima la demanda semanal por SKU y sugiere reposición con el modelo lineal exportado desde `ml/` (APF3). |
 
 El entorno local se inicia con:
 
@@ -54,8 +55,17 @@ configuradas en el proyecto remoto. Al configurarlas, mantener
 Las pruebas de contrato no llaman a proveedores reales:
 
 ```bash
-deno test --allow-env supabase/functions/facturacion/nubefact_test.ts supabase/functions/asistente/asistente_test.ts
-deno check supabase/functions/facturacion/index.ts supabase/functions/asistente/index.ts supabase/functions/crear-usuario/index.ts
+deno test --allow-env supabase/functions/facturacion/nubefact_test.ts supabase/functions/asistente/asistente_test.ts supabase/functions/prediccion-demanda/prediccion_test.ts
+deno check supabase/functions/facturacion/index.ts supabase/functions/asistente/index.ts supabase/functions/crear-usuario/index.ts supabase/functions/prediccion-demanda/index.ts
 ```
 
 No ejecutes pruebas reales con OpenAI ni emisiones de NubeFacT sin usar credenciales sandbox.
+
+## Predicción de demanda (APF3)
+
+`prediccion-demanda` no tiene secretos ni llama a servicios externos. Sus parámetros
+(`modelo.json`) y el archivo de paridad (`paridad_prueba.json`) los genera el notebook
+`ml/APF3_TD_Grupo1_ML_Innovacion.ipynb`; no se editan a mano. Si se reentrena el modelo,
+se vuelve a ejecutar el notebook, se corre `npm run functions:test` y se redespliega la
+función. Solo funciona con modelos lineales; si el modelo elegido deja de ser lineal, el
+notebook lo avisa y se usa `ml/predecir.py` como servicio Python.

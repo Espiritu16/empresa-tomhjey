@@ -677,20 +677,10 @@ export function PaginaVentas({
                     {venta.clienteNombre ?? "Venta de mostrador"}
                   </td>
                   <td data-etiqueta="Estado">
-                    <span className="insignias">
-                      <span
-                        className={`modulo-operativo__estado modulo-operativo__estado--${venta.estado}`}
-                      >
-                        {etiquetaEstado(venta.estado)}
-                      </span>
-                      {venta.origen === "simulada" ? (
-                        <span
-                          className="estado estado--info"
-                          title="Historial simulado del dataset APF3; no es una venta real."
-                        >
-                          Simulada
-                        </span>
-                      ) : null}
+                    <span
+                      className={`modulo-operativo__estado modulo-operativo__estado--${venta.estado}`}
+                    >
+                      {etiquetaEstado(venta.estado)}
                     </span>
                   </td>
                   <td data-etiqueta="Total">

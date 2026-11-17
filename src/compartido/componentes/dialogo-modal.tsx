@@ -6,6 +6,8 @@ type Propiedades = {
   abierto: boolean;
   titulo: string;
   bloqueado?: boolean;
+  /** `amplio` para contenido con tablas, como la sugerencia de reposición. */
+  ancho?: "normal" | "amplio";
   onCerrar: () => void;
   children: ReactNode;
 };
@@ -14,6 +16,7 @@ export function DialogoModal({
   abierto,
   titulo,
   bloqueado = false,
+  ancho = "normal",
   onCerrar,
   children,
 }: Propiedades) {
@@ -35,7 +38,11 @@ export function DialogoModal({
   return (
     <dialog
       aria-labelledby={tituloId}
-      className="modulo-operativo__dialogo"
+      className={
+        ancho === "amplio"
+          ? "modulo-operativo__dialogo modulo-operativo__dialogo--amplio"
+          : "modulo-operativo__dialogo"
+      }
       onCancel={(evento) => {
         evento.preventDefault();
         if (!bloqueado) onCerrar();

@@ -21,7 +21,7 @@ type Resultado = {
   accion: "reponer" | "stock suficiente";
 };
 
-type Fila = {
+export type Fila = {
   producto_id: string;
   sku: string;
   nombre: string;
@@ -75,7 +75,12 @@ async function leerError(error: {
   return "No se pudo calcular la reposición. Inténtalo de nuevo.";
 }
 
-export function SugerenciaReposicion() {
+type Propiedades = {
+  /** Si se indica, cada fila por reponer ofrece abrir el ajuste ya precargado. */
+  onReponer?: (fila: Fila, semana: string) => void;
+};
+
+export function SugerenciaReposicion({ onReponer }: Propiedades) {
   const [abierto, setAbierto] = useState(false);
   const [respuesta, setRespuesta] = useState<Respuesta | null>(null);
   const [cargando, setCargando] = useState(false);
@@ -120,6 +125,7 @@ export function SugerenciaReposicion() {
       </button>
       <DialogoModal
         abierto={abierto}
+        ancho="amplio"
         onCerrar={() => setAbierto(false)}
         titulo="Sugerir reposición"
       >
@@ -221,8 +227,23 @@ export function SugerenciaReposicion() {
                         <td data-etiqueta="Sugerencia">
                           {fila.resultado ? (
                             fila.resultado.accion === "reponer" ? (
-                              <span className="estado estado--duda">
-                                Pedir {fila.resultado.reposicion_sugerida} u.
+                              <span className="sugerencia-reposicion__accion">
+                                <span className="estado estado--duda">
+                                  Pedir {fila.resultado.reposicion_sugerida} u.
+                                </span>
+                                {onReponer ? (
+                                  <button
+                                    aria-label={`Reponer ${fila.nombre}`}
+                                    className="modulo-operativo__boton-secundario sugerencia-reposicion__reponer"
+                                    onClick={() => {
+                                      setAbierto(false);
+                                      onReponer(fila, respuesta.semana);
+                                    }}
+                                    type="button"
+                                  >
+                                    Reponer
+                                  </button>
+                                ) : null}
                               </span>
                             ) : (
                               <span className="estado estado--bien">

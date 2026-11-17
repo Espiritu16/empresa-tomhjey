@@ -7,7 +7,10 @@ import { DialogoModal } from "@/compartido/componentes/dialogo-modal";
 import { BotonLectorCodigo } from "@/compartido/componentes/lector-codigo";
 import { useNotificaciones } from "@/compartido/notificaciones/proveedor-notificaciones";
 import type { ArticuloInventario, MovimientoInventario } from "./consultas";
-import { SugerenciaReposicion } from "./sugerencia-reposicion";
+import {
+  type Fila as FilaReposicion,
+  SugerenciaReposicion,
+} from "./sugerencia-reposicion";
 
 type Propiedades = {
   articulos: ArticuloInventario[];
@@ -94,6 +97,22 @@ export function PaginaInventario({
     router.refresh();
   }
 
+  /** Abre el ajuste con el producto y el stock final que deja la reposición sugerida. */
+  function abrirReposicion(fila: FilaReposicion, semana: string) {
+    const unidades = fila.resultado?.reposicion_sugerida ?? 0;
+    const lunes = new Intl.DateTimeFormat("es-PE", {
+      day: "numeric",
+      month: "long",
+    }).format(new Date(`${semana}T12:00:00`));
+    setError(null);
+    setArticuloSeleccionado(`${fila.producto_id}|`);
+    setStockFinal(String(fila.stock_actual + unidades));
+    setMotivo(
+      `Reposición sugerida por el modelo de demanda: ingreso de ${unidades} u. (semana del ${lunes}).`,
+    );
+    setAbierto(true);
+  }
+
   return (
     <section className="modulo-operativo">
       <header className="encabezado-seccion">
@@ -134,7 +153,9 @@ export function PaginaInventario({
           />
         </div>
         <div className="modulo-operativo__acciones">
-          <SugerenciaReposicion />
+          <SugerenciaReposicion
+            onReponer={puedeAjustar ? abrirReposicion : undefined}
+          />
           {puedeAjustar ? (
             <button
               className="boton-principal"

@@ -1,5 +1,11 @@
 /// <reference lib="deno.ns" />
 
+import {
+  lunesActualLima,
+  precioParaModelo,
+  semanasPrevias,
+  ventasPorSemana,
+} from "./datos-mvp.ts";
 import parametros from "./modelo.json" with { type: "json" };
 import casos from "./paridad_prueba.json" with { type: "json" };
 import {
@@ -170,5 +176,56 @@ Deno.test(
     }
     if (catalogo.modelo !== modelo.nombre_modelo)
       throw new Error("Debe informar el modelo.");
+  },
+);
+
+Deno.test("toma el lunes de la semana en hora de Lima", () => {
+  // Lunes 16-11-2026 a las 02:00 UTC todavía es domingo 15 en Lima.
+  if (lunesActualLima(new Date("2026-11-16T02:00:00Z")) !== "2026-11-09") {
+    throw new Error(
+      "Antes de medianoche en Lima sigue siendo la semana anterior.",
+    );
+  }
+  if (lunesActualLima(new Date("2026-11-16T06:00:00Z")) !== "2026-11-16") {
+    throw new Error("El lunes en Lima empieza una semana nueva.");
+  }
+  if (lunesActualLima(new Date("2026-11-21T15:00:00Z")) !== "2026-11-16") {
+    throw new Error("El sábado pertenece a la semana del lunes 16.");
+  }
+});
+
+Deno.test("suma las ventas confirmadas por semana de lunes a domingo", () => {
+  const semanas = semanasPrevias("2026-11-16").map((d) => d.toISOString());
+  if (
+    semanas[0] !== "2026-10-19T05:00:00.000Z" ||
+    semanas[3] !== "2026-11-09T05:00:00.000Z"
+  ) {
+    throw new Error("Las 4 semanas previas deben empezar a las 00:00 de Lima.");
+  }
+  const ventas = ventasPorSemana(
+    [
+      { cantidad: 2, confirmado_en: "2026-10-19T05:00:00Z" }, // inicio semana 1
+      { cantidad: 1, confirmado_en: "2026-10-26T04:59:59Z" }, // domingo 25 en Lima: semana 1
+      { cantidad: 3, confirmado_en: "2026-11-02T15:00:00Z" }, // semana 3
+      { cantidad: 4, confirmado_en: "2026-11-15T20:00:00Z" }, // domingo 15: semana 4
+      { cantidad: 9, confirmado_en: "2026-11-16T15:00:00Z" }, // semana actual: no cuenta
+      { cantidad: 9, confirmado_en: "2026-10-18T15:00:00Z" }, // antes de la ventana
+    ],
+    "2026-11-16",
+  );
+  if (ventas.join(",") !== "3,0,3,4") {
+    throw new Error(`Ventas por semana incorrectas: ${ventas.join(",")}`);
+  }
+});
+
+Deno.test(
+  "usa el precio de la ficha solo si es comparable al del catálogo",
+  () => {
+    if (precioParaModelo(42, 40) !== 42)
+      throw new Error("42 frente a 40 es comparable.");
+    if (precioParaModelo(89.9, 45) !== 45)
+      throw new Error("89.90 frente a 45 debe usar el catálogo.");
+    if (precioParaModelo(null, 30) !== 30)
+      throw new Error("Sin precio usa el catálogo.");
   },
 );

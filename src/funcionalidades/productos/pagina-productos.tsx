@@ -17,9 +17,17 @@ type Propiedades = {
   errorInicial: string | null;
 };
 
+type ProductoCatalogoModelo = {
+  producto_id: string;
+  nombre: string;
+  tallas: string[];
+};
+
 type FormularioProducto = {
   sku: string;
   codigoBarras: string;
+  /** "P02|28" o "" si no está vinculado al modelo de demanda. */
+  vinculoModelo: string;
   nombre: string;
   categoriaId: string;
   descripcion: string;
@@ -34,6 +42,7 @@ const FORMATO_CODIGO_BARRAS = /^[0-9A-Za-z.-]{4,64}$/;
 const formularioVacio: FormularioProducto = {
   sku: "",
   codigoBarras: "",
+  vinculoModelo: "",
   nombre: "",
   categoriaId: "",
   descripcion: "",
@@ -64,6 +73,24 @@ export function PaginaProductos({
     string | null
   >(null);
   const [error, setError] = useState(errorInicial);
+  const [catalogoModelo, setCatalogoModelo] = useState<
+    ProductoCatalogoModelo[] | null
+  >(null);
+  const [catalogoNoDisponible, setCatalogoNoDisponible] = useState(false);
+
+  async function cargarCatalogoModelo() {
+    if (catalogoModelo) return;
+    const { data, error: errorCatalogo } =
+      await crearClienteSupabase().functions.invoke("prediccion-demanda", {
+        body: { consulta: "catalogo" },
+      });
+    if (errorCatalogo || !Array.isArray(data?.productos)) {
+      setCatalogoNoDisponible(true);
+      return;
+    }
+    setCatalogoNoDisponible(false);
+    setCatalogoModelo(data.productos as ProductoCatalogoModelo[]);
+  }
 
   const visibles = useMemo(() => {
     const texto = busqueda.trim().toLocaleLowerCase("es-PE");
@@ -86,6 +113,7 @@ export function PaginaProductos({
     setFormulario(formularioVacio);
     setError(null);
     setAbierto(true);
+    void cargarCatalogoModelo();
   }
 
   function abrirEdicion(producto: Producto) {
@@ -93,6 +121,10 @@ export function PaginaProductos({
     setFormulario({
       sku: producto.sku,
       codigoBarras: producto.codigoBarras ?? "",
+      vinculoModelo:
+        producto.modeloProducto && producto.modeloTalla
+          ? `${producto.modeloProducto}|${producto.modeloTalla}`
+          : "",
       nombre: producto.nombre,
       categoriaId: producto.categoriaId ?? "",
       descripcion: producto.descripcion ?? "",
@@ -103,6 +135,7 @@ export function PaginaProductos({
     });
     setError(null);
     setAbierto(true);
+    void cargarCatalogoModelo();
   }
 
   async function guardarProducto(evento: FormEvent<HTMLFormElement>) {
@@ -132,6 +165,13 @@ export function PaginaProductos({
       );
       return;
     }
+    const [modeloProducto, modeloTalla] = formulario.vinculoModelo
+      ? formulario.vinculoModelo.split("|")
+      : [null, null];
+    const vinculo = {
+      modelo_producto: modeloProducto,
+      modelo_talla: modeloTalla,
+    };
     setGuardando(true);
     const supabase = crearClienteSupabase();
     try {
@@ -139,6 +179,7 @@ export function PaginaProductos({
         const cambios = {
           sku: formulario.sku.trim(),
           codigo_barras: codigoBarras || null,
+          ...(!productoEditado.usaCombinaciones ? vinculo : {}),
           nombre: formulario.nombre.trim(),
           categoria_id: formulario.categoriaId || null,
           descripcion: formulario.descripcion.trim() || null,
@@ -167,6 +208,7 @@ export function PaginaProductos({
           .insert({
             sku: formulario.sku.trim(),
             codigo_barras: codigoBarras || null,
+            ...vinculo,
             nombre: formulario.nombre.trim(),
             categoria_id: formulario.categoriaId || null,
             descripcion: formulario.descripcion.trim() || null,
@@ -212,7 +254,11 @@ export function PaginaProductos({
     } catch (errorGuardado) {
       const mensajeError =
         errorGuardado instanceof Error ? errorGuardado.message : "";
-      if (mensajeError.includes("productos_codigo_barras_unico")) {
+      if (mensajeError.includes("productos_modelo_unico")) {
+        setError(
+          "Esa talla del modelo ya está vinculada a otro producto. Elige otra o quita el vínculo del otro producto.",
+        );
+      } else if (mensajeError.includes("productos_codigo_barras_unico")) {
         setError(
           "Ese código de barras ya pertenece a otro producto. Revisa el código escaneado.",
         );
@@ -398,6 +444,12 @@ export function PaginaProductos({
                 </td>
                 <td data-etiqueta="Producto" data-principal>
                   <strong>{producto.nombre}</strong>
+                  {producto.modeloProducto ? (
+                    <small className="modulo-operativo__detalle">
+                      Modelo de demanda: {producto.modeloProducto} · talla{" "}
+                      {producto.modeloTalla}
+                    </small>
+                  ) : null}
                 </td>
                 <td data-etiqueta="Categoría">
                   {producto.categoriaNombre ?? "Sin categoría"}
@@ -513,6 +565,48 @@ export function PaginaProductos({
               />
             </div>
           </div>
+          {!productoEditado?.usaCombinaciones ? (
+            <label className="campo modulo-operativo__ancho-completo">
+              <span>Vínculo con el modelo de demanda</span>
+              <select
+                disabled={!catalogoModelo}
+                onChange={(evento) =>
+                  setFormulario((actual) => ({
+                    ...actual,
+                    vinculoModelo: evento.target.value,
+                  }))
+                }
+                value={formulario.vinculoModelo}
+              >
+                <option value="">Sin vincular</option>
+                {formulario.vinculoModelo && !catalogoModelo ? (
+                  <option value={formulario.vinculoModelo}>
+                    {formulario.vinculoModelo.replace("|", " · talla ")}
+                  </option>
+                ) : null}
+                {catalogoModelo?.map((item) => (
+                  <optgroup
+                    key={item.producto_id}
+                    label={`${item.producto_id} · ${item.nombre}`}
+                  >
+                    {item.tallas.map((talla) => (
+                      <option
+                        key={talla}
+                        value={`${item.producto_id}|${talla}`}
+                      >
+                        {item.producto_id} · {item.nombre} · talla {talla}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+              <small className="modulo-operativo__detalle-campo">
+                {catalogoNoDisponible
+                  ? "No se pudo cargar el catálogo del modelo; puedes guardar el producto sin vincularlo."
+                  : "Con el vínculo, Inventario calcula solo cuánto reponer a partir de las ventas registradas."}
+              </small>
+            </label>
+          ) : null}
           <label className="campo">
             <span>Categoría</span>
             <select

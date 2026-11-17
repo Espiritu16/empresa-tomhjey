@@ -61,6 +61,45 @@ test("muestra el stock actual y permite definir el nuevo stock con motivo", asyn
   await expect(page.getByText("Conteo de almacén")).toBeVisible();
 });
 
+test("registra una entrada de mercadería que suma al stock", async ({
+  page,
+}) => {
+  await iniciarSesion(page, administrador);
+  const sku = `E2E-${randomUUID().slice(0, 8)}`;
+  await page.goto("/panel/productos");
+  await page.getByRole("button", { name: "Nuevo producto" }).click();
+  await page.getByLabel("SKU").fill(sku);
+  await page.getByLabel("Nombre del producto").fill(`Producto ${sku}`);
+  await page.getByLabel("Precio unitario").fill("10");
+  await page.getByLabel("Existencias iniciales").fill("5");
+  await page.getByRole("button", { name: "Guardar producto" }).click();
+
+  await page.goto("/panel/inventario");
+  await page.getByRole("button", { name: "Registrar entrada" }).click();
+  await page.getByLabel("Producto de la entrada").selectOption({
+    label: `${sku} — Producto ${sku}`,
+  });
+  await page.getByLabel("Unidades que entran").fill("7");
+  await expect(page.getByLabel("Stock después de la entrada")).toHaveValue(
+    "12",
+  );
+  await expect(page.getByLabel("Motivo de la entrada")).toHaveValue(
+    "Compra a proveedor",
+  );
+  await page.getByRole("button", { name: "Guardar entrada" }).click();
+
+  await expect(
+    page
+      .getByRole("table")
+      .first()
+      .getByRole("row", { name: new RegExp(sku) }),
+  ).toContainText("12 NIU");
+  const movimiento = page
+    .getByRole("row", { name: /Compra a proveedor/ })
+    .first();
+  await expect(movimiento).toContainText("Entrada");
+});
+
 async function iniciarSesion(
   page: Page,
   usuario: EstadoE2E["administrador"],

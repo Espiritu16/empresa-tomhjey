@@ -34,6 +34,16 @@ export function PaginaInventario({
   const [motivo, setMotivo] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState(errorInicial);
+  const [entradaAbierta, setEntradaAbierta] = useState(false);
+  const [articuloEntrada, setArticuloEntrada] = useState("");
+  const [unidadesEntrada, setUnidadesEntrada] = useState("");
+  const [motivoEntrada, setMotivoEntrada] = useState("");
+  const [guardandoEntrada, setGuardandoEntrada] = useState(false);
+  const [errorEntrada, setErrorEntrada] = useState<string | null>(null);
+  const articuloEntradaActual = articulos.find(
+    (item) =>
+      `${item.productoId}|${item.combinacionId ?? ""}` === articuloEntrada,
+  );
   const articulosVisibles = useMemo(() => {
     const texto = busqueda.trim().toLocaleLowerCase("es-PE");
     return texto
@@ -97,20 +107,76 @@ export function PaginaInventario({
     router.refresh();
   }
 
-  /** Abre el ajuste con el producto y el stock final que deja la reposición sugerida. */
+  function abrirEntrada() {
+    setErrorEntrada(null);
+    setArticuloEntrada("");
+    setUnidadesEntrada("");
+    setMotivoEntrada(MOTIVO_ENTRADA);
+    setEntradaAbierta(true);
+  }
+
+  /** Abre la entrada de mercadería con el producto y las unidades sugeridas por el modelo. */
   function abrirReposicion(fila: FilaReposicion, semana: string) {
     const unidades = fila.resultado?.reposicion_sugerida ?? 0;
     const lunes = new Intl.DateTimeFormat("es-PE", {
       day: "numeric",
       month: "long",
     }).format(new Date(`${semana}T12:00:00`));
-    setError(null);
-    setArticuloSeleccionado(`${fila.producto_id}|`);
-    setStockFinal(String(fila.stock_actual + unidades));
-    setMotivo(
-      `Reposición sugerida por el modelo de demanda: ingreso de ${unidades} u. (semana del ${lunes}).`,
+    setErrorEntrada(null);
+    setArticuloEntrada(`${fila.producto_id}|`);
+    setUnidadesEntrada(String(unidades));
+    setMotivoEntrada(
+      `Reposición sugerida por el modelo de demanda (semana del ${lunes}).`,
     );
-    setAbierto(true);
+    setEntradaAbierta(true);
+  }
+
+  async function registrarEntrada(evento: FormEvent<HTMLFormElement>) {
+    evento.preventDefault();
+    setErrorEntrada(null);
+    const unidades = Number(unidadesEntrada);
+    if (
+      !articuloEntrada ||
+      !Number.isFinite(unidades) ||
+      unidades <= 0 ||
+      !motivoEntrada.trim()
+    ) {
+      setErrorEntrada(
+        "Elige un producto, indica cuántas unidades entran y escribe el motivo.",
+      );
+      return;
+    }
+    const [productoId, combinacionId] = articuloEntrada.split("|");
+    setGuardandoEntrada(true);
+    const { error: errorRpc } = await crearClienteSupabase().rpc(
+      "registrar_entrada",
+      {
+        producto_objetivo: productoId,
+        combinacion_objetivo: combinacionId || null,
+        unidades,
+        razon: motivoEntrada.trim(),
+      },
+    );
+    setGuardandoEntrada(false);
+    if (errorRpc) {
+      if (errorRpc.message.includes("Solo administración")) {
+        notificaciones.error(
+          "Solo administración puede registrar entradas de mercadería.",
+        );
+      } else {
+        setErrorEntrada(
+          errorRpc.message.includes("inactivo")
+            ? "El producto no existe o está inactivo."
+            : "No se pudo registrar la entrada. Revisa los datos e inténtalo de nuevo.",
+        );
+      }
+      return;
+    }
+    setEntradaAbierta(false);
+    notificaciones.exito(
+      `Entraron ${formatearCantidad(unidades, articuloEntradaActual?.unidadMedida ?? "u.")} al stock.`,
+    );
+    router.refresh();
   }
 
   return (
@@ -157,16 +223,25 @@ export function PaginaInventario({
             onReponer={puedeAjustar ? abrirReposicion : undefined}
           />
           {puedeAjustar ? (
-            <button
-              className="boton-principal"
-              onClick={() => {
-                setError(null);
-                setAbierto(true);
-              }}
-              type="button"
-            >
-              Registrar ajuste
-            </button>
+            <>
+              <button
+                className="modulo-operativo__boton-secundario"
+                onClick={() => {
+                  setError(null);
+                  setAbierto(true);
+                }}
+                type="button"
+              >
+                Registrar ajuste
+              </button>
+              <button
+                className="boton-principal"
+                onClick={abrirEntrada}
+                type="button"
+              >
+                Registrar entrada
+              </button>
+            </>
           ) : null}
         </div>
       </div>
@@ -265,7 +340,11 @@ export function PaginaInventario({
                         {articulo?.producto ?? "Producto"}
                       </td>
                       <td data-etiqueta="Tipo">
-                        {movimiento.tipo === "venta" ? "Venta" : "Ajuste"}
+                        {movimiento.tipo === "venta"
+                          ? "Venta"
+                          : movimiento.tipo === "entrada"
+                            ? "Entrada"
+                            : "Ajuste"}
                       </td>
                       <td data-etiqueta="Cambio">
                         {formatearCantidad(
@@ -396,9 +475,112 @@ export function PaginaInventario({
           </div>
         </form>
       </DialogoModal>
+      <DialogoModal
+        abierto={entradaAbierta}
+        bloqueado={guardandoEntrada}
+        onCerrar={() => setEntradaAbierta(false)}
+        titulo="Registrar entrada"
+      >
+        <form
+          className="modulo-operativo__formulario"
+          onSubmit={registrarEntrada}
+        >
+          <label className="campo modulo-operativo__ancho-completo">
+            <span>Producto o combinación</span>
+            <select
+              aria-label="Producto de la entrada"
+              onChange={(evento) => {
+                setArticuloEntrada(evento.target.value);
+                setErrorEntrada(null);
+              }}
+              required
+              value={articuloEntrada}
+            >
+              <option value="">Selecciona un producto</option>
+              {articulos
+                .filter((articulo) => articulo.activo)
+                .map((articulo) => (
+                  <option
+                    key={articulo.id}
+                    value={`${articulo.productoId}|${articulo.combinacionId ?? ""}`}
+                  >
+                    {articulo.sku} — {articulo.producto}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <label className="campo">
+            <span>Unidades que entran</span>
+            <input
+              aria-label="Unidades que entran"
+              inputMode="decimal"
+              min="0.001"
+              onChange={(evento) => setUnidadesEntrada(evento.target.value)}
+              required
+              step="0.001"
+              type="number"
+              value={unidadesEntrada}
+            />
+            <small>Se suman al stock actual.</small>
+          </label>
+          <label className="campo">
+            <span>Stock después de la entrada</span>
+            <input
+              aria-label="Stock después de la entrada"
+              readOnly
+              type="number"
+              value={
+                articuloEntradaActual
+                  ? articuloEntradaActual.existencias +
+                    (Number(unidadesEntrada) > 0 ? Number(unidadesEntrada) : 0)
+                  : ""
+              }
+            />
+            <small>
+              Stock actual: {articuloEntradaActual?.existencias ?? "—"}
+            </small>
+          </label>
+          <label className="campo modulo-operativo__ancho-completo">
+            <span>Motivo de la entrada</span>
+            <textarea
+              aria-label="Motivo de la entrada"
+              onChange={(evento) => setMotivoEntrada(evento.target.value)}
+              required
+              value={motivoEntrada}
+            />
+          </label>
+          {errorEntrada ? (
+            <p
+              className="modulo-operativo__aviso modulo-operativo__aviso--error modulo-operativo__ancho-completo"
+              role="alert"
+            >
+              {errorEntrada}
+            </p>
+          ) : null}
+          <div className="modulo-operativo__acciones modulo-operativo__acciones--dialogo modulo-operativo__ancho-completo">
+            <button
+              className="modulo-operativo__boton-secundario"
+              disabled={guardandoEntrada}
+              onClick={() => setEntradaAbierta(false)}
+              type="button"
+            >
+              Cancelar
+            </button>
+            <button
+              className="boton-principal"
+              disabled={guardandoEntrada}
+              type="submit"
+            >
+              {guardandoEntrada ? "Guardando…" : "Guardar entrada"}
+            </button>
+          </div>
+        </form>
+      </DialogoModal>
     </section>
   );
 }
+
+const MOTIVO_ENTRADA = "Compra a proveedor";
 
 function formatearCantidad(cantidad: number, unidad: string): string {
   const valor = new Intl.NumberFormat("es-PE", {

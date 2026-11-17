@@ -105,7 +105,10 @@ export type RespuestaReposicion = {
   modelo: string;
   mae_prueba: number;
   productos: FilaReposicion[];
+  /** Productos simples activos que todavía no eligieron su vínculo. */
   productos_sin_vincular: number;
+  /** Productos activos con variantes de talla o color: aún no se pueden vincular. */
+  productos_con_variantes: number;
 };
 
 /** Calcula la reposición sugerida de todos los productos activos vinculados al modelo. */
@@ -119,7 +122,7 @@ export async function reposicionDesdeMvp(
   const desde = semanas[0].toISOString();
   const hasta = inicioDiaLima(lunes).toISOString();
 
-  const [vinculados, sinVincular] = await Promise.all([
+  const [vinculados, sinVincular, conVariantes] = await Promise.all([
     cliente
       .from("productos")
       .select(
@@ -134,9 +137,15 @@ export async function reposicionDesdeMvp(
       .from("productos")
       .select("id", { count: "exact", head: true })
       .eq("activo", true)
+      .eq("usa_combinaciones", false)
       .is("modelo_producto", null),
+    cliente
+      .from("productos")
+      .select("id", { count: "exact", head: true })
+      .eq("activo", true)
+      .eq("usa_combinaciones", true),
   ]);
-  if (vinculados.error || sinVincular.error) {
+  if (vinculados.error || sinVincular.error || conVariantes.error) {
     throw new Error("No se pudieron leer los productos.");
   }
   const productos = (vinculados.data ?? []) as ProductoMvp[];
@@ -253,5 +262,6 @@ export async function reposicionDesdeMvp(
     mae_prueba: parametros.metricas_prueba.MAE,
     productos: filas,
     productos_sin_vincular: sinVincular.count ?? 0,
+    productos_con_variantes: conVariantes.count ?? 0,
   };
 }

@@ -41,6 +41,7 @@ type Respuesta = {
   mae_prueba: number;
   productos: Fila[];
   productos_sin_vincular: number;
+  productos_con_variantes: number;
 };
 
 function formatearLunes(fecha: string): string {
@@ -152,13 +153,12 @@ export function SugerenciaReposicion() {
             <div className="modulo-operativo__vacio" role="status">
               <strong>Aún no hay productos vinculados al modelo</strong>
               <span>
-                En Productos, edita cada producto y elige su «Vínculo con el
-                modelo de demanda». Hay {respuesta.productos_sin_vincular}{" "}
-                {respuesta.productos_sin_vincular === 1
-                  ? "producto activo sin vincular"
-                  : "productos activos sin vincular"}
-                .
+                El modelo conoce el catálogo de pantalones y shorts de Tomhjey
+                Jeans. Para ver la sugerencia, en Productos crea o edita un
+                producto de ese catálogo (un producto por talla) y elige su
+                «Vínculo con el modelo de demanda».
               </span>
+              <MotivosSinVinculo respuesta={respuesta} />
             </div>
           ) : null}
 
@@ -169,12 +169,9 @@ export function SugerenciaReposicion() {
                 {porReponer === 1
                   ? "producto conviene reponer"
                   : "productos conviene reponer"}{" "}
-                de {respuesta.productos.length} vinculados
-                {respuesta.productos_sin_vincular
-                  ? ` · ${respuesta.productos_sin_vincular} sin vincular`
-                  : ""}
-                .
+                de {respuesta.productos.length} vinculados.
               </p>
+              <MotivosSinVinculo respuesta={respuesta} />
               <div className="modulo-operativo__tabla-contenedor">
                 <table className="modulo-operativo__tabla">
                   <thead>
@@ -266,5 +263,30 @@ export function SugerenciaReposicion() {
         </div>
       </DialogoModal>
     </>
+  );
+}
+
+/** Explica por qué algunos productos no aparecen en la sugerencia. */
+function MotivosSinVinculo({ respuesta }: { respuesta: Respuesta }) {
+  const sinVincular = respuesta.productos_sin_vincular;
+  const conVariantes = respuesta.productos_con_variantes;
+  if (!sinVincular && !conVariantes) return null;
+  return (
+    <ul className="sugerencia-reposicion__motivos">
+      {sinVincular ? (
+        <li>
+          {sinVincular === 1
+            ? "1 producto no tiene vínculo: si es del catálogo de pantalones y shorts, edítalo en Productos y elige su vínculo."
+            : `${sinVincular} productos no tienen vínculo: si son del catálogo de pantalones y shorts, edítalos en Productos y elige su vínculo.`}
+        </li>
+      ) : null}
+      {conVariantes ? (
+        <li>
+          {conVariantes === 1
+            ? "1 producto tiene variantes de talla o color y todavía no se puede vincular; por ahora el vínculo es para productos simples."
+            : `${conVariantes} productos tienen variantes de talla o color y todavía no se pueden vincular; por ahora el vínculo es para productos simples.`}
+        </li>
+      ) : null}
+    </ul>
   );
 }

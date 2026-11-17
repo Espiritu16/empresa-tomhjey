@@ -37,6 +37,8 @@ export type Venta = {
   confirmadoEn: string | null;
   creadoPor: string;
   tipoComprobante: "factura" | "boleta" | null;
+  /** `simulada`: historial del dataset APF3; no emite comprobante. */
+  origen: "registrada" | "simulada";
   comprobanteId: string | null;
   estadoComprobante: string | null;
   enlacePdf: string | null;
@@ -50,11 +52,22 @@ export type ClienteVenta = {
   tipoDocumento: string | null;
 };
 
+// Las líneas y el comprobante viajan embebidos en cada venta: así solo se leen los
+// de las ventas listadas y no chocan con el máximo de filas de la API.
+const COLUMNAS_VENTA =
+  "id, cliente_id, cliente_nombre, cliente_tipo_documento, cliente_numero_documento, estado, moneda, subtotal, igv, total, creado_en, confirmado_en, creado_por, tipo_comprobante, origen, lineas_venta(id, venta_id, producto_id, combinacion_id, descripcion_congelada, sku_congelado, unidad_medida, cantidad, precio_unitario, total), comprobantes(id, estado, enlace_pdf)";
+
+type ComprobanteEmbebido = {
+  id: string;
+  estado: string;
+  enlace_pdf: string | null;
+};
+
 export async function cargarVentas() {
   const supabase = await crearClienteSupabaseServidor();
   const [
-    ventas,
-    lineas,
+    recientes,
+    borradores,
     clientes,
     productos,
     combinaciones,
@@ -63,16 +76,15 @@ export async function cargarVentas() {
   ] = await Promise.all([
     supabase
       .from("ventas")
-      .select(
-        "id, cliente_id, cliente_nombre, cliente_tipo_documento, cliente_numero_documento, estado, moneda, subtotal, igv, total, creado_en, confirmado_en, creado_por, tipo_comprobante",
-      )
+      .select(COLUMNAS_VENTA)
       .order("creado_en", { ascending: false })
       .limit(200),
+    // Los borradores pendientes siempre se muestran, aunque sean antiguos.
     supabase
-      .from("lineas_venta")
-      .select(
-        "id, venta_id, producto_id, combinacion_id, descripcion_congelada, sku_congelado, unidad_medida, cantidad, precio_unitario, total",
-      ),
+      .from("ventas")
+      .select(COLUMNAS_VENTA)
+      .eq("estado", "borrador")
+      .order("creado_en", { ascending: false }),
     supabase
       .from("clientes")
       .select("id, nombre, tipo_documento, numero_documento")
@@ -97,8 +109,8 @@ export async function cargarVentas() {
 
   if (
     [
-      ventas,
-      lineas,
+      recientes,
+      borradores,
       clientes,
       productos,
       combinaciones,
@@ -114,47 +126,15 @@ export async function cargarVentas() {
     };
   }
 
-  const idsVentas = (ventas.data ?? []).map((venta) => venta.id);
-  const comprobantes = idsVentas.length
-    ? await supabase
-        .from("comprobantes")
-        .select("id, venta_id, estado, enlace_pdf")
-        .in("venta_id", idsVentas)
-    : { data: [], error: null };
-  if (comprobantes.error) {
-    return {
-      ventas: [],
-      clientes: [],
-      productos: [],
-      error: "No se pudo cargar el estado de los comprobantes.",
-    };
-  }
-
-  const lineasPorVenta: Record<string, LineaVenta[]> = {};
-  const comprobantePorVenta = new Map(
-    (comprobantes.data ?? []).map((comprobante) => [
-      comprobante.venta_id,
-      {
-        id: comprobante.id,
-        estado: comprobante.estado,
-        enlacePdf: comprobante.enlace_pdf,
-      },
+  const ventasPorId = new Map(
+    [...(borradores.data ?? []), ...(recientes.data ?? [])].map((venta) => [
+      venta.id,
+      venta,
     ]),
   );
-  for (const linea of lineas.data ?? []) {
-    lineasPorVenta[linea.venta_id] ??= [];
-    lineasPorVenta[linea.venta_id].push({
-      id: linea.id,
-      productoId: linea.producto_id,
-      combinacionId: linea.combinacion_id,
-      descripcion: linea.descripcion_congelada,
-      sku: linea.sku_congelado,
-      unidadMedida: linea.unidad_medida,
-      cantidad: Number(linea.cantidad),
-      precioUnitario: Number(linea.precio_unitario),
-      total: Number(linea.total),
-    });
-  }
+  const ventas = [...ventasPorId.values()].sort((a, b) =>
+    b.creado_en.localeCompare(a.creado_en),
+  );
 
   const valorPorId = new Map((valores.data ?? []).map((v) => [v.id, v]));
   const opcionPorId = new Map(
@@ -199,8 +179,10 @@ export async function cargarVentas() {
   }
 
   return {
-    ventas: (ventas.data ?? []).map((venta) => {
-      const comprobante = comprobantePorVenta.get(venta.id);
+    ventas: ventas.map((venta) => {
+      const embebido = venta.comprobantes as
+        ComprobanteEmbebido | ComprobanteEmbebido[] | null;
+      const comprobante = Array.isArray(embebido) ? embebido[0] : embebido;
       return {
         id: venta.id,
         clienteId: venta.cliente_id,
@@ -220,10 +202,21 @@ export async function cargarVentas() {
           venta.tipo_comprobante === "boleta"
             ? venta.tipo_comprobante
             : null,
+        origen: venta.origen === "simulada" ? "simulada" : "registrada",
         comprobanteId: comprobante?.id ?? null,
         estadoComprobante: comprobante?.estado ?? null,
-        enlacePdf: comprobante?.enlacePdf ?? null,
-        lineas: lineasPorVenta[venta.id] ?? [],
+        enlacePdf: comprobante?.enlace_pdf ?? null,
+        lineas: (venta.lineas_venta ?? []).map((linea) => ({
+          id: linea.id,
+          productoId: linea.producto_id,
+          combinacionId: linea.combinacion_id,
+          descripcion: linea.descripcion_congelada,
+          sku: linea.sku_congelado,
+          unidadMedida: linea.unidad_medida,
+          cantidad: Number(linea.cantidad),
+          precioUnitario: Number(linea.precio_unitario),
+          total: Number(linea.total),
+        })),
       };
     }) as Venta[],
     clientes: (clientes.data ?? []).map((cliente) => ({

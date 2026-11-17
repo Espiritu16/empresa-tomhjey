@@ -17,6 +17,8 @@ import {
 const DIA_MS = 86_400_000;
 const DESFASE_LIMA_MS = 5 * 60 * 60 * 1000; // Lima es UTC−5 todo el año.
 const MAXIMO_PRODUCTOS = 500;
+// La API devuelve como máximo 1000 filas por consulta; se lee por páginas.
+const TAMANO_PAGINA = 1000;
 // El modelo aprendió con los precios del catálogo; si la ficha del MVP se aleja
 // más de esto, se usa el precio de lista del catálogo para no extrapolar.
 const DESVIO_MAXIMO_PRECIO = 0.3;
@@ -73,6 +75,23 @@ export function ventasPorSemana(
     }
   }
   return totales.map((total) => Math.round(total * 1000) / 1000);
+}
+
+/** Lee todas las filas de una consulta ordenada, página por página. */
+export async function leerPaginado<T>(
+  consulta: (
+    desde: number,
+    hasta: number,
+  ) => PromiseLike<{ data: T[] | null; error: unknown }>,
+): Promise<{ data: T[]; error: unknown }> {
+  const filas: T[] = [];
+  for (let desde = 0; ; desde += TAMANO_PAGINA) {
+    const { data, error } = await consulta(desde, desde + TAMANO_PAGINA - 1);
+    if (error) return { data: [], error };
+    filas.push(...(data ?? []));
+    if (!data || data.length < TAMANO_PAGINA)
+      return { data: filas, error: null };
+  }
 }
 
 type ProductoMvp = {
@@ -153,19 +172,29 @@ export async function reposicionDesdeMvp(
 
   const [lineas, movimientos] = ids.length
     ? await Promise.all([
-        cliente
-          .from("lineas_venta")
-          .select("producto_id, cantidad, ventas!inner(estado, confirmado_en)")
-          .in("producto_id", ids)
-          .eq("ventas.estado", "confirmada")
-          .gte("ventas.confirmado_en", desde)
-          .lt("ventas.confirmado_en", hasta),
-        cliente
-          .from("movimientos_inventario")
-          .select("producto_id, existencias_resultantes")
-          .in("producto_id", ids)
-          .gte("creado_en", semanas[3].toISOString())
-          .lt("creado_en", hasta),
+        leerPaginado((a, b) =>
+          cliente
+            .from("lineas_venta")
+            .select(
+              "id, producto_id, cantidad, ventas!inner(estado, confirmado_en)",
+            )
+            .in("producto_id", ids)
+            .eq("ventas.estado", "confirmada")
+            .gte("ventas.confirmado_en", desde)
+            .lt("ventas.confirmado_en", hasta)
+            .order("id")
+            .range(a, b),
+        ),
+        leerPaginado((a, b) =>
+          cliente
+            .from("movimientos_inventario")
+            .select("id, producto_id, existencias_resultantes")
+            .in("producto_id", ids)
+            .gte("creado_en", semanas[3].toISOString())
+            .lt("creado_en", hasta)
+            .order("id")
+            .range(a, b),
+        ),
       ])
     : [
         { data: [], error: null },

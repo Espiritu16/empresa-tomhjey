@@ -1,6 +1,7 @@
 /// <reference lib="deno.ns" />
 
 import {
+  leerPaginado,
   lunesActualLima,
   precioParaModelo,
   semanasPrevias,
@@ -229,3 +230,21 @@ Deno.test(
       throw new Error("Sin precio usa el catálogo.");
   },
 );
+
+Deno.test("leerPaginado junta todas las páginas de 1000 filas", async () => {
+  const total = 2345;
+  const pedidos: [number, number][] = [];
+  const { data, error } = await leerPaginado<number>((desde, hasta) => {
+    pedidos.push([desde, hasta]);
+    const fin = Math.min(hasta, total - 1);
+    const filas = [];
+    for (let i = desde; i <= fin; i++) filas.push(i);
+    return Promise.resolve({ data: filas, error: null });
+  });
+  if (error || data.length !== total || data[total - 1] !== total - 1) {
+    throw new Error(`Se esperaban ${total} filas y llegaron ${data.length}`);
+  }
+  if (pedidos.length !== 3 || pedidos[2][0] !== 2000) {
+    throw new Error(`Páginas inesperadas: ${JSON.stringify(pedidos)}`);
+  }
+});

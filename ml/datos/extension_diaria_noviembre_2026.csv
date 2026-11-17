@@ -1,0 +1,200 @@
+﻿fecha_operacion,venta_id,linea_id,producto_id,SKU,nombre_producto,modelo,talla,cantidad,precio_lista,descuento,precio_unitario,monto_total,moneda,metodo_pago,canal,origen
+2026-11-02,VS-003234,1,S01,S01-30,Short papertash,Papertash,30,5,30,0.15,25.5,127.5,PEN,Yape,Tienda física,simulado
+2026-11-02,VS-003234,2,S01,S01-28,Short papertash,Papertash,28,1,30,0.15,25.5,25.5,PEN,Yape,Tienda física,simulado
+2026-11-02,VS-003235,1,P07,P07-34,Pantalón jean baggy,Baggy,34,1,52,0.15,44.2,44.2,PEN,Yape,Tienda física,simulado
+2026-11-02,VS-003236,1,P01,P01-32,Pantalón papertash,Semipitillo,32,3,38,0.15,32.3,96.9,PEN,Yape,Tienda física,simulado
+2026-11-02,VS-003237,1,P01,P01-28,Pantalón papertash,Semipitillo,28,1,38,0.15,32.3,32.3,PEN,Yape,Tienda física,simulado
+2026-11-02,VS-003238,1,S01,S01-32,Short papertash,Papertash,32,1,30,0.15,25.5,25.5,PEN,Yape,Tienda física,simulado
+2026-11-02,VS-003239,1,S01,S01-32,Short papertash,Papertash,32,2,30,0.15,25.5,51.0,PEN,Yape,Tienda física,simulado
+2026-11-02,VS-003240,1,P07,P07-30,Pantalón jean baggy,Baggy,30,3,52,0.15,44.2,132.6,PEN,Yape,Tienda física,simulado
+2026-11-02,VS-003241,1,S01,S01-32,Short papertash,Papertash,32,1,30,0.15,25.5,25.5,PEN,Yape,Tienda física,simulado
+2026-11-02,VS-003242,1,S01,S01-32,Short papertash,Papertash,32,4,30,0.15,25.5,102.0,PEN,Yape,Tienda física,simulado
+2026-11-02,VS-003243,1,S01,S01-34,Short papertash,Papertash,34,2,30,0.15,25.5,51.0,PEN,Efectivo,Tienda física,simulado
+2026-11-02,VS-003243,2,P07,P07-32,Pantalón jean baggy,Baggy,32,2,52,0.15,44.2,88.4,PEN,Efectivo,Tienda física,simulado
+2026-11-02,VS-003244,1,S01,S01-34,Short papertash,Papertash,34,2,30,0.15,25.5,51.0,PEN,Efectivo,Tienda física,simulado
+2026-11-02,VS-003244,2,P01,P01-30,Pantalón papertash,Semipitillo,30,3,38,0.15,32.3,96.9,PEN,Efectivo,Tienda física,simulado
+2026-11-03,VS-003245,1,P04,P04-8,Pantalón jean niño,Clásico recto,8,1,40,0.15,34.0,34.0,PEN,Yape,Tienda física,simulado
+2026-11-03,VS-003246,1,S01,S01-28,Short papertash,Papertash,28,4,30,0.15,25.5,102.0,PEN,Yape,Tienda física,simulado
+2026-11-03,VS-003247,1,P07,P07-34,Pantalón jean baggy,Baggy,34,1,52,0.15,44.2,44.2,PEN,Yape,Tienda física,simulado
+2026-11-03,VS-003248,1,P04,P04-10,Pantalón jean niño,Clásico recto,10,2,40,0.15,34.0,68.0,PEN,Efectivo,Tienda física,simulado
+2026-11-03,VS-003249,1,S01,S01-32,Short papertash,Papertash,32,1,30,0.15,25.5,25.5,PEN,Efectivo,Tienda física,simulado
+2026-11-03,VS-003250,1,P04,P04-14,Pantalón jean niño,Clásico recto,14,1,40,0.15,34.0,34.0,PEN,Efectivo,Tienda física,simulado
+2026-11-03,VS-003251,1,S01,S01-32,Short papertash,Papertash,32,1,30,0.15,25.5,25.5,PEN,Efectivo,Tienda física,simulado
+2026-11-03,VS-003251,2,S01,S01-32,Short papertash,Papertash,32,2,30,0.15,25.5,51.0,PEN,Efectivo,Tienda física,simulado
+2026-11-03,VS-003252,1,S01,S01-34,Short papertash,Papertash,34,1,30,0.15,25.5,25.5,PEN,Efectivo,Tienda física,simulado
+2026-11-03,VS-003252,2,S01,S01-34,Short papertash,Papertash,34,1,30,0.15,25.5,25.5,PEN,Efectivo,Tienda física,simulado
+2026-11-03,VS-003252,3,P07,P07-30,Pantalón jean baggy,Baggy,30,1,52,0.15,44.2,44.2,PEN,Efectivo,Tienda física,simulado
+2026-11-03,VS-003253,1,P07,P07-30,Pantalón jean baggy,Baggy,30,1,52,0.15,44.2,44.2,PEN,Efectivo,Tienda física,simulado
+2026-11-03,VS-003254,1,S01,S01-30,Short papertash,Papertash,30,5,30,0.15,25.5,127.5,PEN,Efectivo,Tienda física,simulado
+2026-11-04,VS-003255,1,S05,S05-34,Short jogger,Jogger,34,2,30,0.15,25.5,51.0,PEN,Yape,Tienda física,simulado
+2026-11-04,VS-003255,2,P05,P05-34,Pantalón jean oversize,Oversize,34,1,50,0.15,42.5,42.5,PEN,Yape,Tienda física,simulado
+2026-11-04,VS-003256,1,P05,P05-28,Pantalón jean oversize,Oversize,28,1,50,0.15,42.5,42.5,PEN,Yape,Tienda física,simulado
+2026-11-04,VS-003256,2,P05,P05-28,Pantalón jean oversize,Oversize,28,2,50,0.15,42.5,85.0,PEN,Yape,Tienda física,simulado
+2026-11-04,VS-003257,1,S01,S01-28,Short papertash,Papertash,28,4,30,0.15,25.5,102.0,PEN,Yape,Tienda física,simulado
+2026-11-04,VS-003257,2,P01,P01-30,Pantalón papertash,Semipitillo,30,5,38,0.15,32.3,161.5,PEN,Yape,Tienda física,simulado
+2026-11-04,VS-003257,3,S06,S06-32,Short estampado,Estampado,32,2,35,0.15,29.75,59.5,PEN,Yape,Tienda física,simulado
+2026-11-04,VS-003258,1,P01,P01-28,Pantalón papertash,Semipitillo,28,1,38,0.15,32.3,32.3,PEN,Yape,Tienda física,simulado
+2026-11-04,VS-003258,2,S05,S05-32,Short jogger,Jogger,32,1,30,0.15,25.5,25.5,PEN,Yape,Tienda física,simulado
+2026-11-04,VS-003258,3,P05,P05-32,Pantalón jean oversize,Oversize,32,1,50,0.15,42.5,42.5,PEN,Yape,Tienda física,simulado
+2026-11-04,VS-003259,1,S06,S06-28,Short estampado,Estampado,28,1,35,0.15,29.75,29.75,PEN,Efectivo,Tienda física,simulado
+2026-11-04,VS-003260,1,S05,S05-32,Short jogger,Jogger,32,1,30,0.15,25.5,25.5,PEN,Efectivo,Tienda física,simulado
+2026-11-04,VS-003261,1,S01,S01-30,Short papertash,Papertash,30,3,30,0.15,25.5,76.5,PEN,Efectivo,Tienda física,simulado
+2026-11-04,VS-003262,1,S01,S01-34,Short papertash,Papertash,34,1,30,0.15,25.5,25.5,PEN,Efectivo,Tienda física,simulado
+2026-11-04,VS-003263,1,S06,S06-30,Short estampado,Estampado,30,1,35,0.15,29.75,29.75,PEN,Efectivo,Tienda física,simulado
+2026-11-04,VS-003264,1,P01,P01-32,Pantalón papertash,Semipitillo,32,2,38,0.15,32.3,64.6,PEN,Efectivo,Tienda física,simulado
+2026-11-04,VS-003264,2,S05,S05-30,Short jogger,Jogger,30,2,30,0.15,25.5,51.0,PEN,Efectivo,Tienda física,simulado
+2026-11-04,VS-003265,1,S05,S05-32,Short jogger,Jogger,32,2,30,0.15,25.5,51.0,PEN,Efectivo,Tienda física,simulado
+2026-11-04,VS-003265,2,S01,S01-34,Short papertash,Papertash,34,1,30,0.15,25.5,25.5,PEN,Efectivo,Tienda física,simulado
+2026-11-04,VS-003266,1,S06,S06-34,Short estampado,Estampado,34,1,35,0.15,29.75,29.75,PEN,Efectivo,Tienda física,simulado
+2026-11-04,VS-003267,1,S01,S01-32,Short papertash,Papertash,32,3,30,0.15,25.5,76.5,PEN,Efectivo,Tienda física,simulado
+2026-11-04,VS-003268,1,S06,S06-30,Short estampado,Estampado,30,1,35,0.15,29.75,29.75,PEN,Efectivo,Tienda física,simulado
+2026-11-04,VS-003268,2,S01,S01-30,Short papertash,Papertash,30,3,30,0.15,25.5,76.5,PEN,Efectivo,Tienda física,simulado
+2026-11-04,VS-003269,1,P05,P05-30,Pantalón jean oversize,Oversize,30,1,50,0.15,42.5,42.5,PEN,Efectivo,Tienda física,simulado
+2026-11-05,VS-003270,1,P08,P08-8,Pantalón jean baggy niño,Baggy,8,1,44,0.15,37.4,37.4,PEN,Yape,Tienda física,simulado
+2026-11-05,VS-003270,2,S05,S05-32,Short jogger,Jogger,32,1,30,0.15,25.5,25.5,PEN,Yape,Tienda física,simulado
+2026-11-05,VS-003271,1,S05,S05-34,Short jogger,Jogger,34,3,30,0.15,25.5,76.5,PEN,Yape,Tienda física,simulado
+2026-11-05,VS-003272,1,P08,P08-4,Pantalón jean baggy niño,Baggy,4,1,44,0.15,37.4,37.4,PEN,Yape,Tienda física,simulado
+2026-11-05,VS-003273,1,S01,S01-34,Short papertash,Papertash,34,5,30,0.15,25.5,127.5,PEN,Yape,Tienda física,simulado
+2026-11-05,VS-003274,1,P06,P06-4,Pantalón jean oversize niño,Oversize,4,1,42,0.15,35.7,35.7,PEN,Yape,Tienda física,simulado
+2026-11-05,VS-003275,1,S01,S01-32,Short papertash,Papertash,32,2,30,0.15,25.5,51.0,PEN,Yape,Tienda física,simulado
+2026-11-05,VS-003276,1,S01,S01-28,Short papertash,Papertash,28,1,30,0.15,25.5,25.5,PEN,Yape,Tienda física,simulado
+2026-11-05,VS-003276,2,S01,S01-30,Short papertash,Papertash,30,3,30,0.15,25.5,76.5,PEN,Yape,Tienda física,simulado
+2026-11-05,VS-003277,1,P02,P02-34,Pantalón stretch,Skinny,34,1,40,0.15,34.0,34.0,PEN,Efectivo,Tienda física,simulado
+2026-11-05,VS-003278,1,S05,S05-30,Short jogger,Jogger,30,1,30,0.15,25.5,25.5,PEN,Efectivo,Tienda física,simulado
+2026-11-05,VS-003279,1,P02,P02-30,Pantalón stretch,Skinny,30,1,40,0.15,34.0,34.0,PEN,Efectivo,Tienda física,simulado
+2026-11-05,VS-003279,2,S02,S02-34,Short jean,Oversize,34,3,33,0.15,28.05,84.15,PEN,Efectivo,Tienda física,simulado
+2026-11-05,VS-003280,1,S01,S01-28,Short papertash,Papertash,28,1,30,0.15,25.5,25.5,PEN,Efectivo,Tienda física,simulado
+2026-11-05,VS-003280,2,P06,P06-2,Pantalón jean oversize niño,Oversize,2,1,42,0.15,35.7,35.7,PEN,Efectivo,Tienda física,simulado
+2026-11-05,VS-003281,1,S05,S05-32,Short jogger,Jogger,32,1,30,0.15,25.5,25.5,PEN,Efectivo,Tienda física,simulado
+2026-11-05,VS-003282,1,P02,P02-28,Pantalón stretch,Skinny,28,1,40,0.15,34.0,34.0,PEN,Efectivo,Tienda física,simulado
+2026-11-05,VS-003282,2,S02,S02-30,Short jean,Oversize,30,1,33,0.15,28.05,28.05,PEN,Efectivo,Tienda física,simulado
+2026-11-05,VS-003283,1,S05,S05-32,Short jogger,Jogger,32,1,30,0.15,25.5,25.5,PEN,Efectivo,Tienda física,simulado
+2026-11-05,VS-003284,1,P02,P02-34,Pantalón stretch,Skinny,34,1,40,0.15,34.0,34.0,PEN,Efectivo,Tienda física,simulado
+2026-11-05,VS-003285,1,S02,S02-32,Short jean,Oversize,32,6,33,0.15,28.05,168.3,PEN,Efectivo,Tienda física,simulado
+2026-11-06,VS-003286,1,S07,S07-36,Short extra,Extra (tallas grandes),36,1,35,0.15,29.75,29.75,PEN,Yape,Tienda física,simulado
+2026-11-06,VS-003287,1,S07,S07-38,Short extra,Extra (tallas grandes),38,1,35,0.15,29.75,29.75,PEN,Yape,Tienda física,simulado
+2026-11-06,VS-003287,2,P09,P09-28,Pantalón estampado,Estampado,28,1,45,0.15,38.25,38.25,PEN,Yape,Tienda física,simulado
+2026-11-06,VS-003288,1,P03,P03-30,Pantalón jean clásico,Clásico recto,30,1,45,0.15,38.25,38.25,PEN,Yape,Tienda física,simulado
+2026-11-06,VS-003288,2,S07,S07-40,Short extra,Extra (tallas grandes),40,1,35,0.15,29.75,29.75,PEN,Yape,Tienda física,simulado
+2026-11-06,VS-003288,3,S06,S06-30,Short estampado,Estampado,30,3,35,0.15,29.75,89.25,PEN,Yape,Tienda física,simulado
+2026-11-06,VS-003289,1,S01,S01-32,Short papertash,Papertash,32,8,30,0.15,25.5,204.0,PEN,Yape,Tienda física,simulado
+2026-11-06,VS-003289,2,P03,P03-28,Pantalón jean clásico,Clásico recto,28,1,45,0.15,38.25,38.25,PEN,Yape,Tienda física,simulado
+2026-11-06,VS-003290,1,S04,S04-28,Short tafeta,Skinny,28,1,30,0.15,25.5,25.5,PEN,Efectivo,Tienda física,simulado
+2026-11-06,VS-003291,1,S01,S01-30,Short papertash,Papertash,30,14,30,0.15,25.5,357.0,PEN,Efectivo,Tienda física,simulado
+2026-11-06,VS-003292,1,P09,P09-30,Pantalón estampado,Estampado,30,2,45,0.15,38.25,76.5,PEN,Efectivo,Tienda física,simulado
+2026-11-06,VS-003293,1,S01,S01-34,Short papertash,Papertash,34,1,30,0.15,25.5,25.5,PEN,Efectivo,Tienda física,simulado
+2026-11-06,VS-003293,2,S06,S06-34,Short estampado,Estampado,34,1,35,0.15,29.75,29.75,PEN,Efectivo,Tienda física,simulado
+2026-11-06,VS-003294,1,S06,S06-32,Short estampado,Estampado,32,2,35,0.15,29.75,59.5,PEN,Efectivo,Tienda física,simulado
+2026-11-06,VS-003294,2,S01,S01-28,Short papertash,Papertash,28,3,30,0.15,25.5,76.5,PEN,Efectivo,Tienda física,simulado
+2026-11-06,VS-003294,3,P03,P03-30,Pantalón jean clásico,Clásico recto,30,1,45,0.15,38.25,38.25,PEN,Efectivo,Tienda física,simulado
+2026-11-07,VS-003295,1,S01,S01-32,Short papertash,Papertash,32,7,30,0.15,25.5,178.5,PEN,Yape,Tienda física,simulado
+2026-11-07,VS-003296,1,S02,S02-34,Short jean,Oversize,34,1,33,0.15,28.05,28.05,PEN,Yape,Tienda física,simulado
+2026-11-07,VS-003297,1,S05,S05-34,Short jogger,Jogger,34,1,30,0.15,25.5,25.5,PEN,Yape,Tienda física,simulado
+2026-11-07,VS-003298,1,S01,S01-28,Short papertash,Papertash,28,4,30,0.15,25.5,102.0,PEN,Yape,Tienda física,simulado
+2026-11-07,VS-003298,2,S05,S05-30,Short jogger,Jogger,30,4,30,0.15,25.5,102.0,PEN,Yape,Tienda física,simulado
+2026-11-07,VS-003299,1,S03,S03-6,Short jean niño,Oversize,6,1,25,0.15,21.25,21.25,PEN,Yape,Tienda física,simulado
+2026-11-07,VS-003300,1,P01,P01-32,Pantalón papertash,Semipitillo,32,1,38,0.15,32.3,32.3,PEN,Yape,Tienda física,simulado
+2026-11-07,VS-003301,1,S05,S05-32,Short jogger,Jogger,32,2,30,0.15,25.5,51.0,PEN,Yape,Tienda física,simulado
+2026-11-07,VS-003301,2,S02,S02-30,Short jean,Oversize,30,5,33,0.15,28.05,140.25,PEN,Yape,Tienda física,simulado
+2026-11-07,VS-003302,1,P06,P06-8,Pantalón jean oversize niño,Oversize,8,1,42,0.15,35.7,35.7,PEN,Yape,Tienda física,simulado
+2026-11-07,VS-003303,1,S01,S01-30,Short papertash,Papertash,30,9,30,0.15,25.5,229.5,PEN,Yape,Tienda física,simulado
+2026-11-07,VS-003303,2,S08,S08-38,Short performance extra,Performance extra,38,1,35,0.15,29.75,29.75,PEN,Yape,Tienda física,simulado
+2026-11-07,VS-003304,1,S01,S01-30,Short papertash,Papertash,30,8,30,0.15,25.5,204.0,PEN,Yape,Tienda física,simulado
+2026-11-07,VS-003304,2,P01,P01-32,Pantalón papertash,Semipitillo,32,2,38,0.15,32.3,64.6,PEN,Yape,Tienda física,simulado
+2026-11-07,VS-003305,1,S01,S01-34,Short papertash,Papertash,34,4,30,0.15,25.5,102.0,PEN,Efectivo,Tienda física,simulado
+2026-11-07,VS-003306,1,S02,S02-28,Short jean,Oversize,28,1,33,0.15,28.05,28.05,PEN,Efectivo,Tienda física,simulado
+2026-11-07,VS-003306,2,P10,P10-36,Pantalón extra,Extra (tallas grandes),36,1,42,0.15,35.7,35.7,PEN,Efectivo,Tienda física,simulado
+2026-11-07,VS-003307,1,P06,P06-4,Pantalón jean oversize niño,Oversize,4,1,42,0.15,35.7,35.7,PEN,Efectivo,Tienda física,simulado
+2026-11-07,VS-003307,2,S03,S03-4,Short jean niño,Oversize,4,1,25,0.15,21.25,21.25,PEN,Efectivo,Tienda física,simulado
+2026-11-07,VS-003308,1,P01,P01-30,Pantalón papertash,Semipitillo,30,6,38,0.15,32.3,193.8,PEN,Efectivo,Tienda física,simulado
+2026-11-07,VS-003308,2,S03,S03-2,Short jean niño,Oversize,2,1,25,0.15,21.25,21.25,PEN,Efectivo,Tienda física,simulado
+2026-11-07,VS-003308,3,S02,S02-32,Short jean,Oversize,32,6,33,0.15,28.05,168.3,PEN,Efectivo,Tienda física,simulado
+2026-11-07,VS-003309,1,S07,S07-40,Short extra,Extra (tallas grandes),40,3,35,0.15,29.75,89.25,PEN,Efectivo,Tienda física,simulado
+2026-11-07,VS-003310,1,S07,S07-36,Short extra,Extra (tallas grandes),36,2,35,0.15,29.75,59.5,PEN,Efectivo,Tienda física,simulado
+2026-11-07,VS-003311,1,S02,S02-34,Short jean,Oversize,34,1,33,0.15,28.05,28.05,PEN,Efectivo,Tienda física,simulado
+2026-11-07,VS-003311,2,S03,S03-14,Short jean niño,Oversize,14,1,25,0.15,21.25,21.25,PEN,Efectivo,Tienda física,simulado
+2026-11-09,VS-003312,1,S01,S01-32,Short papertash,Papertash,32,2,30,0.0,30.0,60.0,PEN,Yape,Tienda física,simulado
+2026-11-09,VS-003312,2,S01,S01-32,Short papertash,Papertash,32,2,30,0.0,30.0,60.0,PEN,Yape,Tienda física,simulado
+2026-11-09,VS-003313,1,P06,P06-10,Pantalón jean oversize niño,Oversize,10,1,42,0.0,42.0,42.0,PEN,Efectivo,Tienda física,simulado
+2026-11-09,VS-003314,1,P06,P06-8,Pantalón jean oversize niño,Oversize,8,1,42,0.0,42.0,42.0,PEN,Efectivo,Tienda física,simulado
+2026-11-09,VS-003315,1,S01,S01-28,Short papertash,Papertash,28,5,30,0.0,30.0,150.0,PEN,Efectivo,Tienda física,simulado
+2026-11-09,VS-003315,2,S01,S01-30,Short papertash,Papertash,30,1,30,0.0,30.0,30.0,PEN,Efectivo,Tienda física,simulado
+2026-11-10,VS-003316,1,S05,S05-32,Short jogger,Jogger,32,4,30,0.0,30.0,120.0,PEN,Yape,Tienda física,simulado
+2026-11-10,VS-003316,2,S02,S02-32,Short jean,Oversize,32,3,33,0.0,33.0,99.0,PEN,Yape,Tienda física,simulado
+2026-11-10,VS-003316,3,S05,S05-30,Short jogger,Jogger,30,2,30,0.0,30.0,60.0,PEN,Yape,Tienda física,simulado
+2026-11-10,VS-003317,1,S05,S05-30,Short jogger,Jogger,30,2,30,0.0,30.0,60.0,PEN,Yape,Tienda física,simulado
+2026-11-10,VS-003318,1,S02,S02-32,Short jean,Oversize,32,3,33,0.0,33.0,99.0,PEN,Efectivo,Tienda física,simulado
+2026-11-10,VS-003319,1,S02,S02-28,Short jean,Oversize,28,2,33,0.0,33.0,66.0,PEN,Efectivo,Tienda física,simulado
+2026-11-10,VS-003320,1,P05,P05-30,Pantalón jean oversize,Oversize,30,1,50,0.0,50.0,50.0,PEN,Efectivo,Tienda física,simulado
+2026-11-10,VS-003321,1,S05,S05-28,Short jogger,Jogger,28,5,30,0.0,30.0,150.0,PEN,Efectivo,Tienda física,simulado
+2026-11-10,VS-003321,2,P05,P05-30,Pantalón jean oversize,Oversize,30,1,50,0.0,50.0,50.0,PEN,Efectivo,Tienda física,simulado
+2026-11-10,VS-003321,3,P05,P05-28,Pantalón jean oversize,Oversize,28,1,50,0.0,50.0,50.0,PEN,Efectivo,Tienda física,simulado
+2026-11-10,VS-003322,1,S01,S01-30,Short papertash,Papertash,30,2,30,0.0,30.0,60.0,PEN,Efectivo,Tienda física,simulado
+2026-11-10,VS-003322,2,S01,S01-28,Short papertash,Papertash,28,2,30,0.0,30.0,60.0,PEN,Efectivo,Tienda física,simulado
+2026-11-10,VS-003323,1,P05,P05-30,Pantalón jean oversize,Oversize,30,2,50,0.0,50.0,100.0,PEN,Efectivo,Tienda física,simulado
+2026-11-10,VS-003324,1,S01,S01-32,Short papertash,Papertash,32,9,30,0.0,30.0,270.0,PEN,Efectivo,Tienda física,simulado
+2026-11-11,VS-003325,1,P02,P02-32,Pantalón stretch,Skinny,32,2,40,0.0,40.0,80.0,PEN,Yape,Tienda física,simulado
+2026-11-11,VS-003325,2,P01,P01-32,Pantalón papertash,Semipitillo,32,2,38,0.0,38.0,76.0,PEN,Yape,Tienda física,simulado
+2026-11-11,VS-003325,3,P01,P01-28,Pantalón papertash,Semipitillo,28,2,38,0.0,38.0,76.0,PEN,Yape,Tienda física,simulado
+2026-11-11,VS-003326,1,P02,P02-32,Pantalón stretch,Skinny,32,1,40,0.0,40.0,40.0,PEN,Yape,Tienda física,simulado
+2026-11-11,VS-003326,2,S01,S01-30,Short papertash,Papertash,30,1,30,0.0,30.0,30.0,PEN,Yape,Tienda física,simulado
+2026-11-11,VS-003326,3,P02,P02-32,Pantalón stretch,Skinny,32,1,40,0.0,40.0,40.0,PEN,Yape,Tienda física,simulado
+2026-11-11,VS-003327,1,P02,P02-30,Pantalón stretch,Skinny,30,3,40,0.0,40.0,120.0,PEN,Yape,Tienda física,simulado
+2026-11-11,VS-003327,2,S01,S01-32,Short papertash,Papertash,32,3,30,0.0,30.0,90.0,PEN,Yape,Tienda física,simulado
+2026-11-11,VS-003327,3,S01,S01-32,Short papertash,Papertash,32,2,30,0.0,30.0,60.0,PEN,Yape,Tienda física,simulado
+2026-11-11,VS-003328,1,S04,S04-28,Short tafeta,Skinny,28,1,30,0.0,30.0,30.0,PEN,Efectivo,Tienda física,simulado
+2026-11-11,VS-003329,1,P04,P04-6,Pantalón jean niño,Clásico recto,6,1,40,0.0,40.0,40.0,PEN,Efectivo,Tienda física,simulado
+2026-11-11,VS-003329,2,S01,S01-28,Short papertash,Papertash,28,1,30,0.0,30.0,30.0,PEN,Efectivo,Tienda física,simulado
+2026-11-11,VS-003330,1,S01,S01-30,Short papertash,Papertash,30,1,30,0.0,30.0,30.0,PEN,Efectivo,Tienda física,simulado
+2026-11-12,VS-003331,1,S02,S02-32,Short jean,Oversize,32,5,33,0.0,33.0,165.0,PEN,Yape,Tienda física,simulado
+2026-11-12,VS-003332,1,S07,S07-36,Short extra,Extra (tallas grandes),36,3,35,0.1,31.5,94.5,PEN,Yape,Tienda física,simulado
+2026-11-12,VS-003333,1,S01,S01-32,Short papertash,Papertash,32,2,30,0.0,30.0,60.0,PEN,Yape,Tienda física,simulado
+2026-11-12,VS-003334,1,S02,S02-28,Short jean,Oversize,28,1,33,0.0,33.0,33.0,PEN,Yape,Tienda física,simulado
+2026-11-12,VS-003334,2,S07,S07-40,Short extra,Extra (tallas grandes),40,1,35,0.1,31.5,31.5,PEN,Yape,Tienda física,simulado
+2026-11-12,VS-003335,1,S07,S07-36,Short extra,Extra (tallas grandes),36,3,35,0.1,31.5,94.5,PEN,Yape,Tienda física,simulado
+2026-11-12,VS-003336,1,P01,P01-32,Pantalón papertash,Semipitillo,32,7,38,0.0,38.0,266.0,PEN,Yape,Tienda física,simulado
+2026-11-12,VS-003337,1,P01,P01-28,Pantalón papertash,Semipitillo,28,1,38,0.0,38.0,38.0,PEN,Efectivo,Tienda física,simulado
+2026-11-12,VS-003337,2,S07,S07-40,Short extra,Extra (tallas grandes),40,2,35,0.1,31.5,63.0,PEN,Efectivo,Tienda física,simulado
+2026-11-12,VS-003338,1,P01,P01-28,Pantalón papertash,Semipitillo,28,1,38,0.0,38.0,38.0,PEN,Efectivo,Tienda física,simulado
+2026-11-12,VS-003339,1,S01,S01-32,Short papertash,Papertash,32,1,30,0.0,30.0,30.0,PEN,Efectivo,Tienda física,simulado
+2026-11-12,VS-003340,1,P01,P01-30,Pantalón papertash,Semipitillo,30,1,38,0.0,38.0,38.0,PEN,Efectivo,Tienda física,simulado
+2026-11-12,VS-003340,2,P08,P08-10,Pantalón jean baggy niño,Baggy,10,1,44,0.0,44.0,44.0,PEN,Efectivo,Tienda física,simulado
+2026-11-13,VS-003341,1,S03,S03-10,Short jean niño,Oversize,10,1,25,0.0,25.0,25.0,PEN,Yape,Tienda física,simulado
+2026-11-13,VS-003342,1,S03,S03-8,Short jean niño,Oversize,8,1,25,0.0,25.0,25.0,PEN,Yape,Tienda física,simulado
+2026-11-13,VS-003342,2,P01,P01-30,Pantalón papertash,Semipitillo,30,2,38,0.0,38.0,76.0,PEN,Yape,Tienda física,simulado
+2026-11-13,VS-003342,3,P01,P01-28,Pantalón papertash,Semipitillo,28,5,38,0.0,38.0,190.0,PEN,Yape,Tienda física,simulado
+2026-11-13,VS-003343,1,S01,S01-28,Short papertash,Papertash,28,2,30,0.0,30.0,60.0,PEN,Yape,Tienda física,simulado
+2026-11-13,VS-003344,1,S01,S01-32,Short papertash,Papertash,32,1,30,0.0,30.0,30.0,PEN,Yape,Tienda física,simulado
+2026-11-13,VS-003345,1,S01,S01-32,Short papertash,Papertash,32,1,30,0.0,30.0,30.0,PEN,Yape,Tienda física,simulado
+2026-11-13,VS-003346,1,P09,P09-32,Pantalón estampado,Estampado,32,1,45,0.0,45.0,45.0,PEN,Yape,Tienda física,simulado
+2026-11-13,VS-003347,1,P01,P01-32,Pantalón papertash,Semipitillo,32,1,38,0.0,38.0,38.0,PEN,Yape,Tienda física,simulado
+2026-11-13,VS-003347,2,S05,S05-32,Short jogger,Jogger,32,3,30,0.0,30.0,90.0,PEN,Yape,Tienda física,simulado
+2026-11-13,VS-003348,1,S01,S01-30,Short papertash,Papertash,30,1,30,0.0,30.0,30.0,PEN,Efectivo,Tienda física,simulado
+2026-11-13,VS-003349,1,S03,S03-4,Short jean niño,Oversize,4,1,25,0.0,25.0,25.0,PEN,Efectivo,Tienda física,simulado
+2026-11-13,VS-003350,1,S01,S01-28,Short papertash,Papertash,28,2,30,0.0,30.0,60.0,PEN,Efectivo,Tienda física,simulado
+2026-11-13,VS-003350,2,P01,P01-34,Pantalón papertash,Semipitillo,34,1,38,0.0,38.0,38.0,PEN,Efectivo,Tienda física,simulado
+2026-11-13,VS-003350,3,S03,S03-16,Short jean niño,Oversize,16,1,25,0.0,25.0,25.0,PEN,Efectivo,Tienda física,simulado
+2026-11-13,VS-003351,1,P03,P03-28,Pantalón jean clásico,Clásico recto,28,1,45,0.0,45.0,45.0,PEN,Efectivo,Tienda física,simulado
+2026-11-13,VS-003351,2,S03,S03-14,Short jean niño,Oversize,14,1,25,0.0,25.0,25.0,PEN,Efectivo,Tienda física,simulado
+2026-11-13,VS-003352,1,P05,P05-30,Pantalón jean oversize,Oversize,30,2,50,0.0,50.0,100.0,PEN,Efectivo,Tienda física,simulado
+2026-11-13,VS-003352,2,P07,P07-34,Pantalón jean baggy,Baggy,34,1,52,0.0,52.0,52.0,PEN,Efectivo,Tienda física,simulado
+2026-11-13,VS-003353,1,S05,S05-28,Short jogger,Jogger,28,2,30,0.0,30.0,60.0,PEN,Efectivo,Tienda física,simulado
+2026-11-13,VS-003353,2,S05,S05-28,Short jogger,Jogger,28,2,30,0.0,30.0,60.0,PEN,Efectivo,Tienda física,simulado
+2026-11-13,VS-003354,1,P01,P01-32,Pantalón papertash,Semipitillo,32,1,38,0.0,38.0,38.0,PEN,Efectivo,Tienda física,simulado
+2026-11-13,VS-003355,1,S08,S08-36,Short performance extra,Performance extra,36,1,35,0.2,28.0,28.0,PEN,Efectivo,Tienda física,simulado
+2026-11-13,VS-003355,2,S05,S05-30,Short jogger,Jogger,30,3,30,0.0,30.0,90.0,PEN,Efectivo,Tienda física,simulado
+2026-11-14,VS-003356,1,S06,S06-32,Short estampado,Estampado,32,1,35,0.0,35.0,35.0,PEN,Yape,Tienda física,simulado
+2026-11-14,VS-003357,1,S06,S06-30,Short estampado,Estampado,30,1,35,0.0,35.0,35.0,PEN,Yape,Tienda física,simulado
+2026-11-14,VS-003358,1,P07,P07-32,Pantalón jean baggy,Baggy,32,1,52,0.0,52.0,52.0,PEN,Yape,Tienda física,simulado
+2026-11-14,VS-003359,1,P03,P03-30,Pantalón jean clásico,Clásico recto,30,1,45,0.0,45.0,45.0,PEN,Yape,Tienda física,simulado
+2026-11-14,VS-003360,1,S01,S01-30,Short papertash,Papertash,30,2,30,0.0,30.0,60.0,PEN,Yape,Tienda física,simulado
+2026-11-14,VS-003361,1,S06,S06-30,Short estampado,Estampado,30,1,35,0.0,35.0,35.0,PEN,Yape,Tienda física,simulado
+2026-11-14,VS-003362,1,S06,S06-28,Short estampado,Estampado,28,1,35,0.0,35.0,35.0,PEN,Yape,Tienda física,simulado
+2026-11-14,VS-003363,1,S06,S06-34,Short estampado,Estampado,34,1,35,0.0,35.0,35.0,PEN,Yape,Tienda física,simulado
+2026-11-14,VS-003363,2,S01,S01-32,Short papertash,Papertash,32,4,30,0.0,30.0,120.0,PEN,Yape,Tienda física,simulado
+2026-11-14,VS-003364,1,S08,S08-36,Short performance extra,Performance extra,36,1,35,0.2,28.0,28.0,PEN,Yape,Tienda física,simulado
+2026-11-14,VS-003365,1,S01,S01-32,Short papertash,Papertash,32,4,30,0.0,30.0,120.0,PEN,Yape,Tienda física,simulado
+2026-11-14,VS-003365,2,S06,S06-28,Short estampado,Estampado,28,1,35,0.0,35.0,35.0,PEN,Yape,Tienda física,simulado
+2026-11-14,VS-003366,1,P07,P07-28,Pantalón jean baggy,Baggy,28,4,52,0.0,52.0,208.0,PEN,Efectivo,Tienda física,simulado
+2026-11-14,VS-003367,1,S08,S08-36,Short performance extra,Performance extra,36,1,35,0.2,28.0,28.0,PEN,Efectivo,Tienda física,simulado
+2026-11-14,VS-003368,1,S01,S01-28,Short papertash,Papertash,28,10,30,0.0,30.0,300.0,PEN,Efectivo,Tienda física,simulado

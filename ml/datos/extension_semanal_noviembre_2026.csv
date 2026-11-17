@@ -1,0 +1,171 @@
+﻿periodo_semana,anio,mes,semana_iso,temporada,evento,producto_id,SKU,nombre_producto,prenda,tela,modelo,segmento,talla,precio_lista,descuento,precio_unitario,en_promocion,moneda,canal,semanas_desde_lanzamiento,stock_disponible,unidades_recibidas,unidades_vendidas,stock_final,tiempo_de_entrega,stock_de_seguridad,quiebre_stock,demanda_no_atendida,demanda_real,origen
+2026-11-02,2026,11,45,Primavera,Ninguno,P01,P01-28,Pantalón papertash,Pantalón,Pepertash,Semipitillo,Adulto,28,38,0.15,32.3,1,PEN,Tienda física,148,11,8,2,9,1,4,0,0,2,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P01,P01-28,Pantalón papertash,Pantalón,Pepertash,Semipitillo,Adulto,28,38,0.0,38.0,0,PEN,Tienda física,149,9,0,9,0,1,4,1,3,12,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P01,P01-30,Pantalón papertash,Pantalón,Pepertash,Semipitillo,Adulto,30,38,0.15,32.3,1,PEN,Tienda física,148,14,0,14,0,1,6,1,3,17,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P01,P01-30,Pantalón papertash,Pantalón,Pepertash,Semipitillo,Adulto,30,38,0.0,38.0,0,PEN,Tienda física,149,20,20,3,17,1,6,0,0,3,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P01,P01-32,Pantalón papertash,Pantalón,Pepertash,Semipitillo,Adulto,32,38,0.15,32.3,1,PEN,Tienda física,148,23,22,8,15,1,5,0,0,8,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P01,P01-32,Pantalón papertash,Pantalón,Pepertash,Semipitillo,Adulto,32,38,0.0,38.0,0,PEN,Tienda física,149,15,0,11,4,1,5,0,0,11,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P01,P01-34,Pantalón papertash,Pantalón,Pepertash,Semipitillo,Adulto,34,38,0.15,32.3,1,PEN,Tienda física,148,5,5,0,5,1,3,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P01,P01-34,Pantalón papertash,Pantalón,Pepertash,Semipitillo,Adulto,34,38,0.0,38.0,0,PEN,Tienda física,149,5,0,1,4,1,3,0,0,1,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P02,P02-28,Pantalón stretch,Pantalón,Jean stretch,Skinny,Adulto,28,40,0.15,34.0,1,PEN,Tienda física,148,1,0,1,0,2,2,0,0,1,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P02,P02-28,Pantalón stretch,Pantalón,Jean stretch,Skinny,Adulto,28,40,0.0,40.0,0,PEN,Tienda física,149,2,2,0,2,2,2,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P02,P02-30,Pantalón stretch,Pantalón,Jean stretch,Skinny,Adulto,30,40,0.15,34.0,1,PEN,Tienda física,148,4,0,1,3,2,2,0,0,1,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P02,P02-30,Pantalón stretch,Pantalón,Jean stretch,Skinny,Adulto,30,40,0.0,40.0,0,PEN,Tienda física,149,3,0,3,0,2,2,1,3,6,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P02,P02-32,Pantalón stretch,Pantalón,Jean stretch,Skinny,Adulto,32,40,0.15,34.0,1,PEN,Tienda física,148,0,0,0,0,2,2,1,3,3,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P02,P02-32,Pantalón stretch,Pantalón,Jean stretch,Skinny,Adulto,32,40,0.0,40.0,0,PEN,Tienda física,149,4,4,4,0,2,2,1,1,5,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P02,P02-34,Pantalón stretch,Pantalón,Jean stretch,Skinny,Adulto,34,40,0.15,34.0,1,PEN,Tienda física,148,2,0,2,0,2,1,0,0,2,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P02,P02-34,Pantalón stretch,Pantalón,Jean stretch,Skinny,Adulto,34,40,0.0,40.0,0,PEN,Tienda física,149,0,0,0,0,2,1,1,1,1,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P03,P03-28,Pantalón jean clásico,Pantalón,Jean,Clásico recto,Adulto,28,45,0.15,38.25,1,PEN,Tienda física,148,2,0,1,1,2,1,0,0,1,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P03,P03-28,Pantalón jean clásico,Pantalón,Jean,Clásico recto,Adulto,28,45,0.0,45.0,0,PEN,Tienda física,149,1,0,1,0,2,1,0,0,1,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P03,P03-30,Pantalón jean clásico,Pantalón,Jean,Clásico recto,Adulto,30,45,0.15,38.25,1,PEN,Tienda física,148,3,0,2,1,2,2,0,0,2,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P03,P03-30,Pantalón jean clásico,Pantalón,Jean,Clásico recto,Adulto,30,45,0.0,45.0,0,PEN,Tienda física,149,1,0,1,0,2,2,0,0,1,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P03,P03-32,Pantalón jean clásico,Pantalón,Jean,Clásico recto,Adulto,32,45,0.15,38.25,1,PEN,Tienda física,148,3,3,0,3,2,2,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P03,P03-32,Pantalón jean clásico,Pantalón,Jean,Clásico recto,Adulto,32,45,0.0,45.0,0,PEN,Tienda física,149,6,3,0,6,2,2,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P03,P03-34,Pantalón jean clásico,Pantalón,Jean,Clásico recto,Adulto,34,45,0.15,38.25,1,PEN,Tienda física,148,0,0,0,0,2,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P03,P03-34,Pantalón jean clásico,Pantalón,Jean,Clásico recto,Adulto,34,45,0.0,45.0,0,PEN,Tienda física,149,3,3,0,3,2,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P04,P04-2,Pantalón jean niño,Pantalón,Jean,Clásico recto,Niño,2,40,0.15,34.0,1,PEN,Tienda física,148,2,0,0,2,2,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P04,P04-2,Pantalón jean niño,Pantalón,Jean,Clásico recto,Niño,2,40,0.0,40.0,0,PEN,Tienda física,149,2,0,0,2,2,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P04,P04-4,Pantalón jean niño,Pantalón,Jean,Clásico recto,Niño,4,40,0.15,34.0,1,PEN,Tienda física,148,2,0,0,2,2,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P04,P04-4,Pantalón jean niño,Pantalón,Jean,Clásico recto,Niño,4,40,0.0,40.0,0,PEN,Tienda física,149,2,0,0,2,2,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P04,P04-6,Pantalón jean niño,Pantalón,Jean,Clásico recto,Niño,6,40,0.15,34.0,1,PEN,Tienda física,148,2,0,0,2,2,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P04,P04-6,Pantalón jean niño,Pantalón,Jean,Clásico recto,Niño,6,40,0.0,40.0,0,PEN,Tienda física,149,2,0,1,1,2,1,0,0,1,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P04,P04-8,Pantalón jean niño,Pantalón,Jean,Clásico recto,Niño,8,40,0.15,34.0,1,PEN,Tienda física,148,2,0,1,1,2,1,0,0,1,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P04,P04-8,Pantalón jean niño,Pantalón,Jean,Clásico recto,Niño,8,40,0.0,40.0,0,PEN,Tienda física,149,1,0,0,1,2,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P04,P04-10,Pantalón jean niño,Pantalón,Jean,Clásico recto,Niño,10,40,0.15,34.0,1,PEN,Tienda física,148,2,0,2,0,2,1,0,0,2,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P04,P04-10,Pantalón jean niño,Pantalón,Jean,Clásico recto,Niño,10,40,0.0,40.0,0,PEN,Tienda física,149,0,0,0,0,2,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P04,P04-12,Pantalón jean niño,Pantalón,Jean,Clásico recto,Niño,12,40,0.15,34.0,1,PEN,Tienda física,148,2,0,0,2,2,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P04,P04-12,Pantalón jean niño,Pantalón,Jean,Clásico recto,Niño,12,40,0.0,40.0,0,PEN,Tienda física,149,2,0,0,2,2,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P04,P04-14,Pantalón jean niño,Pantalón,Jean,Clásico recto,Niño,14,40,0.15,34.0,1,PEN,Tienda física,148,1,0,1,0,2,1,0,0,1,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P04,P04-14,Pantalón jean niño,Pantalón,Jean,Clásico recto,Niño,14,40,0.0,40.0,0,PEN,Tienda física,149,2,2,0,2,2,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P04,P04-16,Pantalón jean niño,Pantalón,Jean,Clásico recto,Niño,16,40,0.15,34.0,1,PEN,Tienda física,148,1,0,0,1,2,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P04,P04-16,Pantalón jean niño,Pantalón,Jean,Clásico recto,Niño,16,40,0.0,40.0,0,PEN,Tienda física,149,1,0,0,1,2,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P05,P05-28,Pantalón jean oversize,Pantalón,Jean,Oversize,Adulto,28,50,0.15,42.5,1,PEN,Tienda física,113,4,0,3,1,2,1,0,0,3,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P05,P05-28,Pantalón jean oversize,Pantalón,Jean,Oversize,Adulto,28,50,0.0,50.0,0,PEN,Tienda física,114,1,0,1,0,2,1,1,1,2,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P05,P05-30,Pantalón jean oversize,Pantalón,Jean,Oversize,Adulto,30,50,0.15,42.5,1,PEN,Tienda física,113,5,5,1,4,2,2,0,0,1,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P05,P05-30,Pantalón jean oversize,Pantalón,Jean,Oversize,Adulto,30,50,0.0,50.0,0,PEN,Tienda física,114,11,7,6,5,2,2,0,0,6,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P05,P05-32,Pantalón jean oversize,Pantalón,Jean,Oversize,Adulto,32,50,0.15,42.5,1,PEN,Tienda física,113,5,5,1,4,2,2,0,0,1,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P05,P05-32,Pantalón jean oversize,Pantalón,Jean,Oversize,Adulto,32,50,0.0,50.0,0,PEN,Tienda física,114,4,0,0,4,2,2,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P05,P05-34,Pantalón jean oversize,Pantalón,Jean,Oversize,Adulto,34,50,0.15,42.5,1,PEN,Tienda física,113,2,2,1,1,2,1,0,0,1,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P05,P05-34,Pantalón jean oversize,Pantalón,Jean,Oversize,Adulto,34,50,0.0,50.0,0,PEN,Tienda física,114,3,2,0,3,2,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P06,P06-2,Pantalón jean oversize niño,Pantalón,Jean,Oversize,Niño,2,42,0.15,35.7,1,PEN,Tienda física,113,2,0,1,1,2,1,0,0,1,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P06,P06-2,Pantalón jean oversize niño,Pantalón,Jean,Oversize,Niño,2,42,0.0,42.0,0,PEN,Tienda física,114,1,0,0,1,2,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P06,P06-4,Pantalón jean oversize niño,Pantalón,Jean,Oversize,Niño,4,42,0.15,35.7,1,PEN,Tienda física,113,3,0,2,1,2,1,0,0,2,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P06,P06-4,Pantalón jean oversize niño,Pantalón,Jean,Oversize,Niño,4,42,0.0,42.0,0,PEN,Tienda física,114,1,0,0,1,2,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P06,P06-6,Pantalón jean oversize niño,Pantalón,Jean,Oversize,Niño,6,42,0.15,35.7,1,PEN,Tienda física,113,1,0,0,1,2,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P06,P06-6,Pantalón jean oversize niño,Pantalón,Jean,Oversize,Niño,6,42,0.0,42.0,0,PEN,Tienda física,114,3,2,0,3,2,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P06,P06-8,Pantalón jean oversize niño,Pantalón,Jean,Oversize,Niño,8,42,0.15,35.7,1,PEN,Tienda física,113,2,2,1,1,2,1,0,0,1,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P06,P06-8,Pantalón jean oversize niño,Pantalón,Jean,Oversize,Niño,8,42,0.0,42.0,0,PEN,Tienda física,114,1,0,1,0,2,1,0,0,1,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P06,P06-10,Pantalón jean oversize niño,Pantalón,Jean,Oversize,Niño,10,42,0.15,35.7,1,PEN,Tienda física,113,1,0,0,1,2,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P06,P06-10,Pantalón jean oversize niño,Pantalón,Jean,Oversize,Niño,10,42,0.0,42.0,0,PEN,Tienda física,114,3,2,1,2,2,1,0,0,1,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P06,P06-12,Pantalón jean oversize niño,Pantalón,Jean,Oversize,Niño,12,42,0.15,35.7,1,PEN,Tienda física,113,2,0,0,2,2,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P06,P06-12,Pantalón jean oversize niño,Pantalón,Jean,Oversize,Niño,12,42,0.0,42.0,0,PEN,Tienda física,114,2,0,0,2,2,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P06,P06-14,Pantalón jean oversize niño,Pantalón,Jean,Oversize,Niño,14,42,0.15,35.7,1,PEN,Tienda física,113,3,3,0,3,2,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P06,P06-14,Pantalón jean oversize niño,Pantalón,Jean,Oversize,Niño,14,42,0.0,42.0,0,PEN,Tienda física,114,6,3,0,6,2,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P06,P06-16,Pantalón jean oversize niño,Pantalón,Jean,Oversize,Niño,16,42,0.15,35.7,1,PEN,Tienda física,113,2,2,0,2,2,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P06,P06-16,Pantalón jean oversize niño,Pantalón,Jean,Oversize,Niño,16,42,0.0,42.0,0,PEN,Tienda física,114,2,0,0,2,2,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P07,P07-28,Pantalón jean baggy,Pantalón,Jean,Baggy,Adulto,28,52,0.15,44.2,1,PEN,Tienda física,87,0,0,0,0,2,2,1,2,2,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P07,P07-28,Pantalón jean baggy,Pantalón,Jean,Baggy,Adulto,28,52,0.0,52.0,0,PEN,Tienda física,88,4,4,4,0,2,2,0,0,4,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P07,P07-30,Pantalón jean baggy,Pantalón,Jean,Baggy,Adulto,30,52,0.15,44.2,1,PEN,Tienda física,87,5,5,5,0,2,3,1,2,7,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P07,P07-30,Pantalón jean baggy,Pantalón,Jean,Baggy,Adulto,30,52,0.0,52.0,0,PEN,Tienda física,88,5,5,0,5,2,3,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P07,P07-32,Pantalón jean baggy,Pantalón,Jean,Baggy,Adulto,32,52,0.15,44.2,1,PEN,Tienda física,87,5,4,2,3,2,2,0,0,2,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P07,P07-32,Pantalón jean baggy,Pantalón,Jean,Baggy,Adulto,32,52,0.0,52.0,0,PEN,Tienda física,88,3,0,1,2,2,2,0,0,1,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P07,P07-34,Pantalón jean baggy,Pantalón,Jean,Baggy,Adulto,34,52,0.15,44.2,1,PEN,Tienda física,87,3,0,2,1,2,1,0,0,2,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P07,P07-34,Pantalón jean baggy,Pantalón,Jean,Baggy,Adulto,34,52,0.0,52.0,0,PEN,Tienda física,88,1,0,1,0,2,1,0,0,1,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P08,P08-2,Pantalón jean baggy niño,Pantalón,Jean,Baggy,Niño,2,44,0.15,37.4,1,PEN,Tienda física,87,3,0,0,3,2,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P08,P08-2,Pantalón jean baggy niño,Pantalón,Jean,Baggy,Niño,2,44,0.0,44.0,0,PEN,Tienda física,88,3,0,0,3,2,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P08,P08-4,Pantalón jean baggy niño,Pantalón,Jean,Baggy,Niño,4,44,0.15,37.4,1,PEN,Tienda física,87,1,0,1,0,2,1,0,0,1,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P08,P08-4,Pantalón jean baggy niño,Pantalón,Jean,Baggy,Niño,4,44,0.0,44.0,0,PEN,Tienda física,88,0,0,0,0,2,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P08,P08-6,Pantalón jean baggy niño,Pantalón,Jean,Baggy,Niño,6,44,0.15,37.4,1,PEN,Tienda física,87,3,2,0,3,2,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P08,P08-6,Pantalón jean baggy niño,Pantalón,Jean,Baggy,Niño,6,44,0.0,44.0,0,PEN,Tienda física,88,3,0,0,3,2,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P08,P08-8,Pantalón jean baggy niño,Pantalón,Jean,Baggy,Niño,8,44,0.15,37.4,1,PEN,Tienda física,87,1,0,1,0,2,1,0,0,1,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P08,P08-8,Pantalón jean baggy niño,Pantalón,Jean,Baggy,Niño,8,44,0.0,44.0,0,PEN,Tienda física,88,0,0,0,0,2,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P08,P08-10,Pantalón jean baggy niño,Pantalón,Jean,Baggy,Niño,10,44,0.15,37.4,1,PEN,Tienda física,87,1,0,0,1,2,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P08,P08-10,Pantalón jean baggy niño,Pantalón,Jean,Baggy,Niño,10,44,0.0,44.0,0,PEN,Tienda física,88,1,0,1,0,2,1,0,0,1,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P08,P08-12,Pantalón jean baggy niño,Pantalón,Jean,Baggy,Niño,12,44,0.15,37.4,1,PEN,Tienda física,87,0,0,0,0,2,1,1,1,1,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P08,P08-12,Pantalón jean baggy niño,Pantalón,Jean,Baggy,Niño,12,44,0.0,44.0,0,PEN,Tienda física,88,2,2,0,2,2,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P08,P08-14,Pantalón jean baggy niño,Pantalón,Jean,Baggy,Niño,14,44,0.15,37.4,1,PEN,Tienda física,87,1,0,0,1,2,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P08,P08-14,Pantalón jean baggy niño,Pantalón,Jean,Baggy,Niño,14,44,0.0,44.0,0,PEN,Tienda física,88,1,0,0,1,2,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P08,P08-16,Pantalón jean baggy niño,Pantalón,Jean,Baggy,Niño,16,44,0.15,37.4,1,PEN,Tienda física,87,0,0,0,0,2,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P08,P08-16,Pantalón jean baggy niño,Pantalón,Jean,Baggy,Niño,16,44,0.0,44.0,0,PEN,Tienda física,88,2,2,0,2,2,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P09,P09-28,Pantalón estampado,Pantalón,Estampado,Estampado,Adulto,28,45,0.15,38.25,1,PEN,Tienda física,148,1,0,1,0,1,1,0,0,1,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P09,P09-28,Pantalón estampado,Pantalón,Estampado,Estampado,Adulto,28,45,0.0,45.0,0,PEN,Tienda física,149,2,2,0,2,1,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P09,P09-30,Pantalón estampado,Pantalón,Estampado,Estampado,Adulto,30,45,0.15,38.25,1,PEN,Tienda física,148,2,2,2,0,1,1,0,0,2,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P09,P09-30,Pantalón estampado,Pantalón,Estampado,Estampado,Adulto,30,45,0.0,45.0,0,PEN,Tienda física,149,2,2,0,2,1,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P09,P09-32,Pantalón estampado,Pantalón,Estampado,Estampado,Adulto,32,45,0.15,38.25,1,PEN,Tienda física,148,2,2,0,2,1,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P09,P09-32,Pantalón estampado,Pantalón,Estampado,Estampado,Adulto,32,45,0.0,45.0,0,PEN,Tienda física,149,2,0,1,1,1,1,0,0,1,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P09,P09-34,Pantalón estampado,Pantalón,Estampado,Estampado,Adulto,34,45,0.15,38.25,1,PEN,Tienda física,148,2,2,0,2,1,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P09,P09-34,Pantalón estampado,Pantalón,Estampado,Estampado,Adulto,34,45,0.0,45.0,0,PEN,Tienda física,149,2,0,0,2,1,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P10,P10-36,Pantalón extra,Pantalón,Pepertash,Extra (tallas grandes),Adulto,36,42,0.15,35.7,1,PEN,Tienda física,148,1,0,1,0,1,1,1,1,2,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P10,P10-36,Pantalón extra,Pantalón,Pepertash,Extra (tallas grandes),Adulto,36,42,0.0,42.0,0,PEN,Tienda física,149,2,2,0,2,1,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P10,P10-38,Pantalón extra,Pantalón,Pepertash,Extra (tallas grandes),Adulto,38,42,0.15,35.7,1,PEN,Tienda física,148,2,2,0,2,1,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P10,P10-38,Pantalón extra,Pantalón,Pepertash,Extra (tallas grandes),Adulto,38,42,0.0,42.0,0,PEN,Tienda física,149,2,0,0,2,1,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,P10,P10-40,Pantalón extra,Pantalón,Pepertash,Extra (tallas grandes),Adulto,40,42,0.15,35.7,1,PEN,Tienda física,148,1,0,0,1,1,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,P10,P10-40,Pantalón extra,Pantalón,Pepertash,Extra (tallas grandes),Adulto,40,42,0.0,42.0,0,PEN,Tienda física,149,1,0,0,1,1,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S01,S01-28,Short papertash,Short,Pepertash,Papertash,Adulto,28,30,0.15,25.5,1,PEN,Tienda física,148,29,0,18,11,1,9,0,0,18,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S01,S01-28,Short papertash,Short,Pepertash,Papertash,Adulto,28,30,0.0,30.0,0,PEN,Tienda física,149,32,21,22,10,1,9,0,0,22,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S01,S01-30,Short papertash,Short,Pepertash,Papertash,Adulto,30,30,0.15,25.5,1,PEN,Tienda física,148,51,0,50,1,1,15,0,0,50,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S01,S01-30,Short papertash,Short,Pepertash,Papertash,Adulto,30,30,0.0,30.0,0,PEN,Tienda física,149,61,60,8,53,1,15,0,0,8,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S01,S01-32,Short papertash,Short,Pepertash,Papertash,Adulto,32,30,0.15,25.5,1,PEN,Tienda física,148,80,54,32,48,1,13,0,0,32,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S01,S01-32,Short papertash,Short,Pepertash,Papertash,Adulto,32,30,0.0,30.0,0,PEN,Tienda física,149,48,0,31,17,1,13,0,0,31,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S01,S01-34,Short papertash,Short,Pepertash,Papertash,Adulto,34,30,0.15,25.5,1,PEN,Tienda física,148,22,21,18,4,1,7,0,0,18,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S01,S01-34,Short papertash,Short,Pepertash,Papertash,Adulto,34,30,0.0,30.0,0,PEN,Tienda física,149,27,23,0,27,1,7,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S02,S02-28,Short jean,Short,Jean,Oversize,Adulto,28,33,0.15,28.05,1,PEN,Tienda física,148,5,5,1,4,2,4,0,0,1,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S02,S02-28,Short jean,Short,Jean,Oversize,Adulto,28,33,0.0,33.0,0,PEN,Tienda física,149,9,5,3,6,2,4,0,0,3,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S02,S02-30,Short jean,Short,Jean,Oversize,Adulto,30,33,0.15,28.05,1,PEN,Tienda física,148,6,6,6,0,2,6,1,2,8,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S02,S02-30,Short jean,Short,Jean,Oversize,Adulto,30,33,0.0,33.0,0,PEN,Tienda física,149,0,0,0,0,2,6,1,11,11,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S02,S02-32,Short jean,Short,Jean,Oversize,Adulto,32,33,0.15,28.05,1,PEN,Tienda física,148,12,0,12,0,2,5,1,13,25,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S02,S02-32,Short jean,Short,Jean,Oversize,Adulto,32,33,0.0,33.0,0,PEN,Tienda física,149,11,11,11,0,2,5,1,1,12,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S02,S02-34,Short jean,Short,Jean,Oversize,Adulto,34,33,0.15,28.05,1,PEN,Tienda física,148,5,0,5,0,2,3,1,1,6,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S02,S02-34,Short jean,Short,Jean,Oversize,Adulto,34,33,0.0,33.0,0,PEN,Tienda física,149,0,0,0,0,2,3,1,1,1,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S03,S03-2,Short jean niño,Short,Jean,Oversize,Niño,2,25,0.15,21.25,1,PEN,Tienda física,148,1,0,1,0,2,1,0,0,1,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S03,S03-2,Short jean niño,Short,Jean,Oversize,Niño,2,25,0.0,25.0,0,PEN,Tienda física,149,0,0,0,0,2,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S03,S03-4,Short jean niño,Short,Jean,Oversize,Niño,4,25,0.15,21.25,1,PEN,Tienda física,148,3,0,1,2,2,1,0,0,1,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S03,S03-4,Short jean niño,Short,Jean,Oversize,Niño,4,25,0.0,25.0,0,PEN,Tienda física,149,2,0,1,1,2,1,0,0,1,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S03,S03-6,Short jean niño,Short,Jean,Oversize,Niño,6,25,0.15,21.25,1,PEN,Tienda física,148,2,0,1,1,2,1,0,0,1,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S03,S03-6,Short jean niño,Short,Jean,Oversize,Niño,6,25,0.0,25.0,0,PEN,Tienda física,149,1,0,0,1,2,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S03,S03-8,Short jean niño,Short,Jean,Oversize,Niño,8,25,0.15,21.25,1,PEN,Tienda física,148,2,0,0,2,2,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S03,S03-8,Short jean niño,Short,Jean,Oversize,Niño,8,25,0.0,25.0,0,PEN,Tienda física,149,2,0,1,1,2,1,0,0,1,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S03,S03-10,Short jean niño,Short,Jean,Oversize,Niño,10,25,0.15,21.25,1,PEN,Tienda física,148,0,0,0,0,2,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S03,S03-10,Short jean niño,Short,Jean,Oversize,Niño,10,25,0.0,25.0,0,PEN,Tienda física,149,2,2,1,1,2,1,0,0,1,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S03,S03-12,Short jean niño,Short,Jean,Oversize,Niño,12,25,0.15,21.25,1,PEN,Tienda física,148,1,0,0,1,2,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S03,S03-12,Short jean niño,Short,Jean,Oversize,Niño,12,25,0.0,25.0,0,PEN,Tienda física,149,1,0,0,1,2,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S03,S03-14,Short jean niño,Short,Jean,Oversize,Niño,14,25,0.15,21.25,1,PEN,Tienda física,148,2,0,1,1,2,1,0,0,1,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S03,S03-14,Short jean niño,Short,Jean,Oversize,Niño,14,25,0.0,25.0,0,PEN,Tienda física,149,1,0,1,0,2,1,0,0,1,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S03,S03-16,Short jean niño,Short,Jean,Oversize,Niño,16,25,0.15,21.25,1,PEN,Tienda física,148,2,0,0,2,2,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S03,S03-16,Short jean niño,Short,Jean,Oversize,Niño,16,25,0.0,25.0,0,PEN,Tienda física,149,2,0,1,1,2,1,0,0,1,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S04,S04-28,Short tafeta,Short,Tafeta,Skinny,Adulto,28,30,0.15,25.5,1,PEN,Tienda física,4,5,0,1,4,1,1,0,0,1,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S04,S04-28,Short tafeta,Short,Tafeta,Skinny,Adulto,28,30,0.0,30.0,0,PEN,Tienda física,5,4,0,1,3,1,1,0,0,1,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S04,S04-30,Short tafeta,Short,Tafeta,Skinny,Adulto,30,30,0.15,25.5,1,PEN,Tienda física,4,6,0,0,6,1,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S04,S04-30,Short tafeta,Short,Tafeta,Skinny,Adulto,30,30,0.0,30.0,0,PEN,Tienda física,5,6,0,0,6,1,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S04,S04-32,Short tafeta,Short,Tafeta,Skinny,Adulto,32,30,0.15,25.5,1,PEN,Tienda física,4,6,0,0,6,1,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S04,S04-32,Short tafeta,Short,Tafeta,Skinny,Adulto,32,30,0.0,30.0,0,PEN,Tienda física,5,6,0,0,6,1,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S04,S04-34,Short tafeta,Short,Tafeta,Skinny,Adulto,34,30,0.15,25.5,1,PEN,Tienda física,4,3,0,0,3,1,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S04,S04-34,Short tafeta,Short,Tafeta,Skinny,Adulto,34,30,0.0,30.0,0,PEN,Tienda física,5,3,0,0,3,1,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S05,S05-28,Short jogger,Short,Algodón,Jogger,Adulto,28,30,0.15,25.5,1,PEN,Tienda física,148,9,8,0,9,1,2,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S05,S05-28,Short jogger,Short,Algodón,Jogger,Adulto,28,30,0.0,30.0,0,PEN,Tienda física,149,9,0,9,0,1,2,1,1,10,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S05,S05-30,Short jogger,Short,Algodón,Jogger,Adulto,30,30,0.15,25.5,1,PEN,Tienda física,148,16,16,7,9,1,4,0,0,7,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S05,S05-30,Short jogger,Short,Algodón,Jogger,Adulto,30,30,0.0,30.0,0,PEN,Tienda física,149,27,18,7,20,1,4,0,0,7,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S05,S05-32,Short jogger,Short,Algodón,Jogger,Adulto,32,30,0.15,25.5,1,PEN,Tienda física,148,10,10,9,1,1,3,0,0,9,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S05,S05-32,Short jogger,Short,Algodón,Jogger,Adulto,32,30,0.0,30.0,0,PEN,Tienda física,149,15,14,7,8,1,3,0,0,7,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S05,S05-34,Short jogger,Short,Algodón,Jogger,Adulto,34,30,0.15,25.5,1,PEN,Tienda física,148,6,6,6,0,1,2,1,1,7,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S05,S05-34,Short jogger,Short,Algodón,Jogger,Adulto,34,30,0.0,30.0,0,PEN,Tienda física,149,7,7,0,7,1,2,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S06,S06-28,Short estampado,Short,Estampado,Estampado,Adulto,28,35,0.15,29.75,1,PEN,Tienda física,148,4,0,1,3,1,1,0,0,1,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S06,S06-28,Short estampado,Short,Estampado,Estampado,Adulto,28,35,0.0,35.0,0,PEN,Tienda física,149,3,0,2,1,1,1,0,0,2,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S06,S06-30,Short estampado,Short,Estampado,Estampado,Adulto,30,35,0.15,29.75,1,PEN,Tienda física,148,5,5,5,0,1,2,1,6,11,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S06,S06-30,Short estampado,Short,Estampado,Estampado,Adulto,30,35,0.0,35.0,0,PEN,Tienda física,149,7,7,2,5,1,2,0,0,2,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S06,S06-32,Short estampado,Short,Estampado,Estampado,Adulto,32,35,0.15,29.75,1,PEN,Tienda física,148,5,0,4,1,1,2,0,0,4,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S06,S06-32,Short estampado,Short,Estampado,Estampado,Adulto,32,35,0.0,35.0,0,PEN,Tienda física,149,5,4,1,4,1,2,0,0,1,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S06,S06-34,Short estampado,Short,Estampado,Estampado,Adulto,34,35,0.15,29.75,1,PEN,Tienda física,148,3,0,2,1,1,1,0,0,2,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S06,S06-34,Short estampado,Short,Estampado,Estampado,Adulto,34,35,0.0,35.0,0,PEN,Tienda física,149,3,2,1,2,1,1,0,0,1,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S07,S07-36,Short extra,Short,Pepertash,Extra (tallas grandes),Adulto,36,35,0.15,29.75,1,PEN,Tienda física,148,10,0,3,7,1,2,0,0,3,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S07,S07-36,Short extra,Short,Pepertash,Extra (tallas grandes),Adulto,36,35,0.1,31.5,1,PEN,Tienda física,149,7,0,6,1,1,2,0,0,6,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S07,S07-38,Short extra,Short,Pepertash,Extra (tallas grandes),Adulto,38,35,0.15,29.75,1,PEN,Tienda física,148,2,0,1,1,1,1,0,0,1,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S07,S07-38,Short extra,Short,Pepertash,Extra (tallas grandes),Adulto,38,35,0.1,31.5,1,PEN,Tienda física,149,4,3,0,4,1,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S07,S07-40,Short extra,Short,Pepertash,Extra (tallas grandes),Adulto,40,35,0.15,29.75,1,PEN,Tienda física,148,5,4,4,1,1,1,0,0,4,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S07,S07-40,Short extra,Short,Pepertash,Extra (tallas grandes),Adulto,40,35,0.1,31.5,1,PEN,Tienda física,149,6,5,3,3,1,1,0,0,3,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S08,S08-36,Short performance extra,Short,Deportivo,Performance extra,Adulto,36,35,0.15,29.75,1,PEN,Tienda física,148,4,3,0,4,1,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S08,S08-36,Short performance extra,Short,Deportivo,Performance extra,Adulto,36,35,0.2,28.0,1,PEN,Tienda física,149,4,0,3,1,1,1,0,0,3,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S08,S08-38,Short performance extra,Short,Deportivo,Performance extra,Adulto,38,35,0.15,29.75,1,PEN,Tienda física,148,1,0,1,0,1,1,0,0,1,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S08,S08-38,Short performance extra,Short,Deportivo,Performance extra,Adulto,38,35,0.2,28.0,1,PEN,Tienda física,149,2,2,0,2,1,1,0,0,0,simulado
+2026-11-02,2026,11,45,Primavera,Ninguno,S08,S08-40,Short performance extra,Short,Deportivo,Performance extra,Adulto,40,35,0.15,29.75,1,PEN,Tienda física,148,1,0,0,1,1,1,0,0,0,simulado
+2026-11-09,2026,11,46,Primavera,Ninguno,S08,S08-40,Short performance extra,Short,Deportivo,Performance extra,Adulto,40,35,0.2,28.0,1,PEN,Tienda física,149,1,0,0,1,1,1,0,0,0,simulado

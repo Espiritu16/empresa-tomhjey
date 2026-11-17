@@ -497,6 +497,7 @@ export function PaginaVentas({
           datosVenta.tipo_comprobante === "factura"
             ? datosVenta.tipo_comprobante
             : null,
+        origen: "registrada",
         comprobanteId: null,
         estadoComprobante: null,
         enlacePdf: null,
@@ -676,10 +677,20 @@ export function PaginaVentas({
                     {venta.clienteNombre ?? "Venta de mostrador"}
                   </td>
                   <td data-etiqueta="Estado">
-                    <span
-                      className={`modulo-operativo__estado modulo-operativo__estado--${venta.estado}`}
-                    >
-                      {etiquetaEstado(venta.estado)}
+                    <span className="insignias">
+                      <span
+                        className={`modulo-operativo__estado modulo-operativo__estado--${venta.estado}`}
+                      >
+                        {etiquetaEstado(venta.estado)}
+                      </span>
+                      {venta.origen === "simulada" ? (
+                        <span
+                          className="estado estado--info"
+                          title="Historial simulado del dataset APF3; no es una venta real."
+                        >
+                          Simulada
+                        </span>
+                      ) : null}
                     </span>
                   </td>
                   <td data-etiqueta="Total">
@@ -687,7 +698,11 @@ export function PaginaVentas({
                   </td>
                   <td data-etiqueta="Productos">{venta.lineas.length}</td>
                   <td data-etiqueta="Acciones" data-acciones>
-                    {editable ? (
+                    {venta.origen === "simulada" ? (
+                      <small className="modulo-operativo__detalle">
+                        Sin comprobante
+                      </small>
+                    ) : editable ? (
                       <>
                         <button
                           aria-label="Editar borrador"

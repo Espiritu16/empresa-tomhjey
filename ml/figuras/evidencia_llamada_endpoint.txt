@@ -4,3 +4,8 @@ $ curl -X POST http://127.0.0.1:8765/predecir -d @ejemplo_entrada.json
 {"sku": "S02-30", "semana": "2026-11-02", "evento": "Ninguno", "unidades_estimadas": 2.78, "unidades_estimadas_redondeadas": 3, "cobertura_semanas": 3, "reposicion_sugerida": 11, "accion": "reponer", "modelo": "SVM lineal", "mae_prueba": 1.41}
 $ curl (talla inexistente)
 {"error": "La talla 99 no existe para S02"}
+# Prueba de validación: petición sin el campo obligatorio "talla" (2026-11-18 17:03, hora de Lima)
+$ curl.exe -i -X POST http://127.0.0.1:8765/predecir -H "Content-Type: application/json" -d "@sin_talla.json"
+HTTP/1.0 400 Bad Request
+Content-Type: application/json; charset=utf-8
+{"error": "Faltan campos obligatorios: talla"}
